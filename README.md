@@ -33,7 +33,7 @@ The format is as follows:
 - Column four is the direction of the gene
   - 'F' is forward
   - 'R' is reverse
-  - 'U' is unknown
+  - "NA" is unknown (Sorry about the previous mistake)
 - Column five is the mutation
   - An deletion (del) is assigned when  the AMR sequence
     is shorter than the reference.
