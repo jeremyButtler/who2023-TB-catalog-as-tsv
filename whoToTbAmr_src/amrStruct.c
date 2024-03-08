@@ -1,12 +1,65 @@
+/*########################################################
+# Name: amrStruct
+#   - Holds functions to support the amrStruct used in
+#     tbAmr. This includes processing the tbAmr format,
+#     sorting the structures, looking up structures and
+#     memory managment
+########################################################*/
+
+/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\
+' SOF: Start Of File
+'   o header:
+'     - Include libraries
+'   o st-01: amrStruct (amrStruct.h only)
+'     - Holds the information for a single amr mutation
+'       that was extracted from the WHO catalog
+'   o fun-01: blankAmrStruct (amrStruct.h only)
+'     - Sets all non-pointer values in amrStructPtr to 0
+'   o fun-02: initAmrStruct (amrStruct.h)
+'     - Sets all values, including pointers in the
+'       amrStruct structure to 0
+'   o fun-03: freeAmrStructStack (amrStruct.h)
+'     - Frees the geneIdStr, refSeqStr, and amrSeqStr
+'       arrays and sets all values to 0 in the input
+'       amrStruct 
+'   o fun-04: freeAmrStruct
+'     - Frees an heap allocated amrStruct structure
+'   o fun-05: freeAmrStructArray
+'     - Frees an heap allocated array of amrStruct
+'       structures
+'   o fun-06: swapAmrStructs
+'     - Swaps the values in two amrStruct structures
+'   o fun-07: sortAmrStructArray
+'     - Sort on an amrStruct array structures by reference
+'       coordiante (uses shell sort)
+'   o fun-08: findNearestAmr
+'      - Finds the nearest amr at or after the input query
+'   o fun-09: pAmrDB
+'     - Print out the amr database used
+'   o fun-10: readTbAmrTbl
+'     - Gets data from a tbAmr tsv file output from pAmrDB
+'       (fun-09)
+\~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+
+/*-------------------------------------------------------\
+| Header:
+|   - Included libraries
+\-------------------------------------------------------*/
+
+#include "amrStruct.h"
+
 #include <stdlib.h>
 #include <stdio.h>
 
-#include "amrStruct.h"
-#include "../generalLib/dataTypeShortHand.h"
 #include "drug_str_ary.h"
 
+/*Only .h files*/
+#include "../generalLib/dataTypeShortHand.h"
+#include "../generalLib/ulCpStr.h"
+#include "../generalLib/base10StrToNum.h"
+
 /*-------------------------------------------------------\
-| Fun-04: freeAmrStructStack
+| Fun-03: freeAmrStructStack
 |   - Frees the geneIdStr, refSeqStr, and amrSeqStr arrays
 |     in amrStructPtr and sets all values to 0
 | Input:
@@ -50,7 +103,7 @@ void freeAmrStructStack(struct amrStruct *amrStructPtr){
 } /*freeAmrStructStack*/
 
 /*-------------------------------------------------------\
-| Fun-05: freeAmrStruct
+| Fun-04: freeAmrStruct
 |   - Frees an heap allocated amrStruct structure
 | Input:
 |   - ampStructPtr:
@@ -66,7 +119,7 @@ void freeAmrStruct(struct amrStruct **amrStructPtr){
 } /*freeAmrStruct*/
 
 /*-------------------------------------------------------\
-| Fun-06: freeAmrStructArray
+| Fun-05: freeAmrStructArray
 |   - Frees an heap allocated array of amrStruct
 |     structures
 | Input:
@@ -92,7 +145,7 @@ void freeAmrStructArray(
 } /*freeAmrStructArray*/
 
 /*-------------------------------------------------------\
-| Fun-07: swapAmrStructs
+| Fun-06: swapAmrStructs
 |   - Swaps the values in two amrStruct structures
 | Input:
 |   - firstAmrSTPtr:
@@ -166,6 +219,11 @@ void freeAmrStructArray(
    (firstAmrSTPtr).aaDelBl = (secAmrSTPtr).aaDelBl;\
    (secAmrSTPtr).aaDelBl = tmpMacC;\
    \
+   tmpMacC = (firstAmrSTPtr).aaMultiDupBl;\
+   (firstAmrSTPtr).aaMultiDupBl =\
+      (secAmrSTPtr).aaMultiDupBl;\
+   (secAmrSTPtr).aaMultiDupBl = tmpMacC;\
+   \
    tmpMacC = (firstAmrSTPtr).frameshiftBl;\
    (firstAmrSTPtr).frameshiftBl =\
       (secAmrSTPtr).frameshiftBl;\
@@ -186,7 +244,7 @@ void freeAmrStructArray(
    (secAmrSTPtr).refSeqStr = tmpMacStr;\
    \
    tmpMacUI = (firstAmrSTPtr).lenRefSeqUI;\
-   (firstAmrSTPtr).lenRefSeqUI = (secAmrSTPtr).lenRefSeqUI;\
+   (firstAmrSTPtr).lenRefSeqUI=(secAmrSTPtr).lenRefSeqUI;\
    (secAmrSTPtr).lenRefSeqUI = tmpMacUI;\
    \
    \
@@ -316,7 +374,7 @@ void freeAmrStructArray(
 } /*swapAmrStructs*/
 
 /*-------------------------------------------------------\
-| Fun-08: sortAmrStructArray
+| Fun-07: sortAmrStructArray
 |   - Sort on an amrStruct array structures by reference
 |     coordiante (uses shell sort)
 | Input:
@@ -332,7 +390,7 @@ void sortAmrStructArray(
    uint startUI,
    uint endUI
 ){ /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\
-   ' Fun-08 TOC: sortGenIndice
+   ' Fun-07 TOC: sortGenIndice
    '  - Sorts the arrays in a genIndice struct by variant
    '    id with shell short.
    '  - Shell sort taken from:
@@ -341,16 +399,16 @@ void sortAmrStructArray(
    '      edition. pages 505-508
    '    - I made some minor changes, but is mostly the
    '      same
-   '  o fun-08 sec-01:
+   '  o fun-07 sec-01:
    '    - Variable declerations
-   '  o fun-08 sec-02:
+   '  o fun-07 sec-02:
    '    - Find the number of rounds to sort for
-   '  o fun-08 sec-03:
+   '  o fun-07 sec-03:
    '    - Sort the arrays in genIndiceST
    \~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
   
   /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\
-  ^ Fun-08 Sec-01:
+  ^ Fun-07 Sec-01:
   ^  - Variable declerations
   \<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
   
@@ -370,7 +428,7 @@ void sortAmrStructArray(
   ulong ulElm = 0;
   
   /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\
-  ^ Fun-08 Sec-02:
+  ^ Fun-07 Sec-02:
   ^  - Find the max search value (number rounds to sort)
   \<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
   
@@ -379,7 +437,7 @@ void sortAmrStructArray(
   while(subUL < numElmUL - 1) subUL = (3 * subUL) + 1;
   
   /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-  ^ Fun-08 Sec-03:
+  ^ Fun-07 Sec-03:
   ^  - Sort the arrays in genIndiceST
   \<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
   
@@ -428,7 +486,7 @@ void sortAmrStructArray(
 } /*sortGenIndice*/
 
 /*-------------------------------------------------------\
-| Fun-09: findNearestAmr
+| Fun-08: findNearestAmr
 |  - Does a binary search for the nearest amr at or after
 |    to the input query coordiante
 | Input:
@@ -450,7 +508,7 @@ int findNearestAmr(
    uint qryUI,
    int numAmrI
 ){ /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-   ' Fun-09 TOC: findNearestAmr
+   ' Fun-08 TOC: findNearestAmr
    '   - Finds the nearest amr at or after the input query
    '     coordiante
    \~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
@@ -510,7 +568,7 @@ int findNearestAmr(
 } /*findNearestAmr*/
 
 /*-------------------------------------------------------\
-| Fun-10: pAmrDB
+| Fun-09: pAmrDB
 |  - Print out the amr database used
 | Input:
 |  - amrAryST:
@@ -560,7 +618,7 @@ char pAmrDB(
    if(outFILE == 0) return def_amrST_invalidFILE;
 
    /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\
-   ^ Fun-10 Sec-03:
+   ^ Fun-09 Sec-03:
    ^   - Print the header
    \<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
 
@@ -756,3 +814,922 @@ char pAmrDB(
 
    return 0;
 } /*pAmrDB*/
+
+/*-------------------------------------------------------\
+| Fun-10: readTbAmrTbl
+|   - Gets data from a tbAmr tsv file output from pAmrDB
+|     (fun-09)
+| Input:
+|   - tbAmrTblStr:
+|     o C-string with path to the AMR database/table
+|   - numAmrUI:
+|     o Changed to hold the number of AMRs in tbAmrTblStr
+|   - durgStrAry:
+|     o Pointer to a c-string to hold the drug names in
+|   - numDrugsI
+|     o Pointer to uint to hold the number of unique
+|       drugs in drugStrAry
+|   - maxDrugsI:
+|     o The maximum number of drugs the current drugStrAry
+|       can hold. This is changed if drugStrAry is resized
+|   - errC:
+|     o Changed to hold the error message
+| Output:
+|   - Modifies:
+|     o numAmrUI to hold the number of extracted amrs
+|     o drugStrAry to hold the name of each drug. This is
+|       resized as needed.
+|     o numDrugsI to hold the number of drugs currently
+|       in drugStrAry
+|     o maxDrugsI to hold the maximum number of drugs
+|       the current drugStrAry has
+|     o errC to hold the error message
+|       - 0 for no errors
+|       - def_amrST_invalidFILE for could not open the
+|         file
+|       - def_amrST_memError for memory errors
+|   - Returns:
+|     o Array of amrStruct structures with the AMRs
+|     o 0 for an error (see errC for specific error)
+\-------------------------------------------------------*/
+struct amrStruct * readTbAmrTbl(
+   char *tbAmrTblStr,    /*Path to tbAmr tsv with AMR(s)*/
+   unsigned int *numAmrUI,  /*Number of AMR(s) in tsv*/
+   char **drugStrAry,       /*Holds drug names*/
+   int *numDrugsI,          /*number drugs in drugStrAry*/
+   int *maxDrugsI,          /*Max drugs for drugStrAry*/
+   char *errC               /*Holds errors*/
+){ /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\
+   ' Fun-10 TOC: readTbAmrTbl
+   '   - Gets data from a tbAmr tsv file output from
+   '     pAmrDB (fun-09)
+   '   o fun-10 sec-01:
+   '     - Variable declerations
+   '   o fun-10 sec-02:
+   '     - Process the header
+   '   o fun-10 sec-03:
+   '     - Process the header and get the number of lines
+   '   o fun-10 sec-04:
+   '     - Prepare buffers for extracting AMRs
+   '   o fun-10 sec-05:
+   '     - Extract the information from the file
+   '   o fun-10 sec-06:
+   '     - Clean up
+   \~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+
+   /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\
+   ^ Fun-10 Sec-01:
+   ^   - Variable declerations
+   \<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
+
+   uint lenBuffUI = 1 << 11; /*Around 4096 bytes*/
+   char *buffStr = 0;        /*Buffer to read file into*/
+   char *tmpStr = 0;         /*For temporary operations*/
+   ulong ulTab = ulCpMakeDelim('\t'); /*for ulCpStrDelim*/
+
+   /*Boolean to check if I need to make a new drug array*/
+   char newDrugAryBl = (*drugStrAry == 0);
+   int iEndDrug = 0; /*Marks end of the drug entry*/
+   int iStartDrug = 0; /*Marks start of the drug entry*/
+   int iDrug = 0;  /*Iterator for loops*/
+
+   struct amrStruct *amrSTAry = 0;
+   uint uiAmr = 0;
+   ulong *drugResUL = 0;
+   ulong *drugCrossResUL = 0;
+
+   FILE *amrFILE = 0;
+
+   /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\
+   ^ Fun-10 Sec-02:
+   ^   - Check if file eixists and set up the buffer
+   \<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
+
+   /*Check if my file exists*/
+   amrFILE = fopen(tbAmrTblStr, "r");
+
+   if(amrFILE == 0) goto fileErr_sec06_sub03_readTbAmrTbl;
+
+   /*Set up my buffer*/
+   buffStr = malloc(lenBuffUI * sizeof(char));
+
+   if(buffStr == 0) goto memErr_sec06_sub02_readTbAmrTbl;
+
+   /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\
+   ^ Fun-10 Sec-03:
+   ^   - Process the header and get the number of lines
+   ^   o fun-10 sec-03 sub-01:
+   ^     - Read in the header
+   ^   o fun-10 sec-03 sub-02:
+   ^     - Get the number of antibiotics
+   ^   o fun-10 sec-03 sub-03:
+   ^     - Allocate memory for the antibiotics
+   ^   o fun-10 sec-03 sub-04:
+   ^     - Copy the antibiotics to the drug array
+   \<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
+
+   /*****************************************************\
+   * Fun-10 Sec-03 Sub-01:
+   *   - Read in the header
+   \*****************************************************/
+
+   buffStr[lenBuffUI - 2] = '\0';
+   tmpStr = fgets(buffStr, lenBuffUI, amrFILE);
+
+   if(! tmpStr) goto fileErr_sec06_sub03_readTbAmrTbl;
+  
+   /*~10 sets '\n', backspace, and "start of text" to 0.
+   `   So, every realisitic character in a file, except
+   `  '\0' and '\n' will have at least one bit set
+   */
+   while(tmpStr[lenBuffUI - 2] & ~10)
+   { /*Loop: Get the full line*/
+      tmpStr =
+         realloc(buffStr, (lenBuffUI <<1) * sizeof(char));
+
+      if(! tmpStr) goto memErr_sec06_sub02_readTbAmrTbl;
+
+      buffStr = tmpStr;
+      tmpStr += lenBuffUI;
+      lenBuffUI <<= 1;
+
+      /*Add my marker back in*/
+      buffStr[lenBuffUI - 2] = '\0';
+
+      tmpStr = fgets(buffStr, lenBuffUI, amrFILE);
+
+      /*Check if I am at the end of the file*/
+      if(! tmpStr) goto fileErr_sec06_sub03_readTbAmrTbl;
+   } /*Loop: Get the full line*/
+   
+   /*****************************************************\
+   * Fun-10 Sec-03 Sub-02:
+   *   - Get the number of antibiotics
+   \*****************************************************/
+
+   for(iDrug = 0; iDrug < 19; ++iDrug)
+      while(buffStr[iStartDrug++] > 31) {}
+
+   iDrug = *numDrugsI;
+   iEndDrug = iStartDrug;
+
+   while(
+      cStrMatch(
+         &buffStr[iEndDrug],
+         "endAntibiotics",
+         '\t',
+         iEndDrug
+      )
+   ){ /*Loop: Find the end of the antibiotics columns*/
+      ++(*numDrugsI);
+      while(buffStr[iEndDrug] != '\t') ++iEndDrug;
+      ++iEndDrug;
+   } /*Loop: Find the end of the antibiotics columns*/
+
+   /*****************************************************\
+   * Fun-10 Sec-03 Sub-03:
+   *   - Allocate memory for the antibiotics
+   \*****************************************************/
+
+   if(newDrugAryBl)
+   { /*If: this is a new drug array*/
+      *drugStrAry = mallocDrugAryStr(*numDrugsI);
+
+      if(! *drugStrAry)
+         goto memErr_sec06_sub02_readTbAmrTbl;
+   } /*If: this is a new drug array*/
+
+   else if((*numDrugsI > *maxDrugsI))
+   { /*If: I need to add more memory to the drug array*/
+
+      if(reallocDrugAryStrNoFree(drugStrAry, *numDrugsI))
+         goto memErr_sec06_sub02_readTbAmrTbl;
+
+   } /*If: I need to add more memory to the drug array*/
+
+   /*****************************************************\
+   * Fun-10 Sec-03 Sub-04:
+   *   - Copy the antibiotics to the drug array
+   \*****************************************************/
+
+   while(iDrug < *numDrugsI)
+   { /*Loop: Read in the antibiotic entries*/
+      iStartDrug +=
+         cpDrugToDrugAry(
+            *drugStrAry, 
+            &buffStr[iStartDrug],
+            iDrug,
+            '\t'
+         ); /*Copy the drug to the drug array*/
+
+      ++iStartDrug; /*Get off the tab*/
+      ++iDrug;
+   } /*Loop: Read in the antibiotic entries*/
+
+   /*****************************************************\
+   * Fun-10 Sec-03 Sub-05:
+   *   - Get the number of lines in the file
+   \*****************************************************/
+
+   *numAmrUI = 0;
+   buffStr[lenBuffUI - 2] = '\0';
+
+   while(fgets(buffStr, lenBuffUI, amrFILE))
+   { /*Loop: Get number of amrs from the file*/
+      
+      ++(*numAmrUI);
+ 
+      while(tmpStr[lenBuffUI - 2] & ~10)
+      { /*Loop: Get the full line*/
+         /*I really do not char about the contents, I just
+         ` want the line count
+         */
+         free(buffStr);
+         buffStr = malloc((lenBuffUI <<1) * sizeof(char));
+
+         if(!buffStr)
+             goto memErr_sec06_sub02_readTbAmrTbl;
+
+         tmpStr = buffStr + lenBuffUI;
+         lenBuffUI <<= 1;
+
+         /*Add my marker back in*/
+         buffStr[lenBuffUI - 2] = '\0';
+      } /*Loop: Get the full line*/
+   } /*Loop: Get number of amrs from the file*/
+
+   /*Check if there were any AMR(s) in the file*/
+   if(! *numAmrUI) goto fileErr_sec06_sub03_readTbAmrTbl;
+
+   /*Go back to start of file*/
+   fseek(amrFILE, 0, SEEK_SET);
+
+   /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\
+   ^ Fun-10 Sec-04:
+   ^   - Prepare buffers for extracting AMRs
+   \<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
+
+   amrSTAry= malloc(*numAmrUI * sizeof(struct amrStruct));
+   if(! amrSTAry) goto memErr_sec06_sub02_readTbAmrTbl;
+
+   /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\
+   ^ Fun-10 Sec-05:
+   ^   - Extract the information from the file
+   ^   o fun-10 sec-05 sub-02:
+   ^     - Get first entry, start read in loop, &
+   ^       initailze the new variables
+   ^   o fun-10 sec-05 sub-02:
+   ^     - Read in the gene id
+   ^   o fun-10 sec-05 sub-03:
+   ^     - Read in the variaint id
+   ^   o fun-10 sec-05 sub-04:
+   ^     - Read in the refernce positon
+   ^   o fun-10 sec-05 sub-05:
+   ^     - Read in the direction
+   ^   o fun-10 sec-05 sub-06:
+   ^     - Read in the mutation type
+   ^   o fun-10 sec-05 sub-07:
+   ^     - Read in the frame shift entry
+   ^   o fun-10 sec-05 sub-08:
+   ^     - Read in the reference sequence
+   ^   o fun-10 sec-05 sub-09:
+   ^     - Read in the amr sequence
+   ^   o fun-10 sec-05 sub-10:
+   ^     - Read in the frist codon base in reference
+   ^   o fun-10 sec-05 sub-11:
+   ^     - Read in the starting codon number
+   ^   o fun-10 sec-05 sub-12:
+   ^     - Read in the ending codon number
+   ^   o fun-10 sec-05 sub-13:
+   ^     - Read in the reference amino acid sequence
+   ^   o fun-10 sec-05 sub-14:
+   ^     - Read in the amr amino acid sequence
+   ^   o fun-10 sec-05 sub-15:
+   ^     - Read in the gene starting position
+   ^   o fun-10 sec-05 sub-16:
+   ^     - Read in the gene ending position
+   ^   o fun-10 sec-05 sub-17:
+   ^     - Check if is a high resistance gene
+   ^   o fun-10 sec-05 sub-18:
+   ^     - Check if is a low resistance gene
+   ^   o fun-10 sec-05 sub-19:
+   ^     - Check if resistance is additive
+   ^   o fun-10 sec-05 sub-20:
+   ^     - Read in the if it needs a functional gene
+   ^   o fun-10 sec-05 sub-21:
+   ^     - Read in the antibiotic flags
+   ^   o fun-10 sec-05 sub-22:
+   ^     - Read in the effect entry
+   ^   o fun-10 sec-05 sub-23:
+   ^     - Read in the commenht entry
+   ^   o fun-10 sec-05 sub-24:
+   ^     - Get the next line
+   \<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
+
+   /*****************************************************\
+   * Fun-10 Sec-05 Sub-01:
+   *   - Get first entry, start read in loop, & initailze`
+   \*****************************************************/
+
+   /*Get past the header*/
+   tmpStr = fgets(buffStr, lenBuffUI, amrFILE);
+   tmpStr = fgets(buffStr, lenBuffUI, amrFILE);
+
+   for(uiAmr = 0; uiAmr < *numAmrUI; ++uiAmr)
+   { /*Loop: Read in the file*/
+
+      initAmrStruct(&amrSTAry[uiAmr]);
+      tmpStr = buffStr;
+
+      /**************************************************\
+      * Fun-10 Sec-05 Sub-02:
+      *   - Read in the gene id
+      \**************************************************/
+
+      amrSTAry[uiAmr].lenGeneIdUI = cLenStr(tmpStr, '\t');
+
+      amrSTAry[uiAmr].geneIdStr =
+         malloc(
+              (amrSTAry[uiAmr].lenGeneIdUI + 1)
+            * sizeof(char)
+         ); /*Allocate memory for the gene name*/
+
+      if(! amrSTAry[uiAmr].geneIdStr)
+         goto memErr_sec06_sub02_readTbAmrTbl;
+
+      cCpStr(
+         amrSTAry[uiAmr].geneIdStr,
+         tmpStr,
+         amrSTAry[uiAmr].lenGeneIdUI
+      );
+
+      tmpStr += amrSTAry[uiAmr].lenGeneIdUI + 1;
+
+      /**************************************************\
+      * Fun-10 Sec-05 Sub-03:
+      *   - Read in the variaint id
+      \**************************************************/
+
+      amrSTAry[uiAmr].lenVarIdUI =
+         ulLenStr(tmpStr, ulTab, '\t');
+
+      amrSTAry[uiAmr].varIdStr =
+         malloc(
+              (amrSTAry[uiAmr].lenVarIdUI + 1)
+            * sizeof(char)
+         ); /*Allocate memory for the variant id*/
+
+      if(! amrSTAry[uiAmr].varIdStr)
+         goto memErr_sec06_sub02_readTbAmrTbl;
+
+      ulCpStr(
+         amrSTAry[uiAmr].varIdStr,
+         tmpStr,
+         amrSTAry[uiAmr].lenVarIdUI
+      );
+
+      tmpStr += amrSTAry[uiAmr].lenVarIdUI + 1;
+
+      /**************************************************\
+      * Fun-10 Sec-05 Sub-04:
+      *   - Read in the refernce positon
+      \**************************************************/
+
+      tmpStr =
+         base10StrToUI(tmpStr, amrSTAry[uiAmr].refPosUI);
+
+      --amrSTAry[uiAmr].refPosUI; /*Convert to index 0*/
+
+      ++tmpStr; /*get off the tab*/
+
+      /**************************************************\
+      * Fun-10 Sec-05 Sub-05:
+      *   - Read in the direction
+      \**************************************************/
+
+      if(*tmpStr == 'F') 
+         amrSTAry[uiAmr].dirFlag = def_amrST_forwardDir;
+      else if(*tmpStr == 'R') 
+         amrSTAry[uiAmr].dirFlag = def_amrST_revCompDir;
+
+      else amrSTAry[uiAmr].dirFlag = def_amrST_unkownDir;
+     
+      /*Move to the next entry*/
+      while(*tmpStr++ != '\t') {}
+
+      /**************************************************\
+      * Fun-10 Sec-05 Sub-06:
+      *   - Read in the mutation type
+      \**************************************************/
+
+      if(*tmpStr == '\t')
+      { /*If: this was a blank entry*/
+         amrSTAry[uiAmr].mutTypeStr[0] = 'N';
+         amrSTAry[uiAmr].mutTypeStr[1] = 'A';
+         amrSTAry[uiAmr].mutTypeStr[2] = '\0';
+
+         goto endMut_fuh11_sec05_sub06;
+      } /*If: this was a blank entry*/
+
+      amrSTAry[uiAmr].mutTypeStr[0] = *tmpStr++;
+
+      if(*tmpStr == '\t')
+      { /*If: this is a short entry*/
+         amrSTAry[uiAmr].mutTypeStr[1] = '\0';
+         goto endMut_fuh11_sec05_sub06;
+      } /*If: this is a short entry*/
+
+      amrSTAry[uiAmr].mutTypeStr[1] = *tmpStr++;
+
+      if(*tmpStr == '\t')
+      { /*If: this is a short entry*/
+         amrSTAry[uiAmr].mutTypeStr[2] = '\0';
+         goto endMut_fuh11_sec05_sub06;
+      } /*If: this is a short entry*/
+
+      /*This is a full length entry*/
+      amrSTAry[uiAmr].mutTypeStr[2] = *tmpStr++;
+      amrSTAry[uiAmr].mutTypeStr[3] = '\0';
+
+      /*Move to the next entry*/
+      endMut_fuh11_sec05_sub06:;
+
+      while(*tmpStr++ != '\t') {}
+
+      /**************************************************\
+      * Fun-10 Sec-05 Sub-07:
+      *   - Read in the frame shift entry
+      \**************************************************/
+
+      amrSTAry[uiAmr].frameshiftBl = (*tmpStr == '1');
+
+      while(*tmpStr++ != '\t') {}
+
+      /**************************************************\
+      * Fun-10 Sec-05 Sub-08:
+      *   - Read in the reference sequence
+      \**************************************************/
+
+      amrSTAry[uiAmr].lenRefSeqUI = cLenStr(tmpStr, '\t');
+
+      amrSTAry[uiAmr].refSeqStr =
+         malloc(
+              (amrSTAry[uiAmr].lenRefSeqUI + 1)
+            * sizeof(char)
+         ); /*Allocate memory for the refernce sequence*/
+
+      if(! amrSTAry[uiAmr].refSeqStr)
+         goto memErr_sec06_sub02_readTbAmrTbl;
+
+      cCpStr(
+         amrSTAry[uiAmr].refSeqStr,
+         tmpStr,
+         amrSTAry[uiAmr].lenRefSeqUI
+      );
+
+      tmpStr += amrSTAry[uiAmr].lenRefSeqUI + 1;
+
+      /**************************************************\
+      * Fun-10 Sec-05 Sub-09:
+      *   - Read in the amr sequence
+      \**************************************************/
+
+      amrSTAry[uiAmr].lenAmrSeqUI = cLenStr(tmpStr, '\t');
+
+      amrSTAry[uiAmr].amrSeqStr =
+         malloc(
+              (amrSTAry[uiAmr].lenAmrSeqUI + 1)
+            * sizeof(char)
+         ); /*Allocate memory for the amrernce sequence*/
+
+      if(! amrSTAry[uiAmr].amrSeqStr)
+         goto memErr_sec06_sub02_readTbAmrTbl;
+
+      cCpStr(
+         amrSTAry[uiAmr].amrSeqStr,
+         tmpStr,
+         amrSTAry[uiAmr].lenAmrSeqUI
+      );
+
+      tmpStr += amrSTAry[uiAmr].lenAmrSeqUI + 1;
+
+      /**************************************************\
+      * Fun-10 Sec-05 Sub-10:
+      *   - Read in the frist codon base in reference
+      \**************************************************/
+
+      if(*tmpStr == 'N')
+      { /*If: this is missing*/
+         amrSTAry[uiAmr].codonPosUI = 0;
+
+         while(*tmpStr++ != '\t') {}
+      } /*If: this is missing*/
+
+      else
+      { /*Else: I have a number*/
+         tmpStr =
+            base10StrToUI(
+               tmpStr,
+               amrSTAry[uiAmr].codonPosUI
+            );
+
+         --amrSTAry[uiAmr].codonPosUI; /*to index 0*/
+         ++tmpStr;
+      } /*Else: I have a number*/
+
+      /**************************************************\
+      * Fun-10 Sec-05 Sub-11:
+      *   - Read in the starting codon number
+      \**************************************************/
+
+      if(*tmpStr == 'N')
+      { /*If: this is missing*/
+         amrSTAry[uiAmr].codonNumUI = 0;
+
+         while(*tmpStr++ != '\t') {}
+      } /*If: this is missing*/
+
+      else
+      { /*Else: I have a number*/
+         tmpStr =
+            base10StrToUI(
+               tmpStr,
+               amrSTAry[uiAmr].codonNumUI
+            );
+
+         ++tmpStr;
+      } /*Else: I have a number*/
+
+
+      /**************************************************\
+      * Fun-10 Sec-05 Sub-12:
+      *   - Read in the ending codon number
+      \**************************************************/
+
+      if(*tmpStr == 'N')
+      { /*If: this is missing*/
+         amrSTAry[uiAmr].endCodonNumUI = 0;
+
+         while(*tmpStr++ != '\t') {}
+      } /*If: this is missing*/
+
+      else
+      { /*Else: I have a number*/
+         tmpStr =
+            base10StrToUI(
+               tmpStr,
+               amrSTAry[uiAmr].endCodonNumUI
+            );
+
+         ++tmpStr;
+      } /*Else: I have a number*/
+
+
+      /**************************************************\
+      * Fun-10 Sec-05 Sub-13:
+      *   - Read in the reference amino acid sequence
+      \**************************************************/
+
+      if(*tmpStr != '0')
+      { /*If: there is an reference amino acid sequence*/
+         amrSTAry[uiAmr].lenRefAaUI= cLenStr(tmpStr,'\t');
+
+         amrSTAry[uiAmr].refAaStr =
+            malloc(
+                 (amrSTAry[uiAmr].lenRefAaUI + 1)
+               * sizeof(char)
+            ); /*Allocate memory for refernce aa seq*/
+   
+         if(! amrSTAry[uiAmr].refAaStr)
+            goto memErr_sec06_sub02_readTbAmrTbl;
+
+         cCpStr(
+            amrSTAry[uiAmr].refAaStr,
+            tmpStr,
+            amrSTAry[uiAmr].lenRefAaUI
+         );
+
+         tmpStr += amrSTAry[uiAmr].lenRefAaUI + 1;
+      } /*If: there is an reference amino acid sequence*/
+
+      else while(*tmpStr++ != '\t') {}
+
+      /**************************************************\
+      * Fun-10 Sec-05 Sub-14:
+      *   - Read in the amr amino acid sequence
+      \**************************************************/
+
+      if(*tmpStr != '0')
+      { /*If: there is an amr amino acid sequence*/
+         amrSTAry[uiAmr].lenAmrAaUI= cLenStr(tmpStr,'\t');
+
+         amrSTAry[uiAmr].amrAaStr =
+            malloc(
+                 (amrSTAry[uiAmr].lenAmrAaUI + 1)
+               * sizeof(char)
+            ); /*Allocate memory for amr aa seq*/
+   
+         if(! amrSTAry[uiAmr].amrAaStr)
+            goto memErr_sec06_sub02_readTbAmrTbl;
+
+         cCpStr(
+            amrSTAry[uiAmr].amrAaStr,
+            tmpStr,
+            amrSTAry[uiAmr].lenAmrAaUI
+         );
+
+         tmpStr += amrSTAry[uiAmr].lenAmrAaUI + 1;
+      } /*If: there is an amr amino acid sequence*/
+
+      else while(*tmpStr++ != '\t') {}
+         
+      /**************************************************\
+      * Fun-10 Sec-05 Sub-15:
+      *   - Read in the gene starting position
+      \**************************************************/
+
+      if(*tmpStr == 'N')
+      { /*If: this is missing*/
+         amrSTAry[uiAmr].geneFirstRefUI = 0;
+
+         while(*tmpStr++ != '\t') {}
+      } /*If: this is missing*/
+
+      else
+      { /*Else: I have a number*/
+         tmpStr =
+            base10StrToUI(
+               tmpStr,
+               amrSTAry[uiAmr].geneFirstRefUI
+            );
+
+         --amrSTAry[uiAmr].geneFirstRefUI; /*to index 0*/
+         ++tmpStr;
+      } /*Else: I have a number*/
+
+      /**************************************************\
+      * Fun-10 Sec-05 Sub-16:
+      *   - Read in the gene ending position
+      \**************************************************/
+
+      if(*tmpStr == 'N')
+      { /*If: this is missing*/
+         amrSTAry[uiAmr].geneLastRefUI = 0;
+
+         while(*tmpStr++ != '\t') {}
+      } /*If: this is missing*/
+
+      else
+      { /*Else: I have a number*/
+         tmpStr =
+            base10StrToUI(
+               tmpStr,
+               amrSTAry[uiAmr].geneLastRefUI
+            );
+
+         --amrSTAry[uiAmr].geneLastRefUI; /*to index 0*/
+         ++tmpStr;
+      } /*Else: I have a number*/
+
+      /**************************************************\
+      * Fun-10 Sec-05 Sub-17:
+      *   - Check if is a high resistance gene
+      \**************************************************/
+      
+      amrSTAry[uiAmr].highResBl = (*tmpStr == '1');
+
+      while(*tmpStr++ != '\t') {}
+
+      /**************************************************\
+      * Fun-10 Sec-05 Sub-18:
+      *   - Check if is a low resistance gene
+      \**************************************************/
+      
+      amrSTAry[uiAmr].lowResBl = (*tmpStr == '1');
+
+      while(*tmpStr++ != '\t') {}
+
+      /**************************************************\
+      * Fun-10 Sec-05 Sub-19:
+      *   - Check if resistance is additive
+      \**************************************************/
+      
+      amrSTAry[uiAmr].additiveResBl = (*tmpStr == '1');
+
+      while(*tmpStr++ != '\t') {}
+
+      /**************************************************\
+      * Fun-10 Sec-05 Sub-20:
+      *   - Read in the if it needs a functional gene
+      \**************************************************/
+
+      /*Nothing in the column; should not happen*/
+      if(*tmpStr == '\t')
+      { /*If: there is no entry*/
+         
+         amrSTAry[uiAmr].lenNeedsGeneUI = 2;
+
+         amrSTAry[uiAmr].needsGeneStr =
+            malloc( 3 * sizeof(char));
+
+         if(! amrSTAry[uiAmr].needsGeneStr)
+            goto memErr_sec06_sub02_readTbAmrTbl;
+
+        amrSTAry[uiAmr].needsGeneStr[0] = 'N';
+        amrSTAry[uiAmr].needsGeneStr[1] = 'A';
+        amrSTAry[uiAmr].needsGeneStr[2] = '\0';
+
+        ++tmpStr;
+      } /*If: there is no entry*/
+
+      else
+      { /*Else if: there  an entry (may be NA)*/
+         amrSTAry[uiAmr].lenNeedsGeneUI =
+            cLenStr(tmpStr, '\t');
+
+         amrSTAry[uiAmr].needsGeneStr =
+            malloc(
+                 (amrSTAry[uiAmr].lenNeedsGeneUI + 1)
+               * sizeof(char)
+            ); /*Allocate memory for the gene name*/
+
+         if(! amrSTAry[uiAmr].needsGeneStr)
+            goto memErr_sec06_sub02_readTbAmrTbl;
+
+         cCpStr(
+            amrSTAry[uiAmr].needsGeneStr,
+            tmpStr,
+            amrSTAry[uiAmr].lenNeedsGeneUI
+         );
+
+         tmpStr += amrSTAry[uiAmr].lenNeedsGeneUI + 1;
+      } /*Else if: there  an entry (may be NA)*/
+
+      /**************************************************\
+      * Fun-10 Sec-05 Sub-21:
+      *   - Read in the antibiotic flags
+      \**************************************************/
+
+      iDrug = 0;
+      drugResUL = amrSTAry[uiAmr].amrFlagsUL;
+      drugCrossResUL = amrSTAry[uiAmr].amrFlagsUL;
+
+      while(*tmpStr != '*')
+      { /*Loop: Check for antibiotic resistance*/
+         if(iDrug >= def_amrST_maxFlags)
+         { /*If: I need to start a new array*/
+            iDrug = 0;
+            ++drugResUL;
+            ++drugCrossResUL;
+         } /*If: I need to start a new array*/
+
+         *drugResUL |=
+            ((*tmpStr - 48) & def_amrST_resFlag) << iDrug;
+
+         *drugCrossResUL |=
+               ((*tmpStr - 48) & def_amrST_crossResFlag)
+            << iDrug;
+
+         ++iDrug;
+
+         /*Move to the enxt antibiotic*/
+         while(*tmpStr++ != '\t') {}
+      } /*Loop: Check for antibiotic resistance*/
+     
+      /*Move to the effect entry*/
+      while(*tmpStr++ != '\t') {}
+
+      /**************************************************\
+      * Fun-10 Sec-05 Sub-22:
+      *   - Read in the effect entry
+      \**************************************************/
+
+      amrSTAry[uiAmr].lenEffectUI =
+         ulLenStr(tmpStr, ulTab, '\t');
+
+      amrSTAry[uiAmr].effectStr =
+         malloc(
+              (amrSTAry[uiAmr].lenEffectUI + 1)
+            * sizeof(char)
+         ); /*Allocate memory for the variant id*/
+
+      if(! amrSTAry[uiAmr].effectStr)
+         goto memErr_sec06_sub02_readTbAmrTbl;
+
+      ulCpStr(
+         amrSTAry[uiAmr].effectStr,
+         tmpStr,
+         amrSTAry[uiAmr].lenEffectUI
+      );
+
+      tmpStr += amrSTAry[uiAmr].lenEffectUI + 1;
+
+      /**************************************************\
+      * Fun-10 Sec-05 Sub-23:
+      *   - Read in the commenht entry
+      \**************************************************/
+
+      amrSTAry[uiAmr].lenCommentUI =
+         ulLenStr(tmpStr, ulTab, '\t');
+
+      amrSTAry[uiAmr].commentStr =
+         malloc(
+              (amrSTAry[uiAmr].lenCommentUI + 1)
+            * sizeof(char)
+         ); /*Allocate memory for the variant id*/
+
+      if(! amrSTAry[uiAmr].commentStr)
+         goto memErr_sec06_sub02_readTbAmrTbl;
+
+      ulCpStr(
+         amrSTAry[uiAmr].commentStr,
+         tmpStr,
+         amrSTAry[uiAmr].lenCommentUI
+      );
+
+      tmpStr += amrSTAry[uiAmr].lenCommentUI + 1;
+
+      /**************************************************\
+      * Fun-10 Sec-05 Sub-24:
+      *   - Get the next line
+      \**************************************************/
+
+      tmpStr = fgets(buffStr, lenBuffUI, amrFILE);
+   } /*Loop: Read in the file*/
+
+   /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\
+   ^ Fun-10 Sec-06:
+   ^   - Clean up
+   ^   o fun-10 sec-06 sub-01:
+   ^     - Clean up when everything worked
+   ^   o fun-10 sec-06 sub-02:
+   ^     - Clean up for memory erorrs
+   ^   o fun-10 sec-06 sub-03:
+   ^     - Clean up for file erorrs
+   \<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
+
+   /*****************************************************\
+   * Fun-10 Sec-06 Sub-01:
+   *   - Clean up when everything worked
+   \*****************************************************/
+
+   free(buffStr);
+   fclose(amrFILE);
+
+   ++(*numDrugsI); /*Convert index 0 to index 1*/
+
+   *errC = 0;
+
+   sortAmrStructArray(amrSTAry, 0, *numAmrUI - 1);
+
+   return amrSTAry;
+
+   /*****************************************************\
+   * Fun-10 Sec-06 Sub-02:
+   *   - Clean up for memory erorrs
+   \*****************************************************/
+
+   memErr_sec06_sub02_readTbAmrTbl:;
+
+   fclose(amrFILE);
+   if(buffStr != 0) free(buffStr);
+
+   if(newDrugAryBl)
+   { /*If: I made a new drug array*/
+      if(*drugStrAry != 0) free(*drugStrAry);
+      *drugStrAry = 0;
+      *numDrugsI = 0;
+      *maxDrugsI = 0;
+   } /*If: I made a new drug array*/
+
+   if(amrSTAry) freeAmrStructArray(&amrSTAry, *numAmrUI);
+
+
+   *errC = def_amrST_memError;
+
+   return 0;
+
+   /*****************************************************\
+   * Fun-10 Sec-06 Sub-03:
+   *   - Clean up for file erorrs
+   \*****************************************************/
+
+   fileErr_sec06_sub03_readTbAmrTbl:;
+
+   if(amrFILE != 0) fclose(amrFILE);
+   if(buffStr != 0) free(buffStr);
+
+   if(newDrugAryBl)
+   { /*If: I made a new drug array*/
+      if(*drugStrAry != 0) free(*drugStrAry);
+      *drugStrAry = 0;
+      *numDrugsI = 0;
+      *maxDrugsI = 0;
+   } /*If: I made a new drug array*/
+
+   if(amrSTAry) freeAmrStructArray(&amrSTAry, *numAmrUI);
+
+   *errC = def_amrST_invalidFILE;
+
+   return 0;
+} /*readTbAmrTbl*/

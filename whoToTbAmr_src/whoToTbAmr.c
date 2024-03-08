@@ -12,7 +12,6 @@
 #include "../generalLib/base10StrToNum.h"
 #include "../generalLib/dataTypeShortHand.h"
 
-
 char * cnvtWhoToTbAmrInput(
    int lenArgsI,
    char *argsStrAry[],
@@ -100,6 +99,17 @@ int main(
          | ! strcmp("help", buffStr)
       ){ /*Pirnt out the help message*/
          fprintf(stdout, "%s\n", helpStr);
+         exit(0);
+      } /*Pirnt out the help message*/
+
+
+      if(  ! strcmp("-v", buffStr)
+         | ! strcmp("--v", buffStr)
+         | ! strcmp("-version", buffStr)
+         | ! strcmp("--version", buffStr)
+         | ! strcmp("version", buffStr)
+      ){ /*Pirnt out the help message*/
+         fprintf(stdout, "March 06 2024\n");
          exit(0);
       } /*Pirnt out the help message*/
 

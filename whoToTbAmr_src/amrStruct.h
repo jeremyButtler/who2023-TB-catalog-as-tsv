@@ -1,62 +1,44 @@
+/*########################################################
+# Name: amrStruct
+#   - Holds functions to support the amrStruct (also has)
+#     used in tbAmr. This includes processing the tbAmr
+#     format, sorting the structures, looking up
+#     structures and memory managment
+########################################################*/
+
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\
 ' SOF: Start Of File
 '   o header:
-'     - Included libraries and definitions
+'     - Definations
 '   o st-01: amrStruct
 '     - Holds the information for a single amr mutation
 '       that was extracted from the WHO catalog
-'   o fun-01: amrIsRes
-'     - Dectects if an amr was classified as resistant or
-'       is unknow/not resitance
-'   o fun-02: blankAmrStruct
+'   o fun-01: blankAmrStruct
 '     - Sets all non-pointer values in amrStructPtr to 0
-'   o fun-03: initAmrStruct
+'   o fun-02: initAmrStruct
 '     - Sets all values, including pointers in the
 '       amrStruct structure to 0
-'   o fun-04: freeAmrStructStack
+'   o fun-03: freeAmrStructStack
 '     - Frees the geneIdStr, refSeqStr, and amrSeqStr
 '       arrays and sets all values to 0 in the input
 '       amrStruct 
-'   o fun-05: freeAmrStruct
+'   o fun-04: freeAmrStruct
 '     - Frees an heap allocated amrStruct structure
-'   o fun-06: freeAmrStructArray
+'   o fun-05: freeAmrStructArray
 '     - Frees an heap allocated array of amrStruct
 '       structures
-'   o fun-07: swapAmrStructs
+'   o fun-06: swapAmrStructs
 '     - Swaps the values in two amrStruct structures
-'   o fun-08: sortAmrStructArray
+'   o fun-07: sortAmrStructArray
 '     - Sort on an amrStruct array structures by reference
 '       coordiante (uses shell sort)
-'   o fun-09: findNearestAmr
+'   o fun-08: findNearestAmr
 '      - Finds the nearest amr at or after the input query
-'   o fun-10: mallocDrugAryStr
-'     - Returns a pointer to allocated memory for
-'       drugAryStr
-'   o fun-11: reallocDrugAryStr
-'     - Returns a pointer to rellocated memory for
-'       drugAryStr
-'   o fun-12: cpDrugToDrugAry
-'      - Copies an antibiotic to a drug array
-'   o fun-13: getDrugFromDrugAry
-'     - Gets the pointer to a drug c-string in a drugAry
-'   o fun-14: findDrug_in_drugAryStr
-'     - Finds an antibiotic in a drugAray c-string
-'   o fun-15: read_2021_WhoAmrCsv
-'     - Gets the amr data from the Who 2021 TB antibiotice
-'       resistance catalog (genome indicie tab saved as
-'       a csv).
-'   o fun-17: checkCrossRes
-'     - Check if there is cross resitance (2023 catalog)
-'   o fun-18: pCrossRes
-'     - Print out cross resitance (report not database)
-'   o fun-19: read_2023_WhoAmrTsv
-'     - Reads in the two tabs (as separate tsv's) and
-'        converts them to an amrStructs array
-'   o fun-19: amrSTAddSingleAa
-'     - Add a single amino acid variant to an amrStruct
-'   o fun-20: who2023ParsVar
-'     - Parse the variant idea from the WHO 2023 TB
-'       catalog to update amino acid mutations.
+'   o fun-09: pAmrDB
+'     - Print out the amr database used
+'   o fun-10: readTbAmrTbl
+'     - Gets data from a tbAmr tsv file output from pAmrDB
+'       (fun-09)
 \~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
 /*-------------------------------------------------------\
@@ -158,7 +140,7 @@ typedef struct amrStruct{
 }amrStruct;
 
 /*-------------------------------------------------------\
-| Fun-02: blankAmrStruct
+| Fun-01: blankAmrStruct
 |   - Sets all non-pointer values in amrStructPtr to 0
 | Input:
 |   - ampStructPtr:
@@ -204,7 +186,7 @@ typedef struct amrStruct{
 } /*blankAmrStruct*/
 
 /*-------------------------------------------------------\
-| Fun-03: initAmrStruct
+| Fun-02: initAmrStruct
 |   - Sets all values, including pointers in amrStructPtr
 |     to 0
 | Input:
@@ -245,7 +227,7 @@ typedef struct amrStruct{
 } /*initAmrStruct*/
 
 /*-------------------------------------------------------\
-| Fun-04: freeAmrStructStack
+| Fun-03: freeAmrStructStack
 |   - Frees the geneIdStr, refSeqStr, and amrSeqStr arrays
 |     in amrStructPtr and sets all values to 0
 | Input:
@@ -260,7 +242,7 @@ typedef struct amrStruct{
 void freeAmrStructStack(struct amrStruct *amrStructPtr);
 
 /*-------------------------------------------------------\
-| Fun-05: freeAmrStruct
+| Fun-04: freeAmrStruct
 |   - Frees an heap allocated amrStruct structure
 | Input:
 |   - ampStructPtr:
@@ -272,7 +254,7 @@ void freeAmrStructStack(struct amrStruct *amrStructPtr);
 void freeAmrStruct(struct amrStruct **amrStructPtr);
 
 /*-------------------------------------------------------\
-| Fun-06: freeAmrStructArray
+| Fun-05: freeAmrStructArray
 |   - Frees an heap allocated array of amrStruct
 |     structures
 | Input:
@@ -289,7 +271,7 @@ void freeAmrStructArray(
 );
 
 /*-------------------------------------------------------\
-| Fun-08: sortAmrStructArray
+| Fun-07: sortAmrStructArray
 |   - Sort on an amrStruct array structures by reference
 |     coordiante (uses shell sort)
 | Input:
@@ -307,7 +289,7 @@ void sortAmrStructArray(
 );
 
 /*-------------------------------------------------------\
-| Fun-09: findNearestAmr
+| Fun-08: findNearestAmr
 |  - Does a binary search for the nearest amr at or after
 |    to the input query coordiante
 | Input:
@@ -331,7 +313,7 @@ int findNearestAmr(
 );
 
 /*-------------------------------------------------------\
-| Fun-10: pAmrDB
+| Fun-09: pAmrDB
 |  - Print out the amr database used
 | Input:
 |  - amrAryST:
@@ -360,6 +342,52 @@ char pAmrDB(
    char *drugStrAry,
    int numDrugsI,
    char *outStr
+);
+
+/*-------------------------------------------------------\
+| Fun-10: readTbAmrTbl
+|   - Gets data from a tbAmr tsv file output from pAmrDB
+|     (fun-09)
+| Input:
+|   - tbAmrTblStr:
+|     o C-string with path to the AMR database/table
+|   - numAmrUI:
+|     o Changed to hold the number of AMRs in tbAmrTblStr
+|   - durgStrAry:
+|     o Pointer to a c-string to hold the drug names in
+|   - numDrugsI
+|     o Pointer to uint to hold the number of unique
+|       drugs in drugStrAry
+|   - maxDrugsI:
+|     o The maximum number of drugs the current drugStrAry
+|       can hold. This is changed if drugStrAry is resized
+|   - errC:
+|     o Changed to hold the error message
+| Output:
+|   - Modifies:
+|     o numAmrUI to hold the number of extracted amrs
+|     o drugStrAry to hold the name of each drug. This is
+|       resized as needed.
+|     o numDrugsI to hold the number of drugs currently
+|       in drugStrAry
+|     o maxDrugsI to hold the maximum number of drugs
+|       the current drugStrAry has
+|     o errC to hold the error message
+|       - 0 for no errors
+|       - def_amrST_invalidFILE for could not open the
+|         file
+|       - def_amrST_memError for memory errors
+|   - Returns:
+|     o Array of amrStruct structures with the AMRs
+|     o 0 for an error (see errC for specific error)
+\-------------------------------------------------------*/
+struct amrStruct * readTbAmrTbl(
+   char *tbAmrTblStr,    /*Path to tbAmr tsv with AMR(s)*/
+   unsigned int *numAmrUI,  /*Number of AMR(s) in tsv*/
+   char **drugStrAry,       /*Holds drug names*/
+   int *numDrugsI,          /*number drugs in drugStrAry*/
+   int *maxDrugsI,          /*Max drugs for drugStrAry*/
+   char *errC               /*Holds errors*/
 );
 
 #endif

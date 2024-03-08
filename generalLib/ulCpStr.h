@@ -3,34 +3,42 @@
 #   - Copies contents of string 1 to string two using
 #     unsigned longs (poor mans vectors)
 #   - These functions are slower than strcpy and strlen,
-#     but they allow deliminators to be used.
+#     but they allow deliminators to be used. The also
+#     do not require any libraries, and so, should not
+#     need OS checks for plan9
 ########################################################*/
 
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\
-|  o header:
-|    - Included libraries, definitions and preprocessor
-|      checks
-|  o fun-01: ulCpStr
-|    - Copies cpStr into dupStr using unsigned longs
-|  o fun-02: ulCpMakeDelim
-|    - Makes an unsigned long delimintor from a character
-|      deliminator for use in cpStrDelim
-|  o fun-03: ulIfDelim
-|    - Detect if the input deliminator is in the input
-|      unsigned long
-|    - This is a bit slow (9 op), 8 if delimUL can be
-|      deterimined at compile time. This is less efficent
-|      on 32 and 16 bit cpus (no longer borderline).
-|  o fun-06: ulVectCpStrDelim TODO:
-|    - ulCpStrDelim, but can be compiled with vectors
-|  o fun-06: cCpStr
-|   - Copies cpStr into dupStr using characters
-|  o fun-07: cCpStrDelim
-|    - Copies cpStr into dupStr until delimC is found
-|  o fun-08: cLenStr
-|    - Finds the length of a string using characters
-|  o fun-0?: cStrEql
-|    - Checks to see if two strings are equal
+' SOF: Start Of File
+'   o header:
+'     - Included libraries, definitions and preprocessor
+'       checks
+'   o fun-01: ulCpStr
+'     - Copies cpStr into dupStr using unsigned longs
+'   o fun-02: ulCpMakeDelim
+'     - Makes an unsigned long delimintor from a character
+'       deliminator for use in cpStrDelim
+'   o fun-03: ulIfDelim
+'     - Detect if the input deliminator is in the input
+'       unsigned long
+'     - This is a bit slow (9 op), 8 if delimUL can be
+'       deterimined at compile time. This is less efficent
+'       on 32 and 16 bit cpus (no longer borderline).
+'   o fun-06: ulVectCpStrDelim TODO:
+'     - ulCpStrDelim, but can be compiled with vectors
+'   o fun-06: cCpStr
+'    - Copies cpStr into dupStr using characters
+'   o fun-07: cCpStrDelim
+'     - Copies cpStr into dupStr until delimC is found
+'   o fun-08: cLenStr
+'     - Finds the length of a string using characters
+'   o fun-0?: cStrEql
+'     - Checks to see if two strings are equal
+'   o fun-09: cStrMatch
+'     - Checks to see if two strings are equal, but does
+'       not check to see if there is anything past the
+'       query's deliminator. This is to deal with strings
+'       with differnt deliminators.
 \~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
 /*-------------------------------------------------------\
@@ -432,6 +440,54 @@
    `    o is (0 & number) = 0, if qryStr was on the
    `      deliminator
    */\
+})
+
+/*-------------------------------------------------------\
+| Fun-09: cStrMatch
+|   - Checks to see if two strings are equal, but does
+|     not check to see if there is anything past the
+|     query's deliminator. This is to deal with strings
+|     with differnt deliminators.
+| Input:
+|   - qryStr:
+|     o The query c-string to compare against the
+|       reference
+|   - refStr:
+|     o The reference c-string to compare against the
+|       query
+|   - delimC:
+|     o Deliminator to stop at
+|   - endI:
+|     o Will have the position before the deliminator.
+|       This assumes that you know what you are doing,
+|       so if you input endI > 0; this will assume you
+|       do not want to compare at 0. This is handy for
+|       looping through headers in tsv files.
+| Output:
+|   - Returns:
+|     o < 0 for qry less than reference
+|     o 0 for qry is same as the reference
+|     o >0 for qry is greater than the reference
+\-------------------------------------------------------*/
+#define cStrMatch(qryStr, refStr, delimC, endI)({\
+   char *refMacStr = (refStr);\
+   char *qryMacStr = (qryStr);\
+   /*This is faster than incurmenting qryMacStr and
+   ` refMacStr separately. Doing *val++ == *val2++ does
+   ` not work here.
+   */\
+   while(*qryMacStr++ == *refMacStr++)\
+   { /*Looop*/\
+      if(*qryMacStr == (delimC))\
+      { /*If: I found the  deliminator*/\
+         --qryMacStr;\
+         --refMacStr;\
+         break;\
+      } /*If: I found the  deliminator*/\
+   } /*Looop*/\
+   \
+   (endI) += qryMacStr - (qryStr);\
+   *qryMacStr - *refMacStr;\
 })
 
 #endif

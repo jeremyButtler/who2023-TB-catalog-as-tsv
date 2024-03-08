@@ -2546,8 +2546,8 @@ char whoAddCodonPos(
                 ` one codon
                 */
              for(
-                iCodon = amrST[iIndex].codonPosUI + 1;
-                iCodon < amrST[iIndex].endCodonNumUI - 1;
+                iCodon = amrST[iIndex].codonNumUI + 1;
+                iCodon < amrST[iIndex].endCodonNumUI;
                 ++iCodon
              ){ /*Loop: Copy the deletion*/
                 oneNtUC =
@@ -2629,8 +2629,8 @@ char whoAddCodonPos(
                 */
 
              for(
-                iCodon = amrST[iIndex].codonPosUI + 1;
-                iCodon < amrST[iIndex].endCodonNumUI - 1;
+                iCodon = amrST[iIndex].codonNumUI + 1;
+                iCodon < amrST[iIndex].endCodonNumUI;
                 ++iCodon
              ){ /*Loop: Copy the deletion*/
                 oneNtUC =

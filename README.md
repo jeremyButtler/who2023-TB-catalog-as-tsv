@@ -15,6 +15,10 @@ I have also included my converter in this repository if
 These converted WHO catalogs have only variants with AMR
   resistance.
 
+March 06, 2024. I fixed an error with my deletion entries
+  that resulted in the reference only ever having 2 amino
+  acids. I would recommend re-downloading the database.
+  
 # Files
 
 ## The tsv file(s)

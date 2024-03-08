@@ -36,7 +36,30 @@ void reallocDrugAryStr(
 );
 
 /*-------------------------------------------------------\
-| Fun-12: cpDrugToDrugAry
+| Fun-12: reallocDrugAryStrNoFree
+|   - Returns a pointer to rellocated memory for
+|     drugAryStr, but does not free drugStrAry when there
+|     is a memory error
+| Input:
+|   - drugAryStr:
+|     o Pionter to drugAryStr to reallocate memory for
+|   - numStringsUI:
+|     o Number of strings to make
+| Output:
+|   - Modifies:
+|     o drugAryStr to be resized
+|     o frees and sets drugAryStr to 0 if memory error
+|   - Returns:
+|     o 0 for no problems
+|     o 1 for memory errors
+\-------------------------------------------------------*/
+char reallocDrugAryStrNoFree(
+   char **drugAryStr,
+   unsigned int numStrUI
+);
+
+/*-------------------------------------------------------\
+| Fun-13: cpDrugToDrugAry
 |   - Copies an antibiotic to a drug array
 | Input:
 |   - drugAryStr:
@@ -75,7 +98,7 @@ void reallocDrugAryStr(
 }) /*cpDrugToDrugAry*/
 
 /*-------------------------------------------------------\
-| Fun-13: getDrugFromDrugAry
+| Fun-14: getDrugFromDrugAry
 |   - Gets the pointer to a drug c-string in a drugAry
 | Input:
 |   - drugAryStr:
@@ -92,7 +115,7 @@ void reallocDrugAryStr(
 ) /*getDrugFromDrugAry*/
 
 /*-------------------------------------------------------\
-| Fun-14: findDrug_in_drugAryStr()
+| Fun-15: findDrug_in_drugAryStr()
 |   - Finds an antibiotic in a drugAray c-string
 | Input:
 |   - qryStr:
