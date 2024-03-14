@@ -27,6 +27,12 @@
 #ifndef CODON_TABLE_H
 #define CODON_TABLE_H
 
+#define t_code_codon_tbl 0
+#define c_code_codon_tbl 1
+#define a_code_codon_tbl 2
+#define g_code_codon_tbl 3
+#define n_code_codon_tbl 4
+
 /*--------------------------------------------------------\
 | Tbl-01 baseToCodeLkTbl:
 |  - Table to convert bases to codes used in the codon
@@ -42,52 +48,52 @@ static char baseToCodeLkTbl[] =
       8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
       8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 
 
-      2, /*A (65)*/
-      4, /*B, (C/G/T) treat as N*/
-      1, /*C*/
-      4, /*D (AGT), treat as N*/
+      a_code_codon_tbl, /*A (65)*/
+      n_code_codon_tbl, /*B, (C/G/T) treat as N*/
+      c_code_codon_tbl, /*C*/
+      n_code_codon_tbl, /*D (AGT), treat as N*/
       8, 8,
-      3, /*G*/
-      4, /*H (ACT) treat as N*/
+      g_code_codon_tbl, /*G*/
+      n_code_codon_tbl, /*H (ACT) treat as N*/
       8, 8,
-      4, /*K (GT), treat as N*/
+      n_code_codon_tbl, /*K (GT), treat as N*/
       8,
-      4, /*M (AC), treat as N*/
-      4, /*N (AGCT)*/
+      n_code_codon_tbl, /*M (AC), treat as N*/
+      n_code_codon_tbl, /*N (AGCT)*/
       8, 8, 8,
-      4, /*R (AG), treat as N*/
-      4, /*S (CG), treat as N*/
-      0, /*T*/
-      0, /*U*/
-      4, /*V (ACG), treat as N*/
+      n_code_codon_tbl, /*R (AG), treat as N*/
+      n_code_codon_tbl, /*S (CG), treat as N*/
+      t_code_codon_tbl, /*T*/
+      t_code_codon_tbl, /*U*/
+      n_code_codon_tbl, /*V (ACG), treat as N*/
       8,
-      4, /*X, I treat as an N, but is for amino acids*/
+      n_code_codon_tbl, /*X, as an N, is for amino acids*/
       8, 8,
 
       /*Special characters after upercase letters*/
       8, 8, 8, 8, 8, 8,
 
       /*lower case letters*/
-      2, /*a (65)*/
-      4, /*b, (c/g/t) treat as n*/
-      1, /*c*/
-      4, /*d (agt), treat as n*/
+      a_code_codon_tbl, /*a (65)*/
+      n_code_codon_tbl, /*b, (c/g/t) treat as n*/
+      c_code_codon_tbl, /*c*/
+      n_code_codon_tbl, /*d (agt), treat as n*/
       8, 8,
-      3, /*g*/
-      4, /*h (act) treat as n*/
+      g_code_codon_tbl, /*g*/
+      n_code_codon_tbl, /*h (act) treat as n*/
       8, 8,
-      4, /*k (gt), treat as n*/
+      n_code_codon_tbl, /*k (gt), treat as n*/
       8,
-      4, /*m (ac), treat as n*/
-      4, /*n (agct)*/
+      n_code_codon_tbl, /*m (ac), treat as n*/
+      n_code_codon_tbl, /*n (agct)*/
       8, 8, 8,
-      4, /*r (ag), treat as n*/
-      4, /*s (cg), treat as n*/
-      0, /*t*/
-      0, /*u*/
-      4, /*v (acg), treat as n*/
+      n_code_codon_tbl, /*r (ag), treat as n*/
+      n_code_codon_tbl, /*s (cg), treat as n*/
+      t_code_codon_tbl, /*t*/
+      t_code_codon_tbl, /*u*/
+      n_code_codon_tbl, /*v (acg), treat as n*/
       8,
-      4, /*x, i treat as an n, but is for amino acids*/
+      n_code_codon_tbl, /*x, as an n, is for amino acids*/
       8, 8,
 
       /*Special characters after lowercase letters*/
@@ -110,52 +116,52 @@ static char compBaseToCodeLkTbl[] =
       8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
       8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 
 
-      2, /*A (65)*/
-      4, /*B, (C/G/T) treat as N*/
-      1, /*C*/
-      4, /*D (AGT), treat as N*/
+      t_code_codon_tbl, /*A (complement is T) (65)*/
+      n_code_codon_tbl, /*B, (C/G/T) treat as N*/
+      g_code_codon_tbl, /*C; complement is G*/
+      n_code_codon_tbl, /*D (AGT), treat as N*/
       8, 8,
-      1, /*G*/
-      4, /*H (ACT) treat as N*/
+      c_code_codon_tbl, /*G; complement is C*/
+      n_code_codon_tbl, /*H (ACT) treat as N*/
       8, 8,
-      4, /*K (GT), treat as N*/
+      n_code_codon_tbl, /*K (GT), treat as N*/
       8,
-      4, /*M (AC), treat as N*/
-      4, /*N (AGCT)*/
+      n_code_codon_tbl, /*M (AC), treat as N*/
+      n_code_codon_tbl, /*N (AGCT)*/
       8, 8, 8,
-      4, /*R (AG), treat as N*/
-      4, /*S (CG), treat as N*/
-      2, /*T*/
-      2, /*U*/
-      4, /*V (ACG), treat as N*/
+      n_code_codon_tbl, /*R (AG), treat as N*/
+      n_code_codon_tbl, /*S (CG), treat as N*/
+      a_code_codon_tbl, /*T; complement is A*/
+      a_code_codon_tbl, /*U; complement is A*/
+      n_code_codon_tbl, /*V (ACG), treat as N*/
       8,
-      4, /*X, I treat as an N, but is for amino acids*/
+      n_code_codon_tbl, /*X, as an N, for amino acids*/
       8, 8,
 
       /*Special characters after upercase letters*/
       8, 8, 8, 8, 8, 8,
 
       /*lower case letters*/
-      2, /*a (65)*/
-      4, /*b, (c/g/t) treat as n*/
-      1, /*c*/
-      4, /*d (agt), treat as n*/
+      t_code_codon_tbl, /*a; complement is T (65)*/
+      n_code_codon_tbl, /*b, (c/g/t) treat as n*/
+      g_code_codon_tbl, /*c; complement is G*/
+      n_code_codon_tbl, /*d (agt), treat as n*/
       8, 8,
-      1, /*g*/
-      4, /*h (act) treat as n*/
+      c_code_codon_tbl, /*g; complement is C*/
+      n_code_codon_tbl, /*h (act) treat as n*/
       8, 8,
-      4, /*k (gt), treat as n*/
+      n_code_codon_tbl, /*k (gt), treat as n*/
       8,
-      4, /*m (ac), treat as n*/
-      4, /*n (agct)*/
+      n_code_codon_tbl, /*m (ac), treat as n*/
+      n_code_codon_tbl, /*n (agct)*/
       8, 8, 8,
-      4, /*r (ag), treat as n*/
-      4, /*s (cg), treat as n*/
-      2, /*t*/
-      2, /*u*/
-      4, /*v (acg), treat as n*/
+      n_code_codon_tbl, /*r (ag), treat as n*/
+      n_code_codon_tbl, /*s (cg), treat as n*/
+      a_code_codon_tbl, /*t; complement is A*/
+      a_code_codon_tbl, /*u; complement is A*/
+      n_code_codon_tbl, /*v (acg), treat as n*/
       8,
-      4, /*x, i treat as an n, but is for amino acids*/
+      n_code_codon_tbl, /*x, treat as n, for amino acids*/
       8, 8,
 
       /*Special characters after lowercase letters*/
@@ -169,43 +175,43 @@ static char compBaseToCodeLkTbl[] =
 static char codonLkTbl[5][5][5] =
    {  /*codonLkTbl*/
       { /*First element is an T*/
-         {'f', 'l', 'f', 'l', 'x'}, /*2nd element is an T*/
-         {'s', 's', 's', 's', 's'}, /*2nd element is an C*/
-         {'y', 'y', '*', '*', 'x'}, /*2nd element is an A*/
-         {'c', 'c', '*', 'w', 'x'}, /*2nd element is an G*/
-         {'x', 'x', 'x', 'x', 'x'}  /*2nd element is an N*/
+         {'f', 'f', 'l', 'l', 'x'}, /*2nd element is T*/
+         {'s', 's', 's', 's', 's'}, /*2nd element is C*/
+         {'y', 'y', '*', '*', 'x'}, /*2nd element is A*/
+         {'c', 'c', '*', 'w', 'x'}, /*2nd element is G*/
+         {'x', 'x', 'x', 'x', 'x'}  /*2nd element is N*/
       }, /*First element is an T*/
 
       { /*First element is an C*/
-         {'l', 'l', 'l', 'l', 'l'}, /*2nd element is an T*/
-         {'p', 'p', 'p', 'p', 'p'}, /*2nd element is an C*/
-         {'h', 'h', 'q', 'q', 'x'}, /*2nd element is an A*/
-         {'r', 'r', 'r', 'r', 'r'}, /*2nd element is an G*/
-         {'x', 'x', 'x', 'x', 'x'}  /*2nd element is an N*/
+         {'l', 'l', 'l', 'l', 'l'}, /*2nd element is T*/
+         {'p', 'p', 'p', 'p', 'p'}, /*2nd element is C*/
+         {'h', 'h', 'q', 'q', 'x'}, /*2nd element is A*/
+         {'r', 'r', 'r', 'r', 'r'}, /*2nd element is G*/
+         {'x', 'x', 'x', 'x', 'x'}  /*2nd element is N*/
       }, /*First element is an C*/
 
       { /*First element is an A*/
-         {'i', 'i', 'i', 'm', 'x'}, /*2nd element is an T*/
-         {'t', 't', 't', 't', 't'}, /*2nd element is an C*/
-         {'n', 'n', 'k', 'k', 'x'}, /*2nd element is an A*/
-         {'s', 's', 'r', 'r', 'x'}, /*2nd element is an G*/
-         {'x', 'x', 'x', 'x', 'x'}  /*2nd element is an N*/
+         {'i', 'i', 'i', 'm', 'x'}, /*2nd element is T*/
+         {'t', 't', 't', 't', 't'}, /*2nd element is C*/
+         {'n', 'n', 'k', 'k', 'x'}, /*2nd element is A*/
+         {'s', 's', 'r', 'r', 'x'}, /*2nd element is G*/
+         {'x', 'x', 'x', 'x', 'x'}  /*2nd element is N*/
       }, /*First element is an A*/
 
       { /*First element is an G*/
-         {'v', 'v', 'v', 'v', 'v'}, /*2nd element is an T*/
-         {'a', 'a', 'a', 'a', 'a'}, /*2nd element is an C*/
-         {'d', 'd', 'e', 'e', 'x'}, /*2nd element is an A*/
-         {'g', 'g', 'g', 'g', 'g'}, /*2nd element is an G*/
-         {'x', 'x', 'x', 'x', 'x'}  /*2nd element is an N*/
-      }, /*First element is an C*/
+         {'v', 'v', 'v', 'v', 'v'}, /*2nd element is T*/
+         {'a', 'a', 'a', 'a', 'a'}, /*2nd element is C*/
+         {'d', 'd', 'e', 'e', 'x'}, /*2nd element is A*/
+         {'g', 'g', 'g', 'g', 'g'}, /*2nd element is G*/
+         {'x', 'x', 'x', 'x', 'x'}  /*2nd element is N*/
+      }, /*First element is an G*/
 
       { /*First element is an N*/
-         {'x', 'x', 'x', 'x', 'x'}, /*2nd element is an T*/
-         {'x', 'x', 'x', 'x', 'x'}, /*2nd element is an C*/
-         {'x', 'x', 'x', 'x', 'x'}, /*2nd element is an A*/
-         {'x', 'x', 'x', 'x', 'x'}, /*2nd element is an G*/
-         {'x', 'x', 'x', 'x', 'x'}  /*2nd element is an N*/
+         {'x', 'x', 'x', 'x', 'x'}, /*2nd element is T*/
+         {'x', 'x', 'x', 'x', 'x'}, /*2nd element is C*/
+         {'x', 'x', 'x', 'x', 'x'}, /*2nd element is A*/
+         {'x', 'x', 'x', 'x', 'x'}, /*2nd element is G*/
+         {'x', 'x', 'x', 'x', 'x'}  /*2nd element is N*/
       }, /*First element is an N*/
    }; /*codonLkTbl*/
 
@@ -329,4 +335,29 @@ static char codonLkTbl[5][5][5] =
    Trp W Tryptophan
    Try Y Tyrosine
    Val V Valine
+*/
+
+/*Table
+     T         C        A        G
+  +--------+--------+--------+--------+
+  | TTT  F | TCT  S | TAT  Y | TGT  C |
+T | TTC  F | TCC  S | TAC  Y | TGC  C | T
+  | TTA  L | TCA  S | TAA  * | TGA  * |
+  | TTG  L | TCG  S | TAG  * | TGG  W |
+  +--------+--------+--------+--------+
+  | CTT  L | CCT  P | CAT  H | CGT  R |
+C | CTC  L | CCC  P | CAC  H | CGC  R | C
+  | CTA  L | CCA  P | CAA  Q | CGA  R |
+  | CTG  L | CCG  P | CAG  Q | CGG  R |
+  +--------+--------+--------+--------+
+  | ATT  I | ACT  T | AAT  N | AGT  S |
+A | ATC  I | ACC  T | AAC  N | AGC  S | A
+  | ATA  I | ACA  T | AAA  K | AGA  R |
+  | ATG  M | ACG  T | AAG  K | AGG  R |
+  +--------+--------+--------+--------+
+  | GTT  V | GCT  A | GAT  D | GGT  G |
+G | GTC  V | GCC  A | GAC  D | GGC  G | G
+  | GTA  V | GCA  A | GAA  E | GGA  G |
+  | GTG  V | GCG  A | GAG  E | GGG  G |
+  +--------+--------+--------+--------+
 */

@@ -15,6 +15,11 @@ I have also included my converter in this repository if
 These converted WHO catalogs have only variants with AMR
   resistance.
 
+March 14, 2024 I found that a few codons were off in my
+  codon table. This will only effect deletions and
+  duplications larger than one amino acid. This has
+  been fixed.
+
 March 06, 2024. I fixed an error with my deletion entries
   that resulted in the reference only ever having 2 amino
   acids. I would recommend re-downloading the database.

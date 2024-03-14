@@ -1,3 +1,10 @@
+# March 14, 2024
+
+- March 14, 2024 I found that a few codons were off in my
+  codon table. This will only effect deletions and
+  duplications larger than one amino acid. This has
+  been fixed.
+
 # March 06, 2024
 
 - Fixed an error were the amino acids added in for 

@@ -109,7 +109,7 @@ int main(
          | ! strcmp("--version", buffStr)
          | ! strcmp("version", buffStr)
       ){ /*Pirnt out the help message*/
-         fprintf(stdout, "March 06 2024\n");
+         fprintf(stdout, "March 14, 2024\n");
          exit(0);
       } /*Pirnt out the help message*/
 
