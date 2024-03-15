@@ -1,9 +1,22 @@
+#ifdef PLAN9
+   #include <u.h>
+   #include <libc.h>
+#else
+   #include <stdlib.h>
+#endif
+
 #include <stdio.h>
-#include <stdlib.h>
 
 #include "samEntryStruct.h"
+
+/*Has no .c files*/
 #include "ulCpStr.h"
 #include "dataTypeShortHand.h"
+
+/*Hidden depenencies
+  #include "../generalLib/base10StrToNum.h" no .c file
+  #include "../generalLib/numToStr.h"       no .c file
+*/
 
 /*This .c version is slightly slower, but it works*/
 /*This will work so long as the integer is beneath
@@ -364,7 +377,5 @@ unsigned char trimSamReads(
     } /*While there are lines in sam file to convert*/
     
     freeSamEntryStack(&samST);
-    errUC & ~1;
+    return errUC & ~1;
 } /*trimSamReads*/
-
-

@@ -921,7 +921,6 @@ struct amrStruct * read_2023_WhoAmrTsv(
 
     int iDrug = 0;         /*Antbiotic on*/
     int drugAryLimitI = 0; /*Number strings in drugAry*/
-    char *drugOnStr = 0;     /*Index of drug working on*/
 
     char cpAmrBl = 0;   /*1: more than 1 indice for amr*/
     int indexI = 0;
@@ -2390,6 +2389,7 @@ char whoAddCodonPos(
    char *cpStr = 0;
    char *dupStr = 0;
    int iIndex = 0;
+   /*int iSwap = 0;*/ /*off gene correction attempt*/
 
    /*Specificly for dealing with aa deletions*/
    int iCodon = 0; /*Codon on for copying deletions*/
@@ -2452,6 +2452,22 @@ char whoAddCodonPos(
        if(amrST[iIndex].refPosUI < samST.refStartUI)
           goto getNextLine;
 
+       /*See if previous index is from the same gene.
+       `  This is do to the WHO catching some none gene
+       `  bases in there amino acid variants. It is a
+       `  real pain.
+       */
+       while(
+             iIndex > 0 
+          && ( !
+               cStrEql(
+                 samST.qryIdStr,
+                 amrST[iIndex - 1].geneIdStr,
+                 '\0'
+               )
+             )
+       ) --iIndex;
+
        /*************************************************\
        * Fun-21 Sec-03 Sub-02:
        *   - Find the codon positions/del aa for each AMR
@@ -2459,16 +2475,24 @@ char whoAddCodonPos(
        *     - Loop though all AMR(s) with this gene and
        *       add the gene coordiantes on the reference
        *   o fun-21 sec-03 sub-02 cat-02:
-       *     - Handle cases with reverse complemnt genes
+       *     - Check if this is a reverse aa sequence
        *   o fun-21 sec-03 sub-02 cat-03:
-       *     - Get reference amino acid sequence for
-       *       AMR(s) in reverse complement genes
+       *     - Check if this is correct reverse gene
        *   o fun-21 sec-03 sub-02 cat-04:
-       *     - Handle cases with forward genes
+       *     - Update the reverse codon position
        *   o fun-21 sec-03 sub-02 cat-05:
        *     - Get reference amino acid sequence for
-       *       AMR(s) in forward genes
+       *       AMR(s) in reverse complement genes
        *   o fun-21 sec-03 sub-02 cat-06:
+       *     - Check if this is an foward aa mutation
+       *   o fun-21 sec-03 sub-02 cat-07:
+       *     - Check if this is correct forward gene
+       *   o fun-21 sec-03 sub-02 cat-08:
+       *     - Update forward gene codon position
+       *   o fun-21 sec-03 sub-02 cat-09:
+       *     - Get reference amino acid sequence for
+       *       AMR(s) in forward genes
+       *   o fun-21 sec-03 sub-02 cat-10:
        *     - Move to the next AMR/restart loop
        \*************************************************/
 
@@ -2478,7 +2502,7 @@ char whoAddCodonPos(
        +     the gene coordiantes on the reference
        \++++++++++++++++++++++++++++++++++++++++++++++++*/
 
-       while(amrST[iIndex].refPosUI < samST.refEndUI)
+       while(amrST[iIndex].refPosUI <= samST.refEndUI)
        { /*Loop: Update positon for each amr*/
           if(iIndex >= numAmrI) break;
 
@@ -2500,6 +2524,109 @@ char whoAddCodonPos(
                  ++iIndex;
                  continue;
              } /*If: this is not an aa mutation*/
+
+             /*++++++++++++++++++++++++++++++++++++++++++\
+             + Fun-21 Sec-03 Sub-02 Cat-03:
+             +   - Check if this is correct reverse gene
+             \++++++++++++++++++++++++++++++++++++++++++*/
+
+             /*This is simpiler and should avoid errors.*/
+             if(  amrST[iIndex].refPosUI <samST.refStartUI
+                ||
+                  amrST[iIndex].refPosUI > samST.refEndUI
+             ){ /*If: aa sequence goes outside of gene*/
+                if(amrST[iIndex].refAaStr)
+                { /*If: I have a reference aa sequence*/
+                   amrST[iIndex].refAaStr[0] = '0';
+                   amrST[iIndex].refAaStr[1] = '\0';
+                   amrST[iIndex].lenRefAaUI = 2;
+                } /*If: I have a reference aa sequence*/
+
+                if(amrST[iIndex].amrAaStr)
+                { /*If: I have an AMR aa sequence*/ 
+                   amrST[iIndex].amrAaStr[0] = '0';
+                   amrST[iIndex].amrAaStr[1] = '\0';
+                   amrST[iIndex].lenAmrAaUI = 2;
+                } /*If: I have an AMR aa sequence*/ 
+
+                amrST[iIndex].codonPosUI = 0;
+                amrST[iIndex].codonNumUI = 0;
+                amrST[iIndex].endCodonNumUI = 0;
+             } /*If: aa sequence goes outside of gene*/
+
+             /*Check if this is mapping to the end of a
+             `   gene. In this case it is very likely the
+             `   WHO database included an "extra" base in
+             `   that was not part of the gene. Sadly
+             `   there are a few large insertions that
+             `   go beyond the genes range that will
+             `   generate infininte loops if do
+             `   amr.refPos + amr.lenRef > sam.refEnd
+             ` THIS  SEEMS TO HAVE CAUSED MORE PROBLEMS
+             `   THEN IT SOLVED
+             */
+             /*
+             if(   amrST[iIndex].refPosUI ==samST.refEndUI
+                && (
+                      cStrEql(
+                         samST.qryIdStr,
+                         amrST[iIndex].geneIdStr,
+                         '\0'
+                      )
+                   )*//*Check if gene names do not match*/
+             /*){*/ /*If: this is likely on another gene*/
+
+                /*I need to make sure that all other AMRs
+                `  after this AMR are on a different gene
+                */
+                /*
+                iSwap = iIndex + 1;
+
+                while(
+                   !(
+                      cStrEql(
+                         samST.qryIdStr,
+                         amrST[iIndex].geneIdStr,
+                         '\0'
+                      )
+                    )*/ /*Check if gene names match*//*
+                ){*/ /*Loop: See if next amrs are at pos*/
+                   /*if(iSwap >= numAmrI) break;*/
+
+                   /*if(amrST[iSwap].lenRefSeqUI > 1)
+                   {*//*If: next amr is on the next gene*/
+                      /*++iSwap;
+                      continue;
+                   }*//*If: next amr is on the next gene*/
+                   /*
+                   swapAmrStructs(
+                      amrST[iSwap - 1],
+                      amrST[iSwap]
+                   );
+
+                   ++iSwap;
+                }*/ /*Loop: See if next amrs are at pos*/
+                /*
+                if(amrST[iSwap].lenRefSeqUI > 1)
+                {*/ /*If: index is still the next gene*/
+                  /* errC =
+                      readSamLine(
+                         &samST,
+                         buffStr,
+                         lenBuffUL,
+                         samFILE
+                      );*/ /*Get the next line*/
+
+                   /*if(errC) break;*/ /*EOF/memory err*/
+                /*}*/ /*If: index is still the next gene*/
+
+                   /*continue;
+             }*/ /*If: this is likely on another gene*/
+
+             /*++++++++++++++++++++++++++++++++++++++++++\
+             + Fun-21 Sec-03 Sub-02 Cat-04:
+             +   - Update the reverse codon position
+             \++++++++++++++++++++++++++++++++++++++++++*/
 
              /*Update the starting position*/
              amrST[iIndex].codonPosUI =
@@ -2529,7 +2656,7 @@ char whoAddCodonPos(
              revGetDupDel:;
 
              /*++++++++++++++++++++++++++++++++++++++++++\
-             + Fun-21 Sec-03 Sub-02 Cat-02:
+             + Fun-21 Sec-03 Sub-02 Cat-05:
              +   - Get reference amino acid sequence for
              +     AMR(s) in reverse complement genes
              \++++++++++++++++++++++++++++++++++++++++++*/
@@ -2568,12 +2695,13 @@ char whoAddCodonPos(
           } /*If: this is a reverse sequence*/
 
           /*+++++++++++++++++++++++++++++++++++++++++++++\
-          + Fun-21 Sec-03 Sub-02 Cat-04:
-          +   - Handle cases with forward genes
+          + Fun-21 Sec-03 Sub-02 Cat-06:
+          +   - Check if this is an foward aa mutation
           \+++++++++++++++++++++++++++++++++++++++++++++*/
 
           else
           { /*Else: This is a foward sequence*/
+
              amrST[iIndex].dirFlag = def_amrST_forwardDir;
 
              if(amrST[iIndex].codonNumUI == 0)
@@ -2581,7 +2709,105 @@ char whoAddCodonPos(
                  ++iIndex;
                  continue;
              } /*If: this is not an aa mutation*/
-     
+
+             /*++++++++++++++++++++++++++++++++++++++++++\
+             + Fun-21 Sec-03 Sub-02 Cat-07:
+             +   - Check if this is correct forward gene
+             \++++++++++++++++++++++++++++++++++++++++++*/
+
+             /*This is simpiler and should avoid errors.*/
+             if(  amrST[iIndex].refPosUI <samST.refStartUI
+                ||
+                  amrST[iIndex].refPosUI > samST.refEndUI
+             ){ /*If: aa sequence goes outside of gene*/
+                amrST[iIndex].refAaStr[0] = '0';
+                amrST[iIndex].refAaStr[1] = '\0';
+                amrST[iIndex].lenRefAaUI = 2;
+
+                amrST[iIndex].amrAaStr[0] = '0';
+                amrST[iIndex].amrAaStr[1] = '\0';
+                amrST[iIndex].lenAmrAaUI = 2;
+
+                amrST[iIndex].codonPosUI = 0;
+                amrST[iIndex].codonNumUI = 0;
+                amrST[iIndex].endCodonNumUI = 0;
+             } /*If: aa sequence goes outside of gene*/
+
+             /*Check if this is mapping to the end of a
+             `   gene. In this case it is very likely the
+             `   WHO database included an "extra" base in
+             `   that was not part of the gene. Sadly
+             `   there are a few large insertions that
+             `   go beyond the genes range that will
+             `   generate infininte loops if do
+             `   amr.refPos + amr.lenRef > sam.refEnd
+             ` THIS  SEEMS TO HAVE CAUSED MORE PROBLEMS
+             `   THEN IT SOLVED
+             */
+             /*
+             if(   amrST[iIndex].refPosUI ==samST.refEndUI
+                && (
+                      cStrEql(
+                         samST.qryIdStr,
+                         amrST[iIndex].geneIdStr,
+                         '\0'
+                      )
+                   )*/ /*Check if gene names do not match*/
+             /*){*/ /*If: this is likely on another gene*/
+
+                /*I need to make sure that all other AMRs
+                `  after this AMR are on a different gene
+                */
+                /*iSwap = iIndex + 1;
+
+                while(
+                   !(
+                      cStrEql(
+                         samST.qryIdStr,
+                         amrST[iIndex].geneIdStr,
+                         '\0'
+                      )
+                    )*/ /*Check if gene names match*/
+                /*){*/ /*Loop: See if next amrs are at pos*/
+                   /*if(iSwap >= numAmrI) break;
+
+                   if(amrST[iSwap].lenRefSeqUI > 1)
+                   {*/ /*If: next amr is on the next gene*/
+                     /* ++iSwap;
+                      continue;
+                   }*//*If: next amr is on the next gene*/
+
+                   /*
+                   swapAmrStructs(
+                      amrST[iSwap - 1],
+                      amrST[iSwap]
+                   );
+
+                   ++iSwap;
+                }*/ /*Loop: See if next amrs are at pos*/
+
+                /*
+                if(amrST[iSwap].lenRefSeqUI > 1)
+                {*/ /*If: index is still the next gene*/
+                   /*errC =
+                      readSamLine(
+                         &samST,
+                         buffStr,
+                         lenBuffUL,
+                         samFILE
+                      );*/ /*Get the next line*/
+
+                   /*if(errC) break;*/ /*EOF/memory err*/
+                /*}*/ /*If: index is still the next gene*/
+
+                   /*continue;
+             }*/ /*If: this is likely on another gene*/
+
+             /*++++++++++++++++++++++++++++++++++++++++++\
+             + Fun-21 Sec-03 Sub-02 Cat-08:
+             +   - Update forward gene codon position
+             \++++++++++++++++++++++++++++++++++++++++++*/
+
              /*Update the starting position*/
              amrST[iIndex].codonPosUI =
                   samST.refStartUI
@@ -2611,7 +2837,7 @@ char whoAddCodonPos(
              forGetDupDel:;
 
              /*++++++++++++++++++++++++++++++++++++++++++\
-             + Fun-21 Sec-03 Sub-02 Cat-05:
+             + Fun-21 Sec-03 Sub-02 Cat-09:
              +   - Get reference amino acid sequence for
              +     AMR(s) in forward genes
              \++++++++++++++++++++++++++++++++++++++++++*/
@@ -2652,7 +2878,7 @@ char whoAddCodonPos(
           } /*Else: This is a foward sequence*/
 
           /*+++++++++++++++++++++++++++++++++++++++++++++\
-          + Fun-21 Sec-03 Sub-02 Cat-06:
+          + Fun-21 Sec-03 Sub-02 Cat-10:
           +   - Move to the next AMR/restart loop
           \+++++++++++++++++++++++++++++++++++++++++++++*/
 

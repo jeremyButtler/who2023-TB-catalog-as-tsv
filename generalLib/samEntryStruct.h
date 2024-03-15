@@ -2,26 +2,14 @@
 # Name: samEntryStruct
 #  - Holds structer to hold a sam file entry. This also
 #    includes the functions needed to support this
-#    structer.
-# Note:
-#  - End of file has some general sam file basics
+#    structure.
 ########################################################*/
-
-/*-------------------------------------------------------\
-| Header:
-|   - Included libraries, definitions and preprocessor
-|     checks
-\-------------------------------------------------------*/
-
-#ifndef SAMENTRYSTRUCT_H
-#define SAMENTRYSTRUCT_H
-
-#define defQAdjust 33 /*offest to get q-score of 0*/
-#define defMaxQScore 94 /*highest possible Q-score*/
 
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\
 ' SOF: Start Of File
-'  o struct-01 samEntry:
+'  o header:
+'    - header guards and definitions
+'  o st-01 samEntry:
 '    - Holds a single samfile entry
 '  o fun-01 blankSamEntry:
 '    - Sets all non-alloacted variables in samEntryST to 0
@@ -34,34 +22,40 @@
 '    - Frees a samEntry structer (and sets to null)
 '  o fun-05: makeSamEntry
 '    - Makes an heap allocated samEntry structure
-'  o fun-08 processSamEntry:
-'    - Sets Q-score, cigar, & sequence pointers and 
-'      stats in a sam entry sotred in a samEntry struct.
-'  o fun-09 readNextPartOfLine:
-'    - Reads in next part of line when fgets did not
-'      get a full line
-'  o fun-10 findSamCig:
-'    - Finds the cigar in same entry & also finds the
-'      number of bases in query from cigar
-'  o fun-11 readSamLine:
-'    - Reads in sam entry into a samEntry struct
-'  o fun-12 printSamEntry:
+'  o fun-08: cpQScore (.c file only)
+'    - Copies Q-scores from a string into a samEntry
+'      structure
+'  o fun-09: readSamLine
+'    - Reads in a single line from a sam file
+'  o fun-10: pSamEntry
 '    - Prints the sam file entry to a file. This does not
 '      print any extra stats that were found.
-'  o fun-13 samToFq:
-'    - Prints sam entry as a fastq entry to a fastq file
-'  o fun-14 printStatsHeader:
-'    - Prints the stat file header made using a samEntry
-'      struct
-'  o fun-15 printSamStats
-'    - Prints stats in samEntry structure to a tsv file
-'  o fun-16 swapSamEntries:
-'    - Swaps the values in two sam entries. This includes
-'      histograms, so will take a bit of time.
+'  o fun-11: pSamEntryAsFastq
+'    - Prints the sam entry as a fastq entry to a fastq
+'      file
+'  o fun-12: pSamEntryAsFasta
+'    - Prints the sam entry as a fasta entry to a fasta
+'      file
+'  o fun-13: pSamEntryStats
+'    - Prints out the stats in a samEntry struct to a file
+'  o note-01:
+'     - Notes about the sam file format from the sam file
+'       pdf
 \~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
 /*-------------------------------------------------------\
-| Struct-01: samEntry
+| Header:
+|   - Header gaurds and definitions
+\-------------------------------------------------------*/
+
+#ifndef SAMENTRYSTRUCT_H
+#define SAMENTRYSTRUCT_H
+
+#define defQAdjust 33 /*offest to get q-score of 0*/
+#define defMaxQScore 94 /*highest possible Q-score*/
+
+/*-------------------------------------------------------\
+| ST-01: samEntry
 |  - Holds a single samfile entry
 \-------------------------------------------------------*/
 typedef struct samEntry
@@ -191,7 +185,7 @@ typedef struct samEntry
 } /*blankSamEntry*/
 
 /*-------------------------------------------------------\
-| Fun-03: initSamEntry
+| Fun-02: initSamEntry
 |  - Initializes a samEntry structure for use. This 
 |    function should only ever be called once per
 |    structure or after freeSamEntryStack has been used.
@@ -210,7 +204,7 @@ typedef struct samEntry
 unsigned char initSamEntry(struct samEntry *samSTPtr);
 
 /*-------------------------------------------------------\
-| Fun-06: freeSamEntryStack
+| Fun-03: freeSamEntryStack
 | Use:
 |  - Frees all variables in samEntry, but not samEntry
 | Input:
@@ -439,6 +433,12 @@ void pSamEntryStats(
 );
 
 #endif
+
+/*-------------------------------------------------------\
+| Note-01:
+|   - Notes about the sam file format from the sam file
+|     pdf
+\-------------------------------------------------------*/
 
 /*
 Sam file table for first 11 columns (all sam files have)

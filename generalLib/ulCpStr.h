@@ -155,17 +155,21 @@
 \-------------------------------------------------------*/
 #define ulCpMakeDelim(delimC)({\
    int iRepMac = 0;\
-   unsigned long macDelimUL = (ulong) (delimC);\
+   unsigned long macDelimUL = (unsigned char) (delimC);\
    \
    for(\
       iRepMac = sizeof(unsigned long) << 2;\
-      iRepMac > 0;\
+      iRepMac >= defBitsPerChar;\
       iRepMac >>= 1\
    ) macDelimUL |= (macDelimUL << iRepMac);\
    \
    macDelimUL;\
 }) /*ulMakeDelim*/
    /*Logic:
+   `   - macDelimUL  = (unsigned char) delimC:
+   `     o the (unsigned char) is needed to avoid negative
+   `       values being converted to their long
+   `       equivulents
    `   - sizeof(unsigned long) << 2:
    `     o Gets me to the half way point in bits. So
    `       8 (64 bit) becomes 32, 4 (32 bit) becomes 16,
@@ -200,19 +204,17 @@
 |       to get this value)
 | Output:
 |   - Returns:
-|     o  unsigned long > 0; strUL has no deliminator. The
+|     o  unsigned long == 0; strUL has no deliminator. The
 |        position of the delimintor can be found with
 |        log2(returned ulong) >> 8. The 1 is shifted to
 |        the left of the character.
-|     o  unsigned long == 0; strUL has deliminator
+|     o  unsigned long > 0; strUL has deliminator
 \-------------------------------------------------------*/
 #define ulIfDelim(strUL, delimUL)({\
-   unsigned long macAddUL = \
-     ( (ulong) (strUL) ) ^ (delimUL);\
-   \
-     ( ((macAddUL &1) + macAddUL) - ulCpMakeDelim(0x01) )\
-   &\
-     ulCpMakeDelim(0x80);\
+   unsigned long macAddUL = (strUL) ^ (delimUL);\
+   macAddUL = ( (macAddUL & 1) + macAddUL );\
+   macAddUL -= ulCpMakeDelim(0x01);\
+   macAddUL & ulCpMakeDelim(0x80); /*Answer to return*/\
 })
    /*Logic:
    ` - addUL = strUL ^ delimUL:
@@ -306,7 +308,7 @@
    \
    while(!macAtDelimUL)\
    { /*Loop: Copy cpStr to dupStr*/\
-      uiLenStrMac += 8;\
+      uiLenStrMac += defCharPerUL;\
       ++macPtrUL;\
       macAtDelimUL = ulIfDelim(*macPtrUL, (delimUL));\
    } /*Loop: Copy cpStr to dupStr*/\

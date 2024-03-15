@@ -13,7 +13,7 @@
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\
 ' SOF: Start Of File
 '   o header:
-'     - Includes and definitions
+'     - Header guards
 '   o st: geneCoords
 '     - Holds the arrays for the gene coordinates and ids 
 '       in a paf file
@@ -28,7 +28,7 @@
 '   o fun-05: getPafGene
 '     - Get the id and coordinates for a gene from a paf
 '       file
-'   o fun-06: swapGeneCoord
+'   o fun-06: swapGeneCoord (.c only)
 '     - Swaps two array items in a geneCoords structure
 '       around
 '   o fun-07: geneCoordsSort
@@ -43,14 +43,11 @@
 
 /*-------------------------------------------------------\
 | Header:
-|   - Included libraries and defintions
+|   - Header guards
 \-------------------------------------------------------*/
 
 #ifndef GENE_COORD_STRUCT_H
 #define GENE_COORD_STRUCT_H
-
-#include "base10StrToNum.h"
-#include "genMath.h"
 
 /*-------------------------------------------------------\
 | ST: geneCoords
@@ -59,9 +56,10 @@
 \-------------------------------------------------------*/
 typedef struct geneCoords{
    char (*idStrAry)[64];
-   uint *startAryUI;
-   uint *endAryUI;
+   unsigned int *startAryUI;
+   unsigned int *endAryUI;
 }geneCoords;
+
 
 /*-------------------------------------------------------\
 | Fun-01: freeGeneCoordsStack
@@ -74,25 +72,10 @@ typedef struct geneCoords{
 |   - Frees:
 |     o idStrAry, startAryUI, and endAryUI (and sets to 0)
 \-------------------------------------------------------*/
-#define freeGeneCoordsStack(geneCoordsST){\
-   if((geneCoordsST)->idStrAry != 0)\
-   { /*If: there are ids to free*/\
-      free((geneCoordsST)->idStrAry);\
-      (geneCoordsST)->idStrAry = 0;\
-   } /*If: there are ids to free*/\
-   \
-   if((geneCoordsST)->startAryUI != 0)\
-   { /*If: there are starting positions to free*/\
-      free((geneCoordsST)->startAryUI);\
-      (geneCoordsST)->startAryUI = 0;\
-   } /*If: there are starting positions to free*/\
-   \
-   if((geneCoordsST)->endAryUI != 0)\
-   { /*If: there are ending positions to free*/\
-      free((geneCoordsST)->endAryUI);\
-      (geneCoordsST)->endAryUI = 0;\
-   } /*If: there are ending positions to free*/\
-} /*freeGeneCoordsStack*/
+void
+freeGeneCoordsStack(
+   struct geneCoords *geneCoordsST
+);
 
 /*-------------------------------------------------------\
 | Fun-02: freeGeneCoords
@@ -104,11 +87,10 @@ typedef struct geneCoords{
 |   - Frees:
 |     o geneCoordsST (and sets to 0)
 \-------------------------------------------------------*/
-#define freeGeneCoords(geneCoordsST){\
-   freeGeneCoordsStack((geneCoordsST));\
-   free((geneCoordsST));\
-   (geneCoordsST) = 0;\
-} /*freeGeneCoords*/
+void
+freeGeneCoords(
+   struct geneCoords **geneCoordsST
+);
 
 /*-------------------------------------------------------\
 | Fun-03: initGeneCoords
@@ -139,39 +121,10 @@ typedef struct geneCoords{
 | Note:
 |   - Do not use initGeneCoords on the returned structure
 \-------------------------------------------------------*/
-#define makeGeneCoords(numGenesUI)({\
-   struct geneCoords *retST =\
-      malloc(sizeof(struct geneCoords));\
-   \
-   if(retST != 0)\
-   { /*If: I had allocated a structure*/\
-      \
-      initGeneCoords(retST);\
-      \
-      retST->idStrAry =\
-         malloc((numGenesUI) * sizeof(*retST->idStrAry));\
-      \
-      if(retST->idStrAry != 0)\
-      { /*If: I had no errors for the gene ids array*/\
-         retST->startAryUI =\
-            malloc((numGenesUI) * sizeof(uint));\
-         \
-         if(retST->startAryUI ==0)\
-           {freeGeneCoords(retST);}\
-         \
-         else\
-         { /*Else: I can try getting memory for the end*/\
-            retST->endAryUI =\
-               malloc((numGenesUI) * sizeof(uint));\
-            \
-            if(retST->startAryUI == 0)\
-               {freeGeneCoords(retST);}\
-         } /*Else: I can try getting memory for the end*/\
-      } /*If: I had no errors for the gene ids array*/\
-   } /*If: I had allocated a structure*/\
-   \
-   retST;\
-}) /*makeGeneCoords*/
+struct geneCoords *
+makeGeneCoords(
+   unsigned int numGenesUI
+);
 
 /*-------------------------------------------------------\
 | Fun-05: getPafGene
@@ -192,104 +145,13 @@ typedef struct geneCoords{
 |   - Modifies:
 |     o All arrays in geneCoordsST to hold the new gene
 \-------------------------------------------------------*/
-#define getPafGene(geneCoordsST,posUI,typeC,pafLineStr)\
-{ /*getPagGene*/\
-   uchar ucEntry = 0;\
-   uint uiChar = 0;\
-   char *tmpStr = 0;\
-   \
-   for(uiChar = 0; (pafLineStr)[uiChar] > 32; ++uiChar)\
-      (geneCoordsST)->idStrAry[(posUI)][uiChar] =\
-         (pafLineStr)[uiChar];\
-   \
-   (geneCoordsST)->idStrAry[(posUI)][uiChar] = '\0';\
-   ++uiChar;\
-   \
-   for(ucEntry = 1; ucEntry < 7; ++ucEntry)\
-   { /*Loop: Move to the reference start position*/\
-      for(\
-         uiChar = uiChar;\
-         (pafLineStr)[uiChar] > 32;\
-         ++uiChar\
-      ){} /*Move to the next entry (tab)*/\
-      \
-      ++uiChar;\
-   } /*Loop: Move to the reference start position*/\
-   \
-   tmpStr =\
-      base10StrToUI(\
-         &(pafLineStr)[uiChar],\
-         (geneCoordsST)->startAryUI[(posUI)]\
-      ); /*Get the starting position*/\
-   \
-   ++tmpStr; /*Move off the tab*/\
-   ++ucEntry;\
-   \
-   tmpStr =\
-      base10StrToUI(\
-         tmpStr,\
-         (geneCoordsST)->endAryUI[(posUI)]\
-      ); /*Get the ending position*/\
-   \
-   ++tmpStr; /*Move off the tab*/\
-   ++ucEntry;\
-   \
-   /*Get the alignment type (P for primary)*/\
-   uiChar = 0;\
-   while(tmpStr[uiChar] != 't'\
-      && tmpStr[uiChar + 1] != 'p'\
-      && tmpStr[uiChar + 2] != ':'\
-   ) ++uiChar;\
-   (typeC) = tmpStr[uiChar + 5];\
-} /*getPafGene*/
-
-/*-------------------------------------------------------\
-| Fun-06: swapGeneCoord
-|  - Swaps two array items in a geneCoords structure
-|    around
-| Input:
-|  - geneCoordST:
-|    o Pointer to the geneCoord structure to swap elements
-|      in
-|  - posOne:
-|    o The position (index) of the first gene to swap
-|  - posTwo:
-|    o The position (index) of the second gene to swap
-| Output:
-|  - Modifies:
-|    o Swaps the start, end, and gene id around
-\-------------------------------------------------------*/
-#define swapGeneCoord(geneCoordST, posOne, posTwo){ \
-  uint macStartUI = (geneCoordST)->startAryUI[(posOne)];\
-  uint macEndUI = (geneCoordST)->endAryUI[(posOne)];\
-  char macSwapC = 0;\
-  uchar cMac = 0;\
-  \
-  (geneCoordST)->startAryUI[(posOne)] =\
-     (geneCoordST)->startAryUI[(posTwo)];\
-   \
-  (geneCoordST)->endAryUI[(posOne)] =\
-     (geneCoordST)->endAryUI[(posTwo)];\
-  \
-  (geneCoordST)->startAryUI[(posTwo)] = macStartUI;\
-  (geneCoordST)->endAryUI[(posTwo)] = macEndUI;\
-  \
-  while(\
-        (geneCoordST)->idStrAry[(posOne)][cMac] != '\0'\
-     || (geneCoordST)->idStrAry[(posTwo)][cMac] != '\0'\
-  ){ /*Loop: copy the gene name*/\
-     macSwapC =(geneCoordST)->idStrAry[(posOne)][cMac];\
-     \
-     (geneCoordST)->idStrAry[(posOne)][cMac] =\
-        (geneCoordST)->idStrAry[(posTwo)][cMac];\
-     \
-     (geneCoordST)->idStrAry[(posTwo)][cMac] = macSwapC;\
-     ++cMac;\
-  } /*Loop: copy the gene name*/\
-  \
-  (geneCoordST)->idStrAry[(posOne)][cMac] = '\0';\
-  (geneCoordST)->idStrAry[(posTwo)][cMac] = '\0';\
-} /*swapScoreSTs*/
+void
+getPafGene(
+   struct geneCoords *geneCoordsST,
+   unsigned int posUI,
+   char *typeC,
+   char *pafLineStr
+); /*getPagGene*/
 
 /*-------------------------------------------------------\
 | Fun-07: geneCoordsSort
@@ -308,99 +170,12 @@ typedef struct geneCoords{
 |    o Arrays in geneCoordST to be sorted by the gene
 |      starting coordinate (lowest first)
 \-------------------------------------------------------*/
-static void sortGeneCoords(
+void
+sortGeneCoords(
    struct geneCoords *geneCoordST,
-   uint startUI,
-   uint endUI
-){ /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-   ' Fun-07 TOC: sortGeneCoords
-   '  - Sorts the arrays in a geneCoords struct by
-   '    starting position with shell short.
-   '  - Shell sort taken from:
-   '    - Adam Drozdek. 2013. Data Structures and
-   '      Algorithims in c++. Cengage Leraning. fourth
-   '      edition. pages 505-508
-   '    - I made some minor changes, but is mostly the
-   '      same
-   '  o fun-07 sec-01:
-   '    - Variable declerations
-   '  o fun-07 sec-02:
-   '    - Find the number of rounds to sort for
-   '  o fun-07 sec-03:
-   '    - Sort the arrays in geneCoordST
-   \~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-  
-  /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\
-  ^ Fun-07 Sec-01:
-  ^  - Variable declerations
-  \<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
-  
-  /*Number of elements to sort*/
-  ulong numElmUL = (endUI) - (startUI);
-  
-  /*Number of sorting rounds*/
-  ulong subUL = 0;
-  ulong nextElmUL = 0;
-  ulong lastElmUL = 0;
-  ulong elmOnUL = 0;
-  
-  /*Get arrays to sort from the matrix (for sanity)*/
-  
-  /*Variables to incurment loops*/
-  ulong ulIndex = 0;
-  ulong ulElm = 0;
-  
-  /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\
-  ^ Fun-07 Sec-02:
-  ^  - Find the max search value (number rounds to sort)
-  \<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
-  
-  /*Recursion formula: h[0] = 1, h[n] = 3 * h[n - 1] +1*/
-  subUL = 1; /*Initialzie first array*/
-  while(subUL < numElmUL - 1) subUL = (3 * subUL) + 1;
-  
-  /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-  ^ Fun-07 Sec-03:
-  ^  - Sort the arrays in geneCoordST
-  \<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
-  
-  while(subUL > 0)
-  { /*loop trhough all sub arrays sort the subarrays*/
-    for(ulIndex = 0; ulIndex <= subUL; ++ulIndex)
-    { /*For each element in the subarray*/
-      for(ulElm = ulIndex;
-          ulElm + subUL <= endUI;
-          ulElm += subUL
-      ){ /*Loop; swap each nth element of the subarray*/
-        nextElmUL = ulElm + subUL;
-        
-        if(   (geneCoordST)->startAryUI[ulElm]
-            > (geneCoordST)->startAryUI[nextElmUL]
-        ){ /*If I need to swap an element*/
-          swapGeneCoord((geneCoordST),ulElm,nextElmUL);
-          
-          lastElmUL = ulElm;
-          elmOnUL = ulElm;
-          
-          while(lastElmUL >= subUL)
-          { /*loop; move swapped element back*/
-            lastElmUL -= subUL;
-            
-            if(   (geneCoordST)->startAryUI[elmOnUL]
-                > (geneCoordST)->startAryUI[lastElmUL]
-            ) break; /*Positioned the element*/
-            
-            swapGeneCoord((geneCoordST),elmOnUL,lastElmUL);
-            
-            elmOnUL = lastElmUL;
-          } /*loop; move swapped element back*/
-        } /*If I need to swap elements*/
-      } /*Loop; swap each nth element of the subarray*/
-    } /*For each element in the subarray*/
-    
-    subUL = (subUL - 1) / 3; /*Move to the next round*/
-  } /*loop through all sub arrays to sort the subarrays*/
-} /*sortGeneCoords*/
+   unsigned int startUI,
+   unsigned int endUI
+);
 
 /*-------------------------------------------------------\
 | Fun-08: findStartCoordInGeneCoord
@@ -420,49 +195,12 @@ static void sortGeneCoords(
 |    o The index of the starting position
 |    o -1 if there was no gene
 \-------------------------------------------------------*/
-static int findStartCoordInGeneCoord(
+int
+findStartCoordInGeneCoord(
    struct geneCoords *geneST,
-   uint qryUI,
+   unsigned int qryUI,
    int numGenesI
-){ /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-   ' Fun-08 TOC: findStartCoordInGeneCoords
-   '  - Finds the starting coordinate (query) in a
-   '    geneCoords structure
-   '  o fun-08 sec-01:
-   '    - Variable declerations
-   '  o fun-08 sec-02:
-   \~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-
-   int midI = 0;
-   int rightHalfI = numGenesI - 1;
-   int leftHalfI = 0;
-
-   while(leftHalfI <= rightHalfI)
-   { /*Loop: Search for the starting coordinate*/
-      midI = (leftHalfI + rightHalfI) >> 1;
-
-      if(   qryUI < geneST->startAryUI[midI]
-         && qryUI < geneST->endAryUI[midI]
-      )  rightHalfI = midI - 1;
-
-      else if(
-            qryUI > geneST->startAryUI[midI]
-         && qryUI > geneST->endAryUI[midI]
-      ) leftHalfI = midI + 1;
-
-     else return midI;
-   } /*Loop: Search for the starting coordinate*/
-
-   if(   qryUI < geneST->startAryUI[midI]
-      && qryUI < geneST->endAryUI[midI]
-   ) return -1;
-
-   if(   qryUI > geneST->startAryUI[midI]
-      && qryUI > geneST->endAryUI[midI]
-   ) return -1;
-
-   return midI;
-} /*findStartCoordInGeneCoords*/
+);
 
 /*-------------------------------------------------------\
 | Fun-09: pafGetGeneCoords
@@ -481,48 +219,10 @@ static int findStartCoordInGeneCoord(
 |    o numGenesI to have the number of genes (index 0)
 |      extracted
 \-------------------------------------------------------*/
-#define pafGetGeneCoords(\
-   pafFILE, /*Paf file to extract gene coordinates from*/\
-   numGenesI /*Number of genes extracted*/\
-)({\
-   ushort macLenBuffUS = 1024;\
-   char macBuffStr[macLenBuffUS];\
-   \
-   char macAlnTypeC = 0;     /*To check alignment type*/\
-   ulong macNumLinesUL = 0;\
-   ulong macIdIndexUL = 0;\
-   \
-   struct geneCoords *macGenesST = 0;\
-   \
-   /*Find the number of entries in the paf file*/\
-   while(fgets(macBuffStr, macLenBuffUS, (pafFILE)))\
-      ++macNumLinesUL;\
-   \
-   /*Extract each entry*/\
-   fseek((pafFILE), 0, SEEK_SET);\
-   macGenesST = makeGeneCoords(macNumLinesUL);\
-   \
-   if(macGenesST)\
-   { /*If: I did not have a memory error*/\
-      while(fgets(macBuffStr, macLenBuffUS, (pafFILE)))\
-      { /*Loop: Get entries from the paf file*/\
-         /*Get the gene locations from the paf line*/\
-         getPafGene(\
-            macGenesST,\
-            (numGenesI),\
-            macAlnTypeC,\
-            macBuffStr\
-         );\
-         \
-         (numGenesI) += (macAlnTypeC == 'P');\
-      } /*Loop: Get entries from the paf file*/\
-      \
-      --(numGenesI); /*Convert to index 0*/\
-      sortGeneCoords(macGenesST, 0, (numGenesI));\
-      fseek((pafFILE), 0, SEEK_SET);\
-      \
-   } /*If: I did not have a memory error*/\
-   macGenesST;\
-})
+struct geneCoords *
+pafGetGeneCoords(
+   void *pafFILE, /*Paf file get gene coordinates from*/\
+   int *numGenesI /*Number of genes extracted*/\
+);
 
 #endif

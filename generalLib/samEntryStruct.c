@@ -1,6 +1,62 @@
+/*########################################################
+# Name: samEntryStruct
+#  - Holds structer to hold a sam file entry. This also
+#    includes the functions needed to support this
+#    structure.
+########################################################*/
+
+/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\
+' SOF: Start Of File
+'  o header:
+'    - Included libraries
+'  o st-01 samEntry: (.h only)
+'    - Holds a single samfile entry
+'  o fun-01 blankSamEntry: (.h only)
+'    - Sets all non-alloacted variables in samEntryST to 0
+'  o fun-02 initSamEntry: (.h only)
+'    - Initalize a samEntry struct to 0's
+'  o fun-03 freeSamEntryStack:
+'    - Frees heap allocations in a stack allocated
+'      samEntry struct
+'  o fun-04 freeSamEntry:
+'    - Frees a samEntry structer (and sets to null)
+'  o fun-05: makeSamEntry
+'    - Makes an heap allocated samEntry structure
+'  o fun-08: cpQScore
+'    - Copies Q-scores from a string into a samEntry
+'      structure
+'  o fun-09: readSamLine
+'    - Reads in a single line from a sam file
+'  o fun-10: pSamEntry
+'    - Prints the sam file entry to a file. This does not
+'      print any extra stats that were found.
+'  o fun-11: pSamEntryAsFastq
+'    - Prints the sam entry as a fastq entry to a fastq
+'      file
+'  o fun-12: pSamEntryAsFasta
+'    - Prints the sam entry as a fasta entry to a fasta
+'      file
+'  o fun-13: pSamEntryStats
+'    - Prints out the stats in a samEntry struct to a file
+'  o note-01: (.h file only)
+'     - Notes about the sam file format from the sam file
+'       pdf
+\~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+
+/*-------------------------------------------------------\
+| Header:
+|   - Included libraries
+\-------------------------------------------------------*/
+
 #include "samEntryStruct.h"
 
-#include <stdlib.h>
+#ifdef PLAN9
+   #include <u.h>
+   #include <libc.h>
+#else
+   #include <stdlib.h>
+#endif
+
 #include <stdio.h>
 
 /*These have no .c files*/
@@ -9,8 +65,13 @@
 #include "ulCpStr.h"
 #include "numToStr.h"
 
+#define def_samEntry_newLine ulCpMakeDelim('\n')
+#define def_samEntry_tab ulCpMakeDelim('\t')
+#define def_samEntry_one ulCpMakeDelim(0x01)
+#define def_samEntry_highBit ulCpMakeDelim(0x80)
+
 /*-------------------------------------------------------\
-| Fun-03: initSamEntry
+| Fun-02: initSamEntry
 |  - Initializes a samEntry structure for use. This 
 |    function should only ever be called once per
 |    structure or after freeSamEntryStack has been used.
@@ -55,7 +116,7 @@ unsigned char initSamEntry(struct samEntry *samSTPtr){
 } /*initSamEntry*/
 
 /*-------------------------------------------------------\
-| Fun-06: freeSamEntryStack
+| Fun-03: freeSamEntryStack
 | Use:
 |  - Frees all variables in samEntry, but not samEntry
 | Input:
@@ -114,7 +175,9 @@ void freeSamEntry(struct samEntry **samSTPtr){
 |    o Pointer to a samEntry structure
 |    o 0 if had an memory error
 \-------------------------------------------------------*/
-struct samEntry * makeSamEntry(){
+struct samEntry *
+makeSamEntry(
+){
   struct samEntry *samST=malloc(sizeof(struct samEntry));
   uchar errUC = 0;
   
@@ -142,7 +205,10 @@ struct samEntry * makeSamEntry(){
 |     o samSTPtr->qHistUI to have a histogram of Q-scores
 |     o samSTPtr->sumQUL to have the sum of all Q-scores
 \-------------------------------------------------------*/
-void samEntryFindQScores(struct samEntry *samSTPtr){
+void
+samEntryFindQScores(
+   struct samEntry *samSTPtr
+){
     ulong qAdjustUL = ulCpMakeDelim(defQAdjust);
     ulong qScoresUL = 0;
     ulong *qPtrUL = (ulong *) (samSTPtr)->qStr;
@@ -188,7 +254,47 @@ void samEntryFindQScores(struct samEntry *samSTPtr){
     samEntryQHistToMed((samSTPtr));
 } /*samEntryFindQScores*/
 
-int cpQScores(struct samEntry *samSTPtr, char *cpQStr){
+/*-------------------------------------------------------\
+| Fun-08: cpQScore
+|   - Copies Q-scores from a string into a samEntry
+|     structure
+| Input:
+|   - samSTPtr:
+|     o Pionter to sam entry struct to copys Q-scores to
+|   _ cpQStr:
+|     o C-string with Q-scores to copy to samSTPtr
+| Output:
+|   - Mofidies:
+|     o qStr in samSTPtry to have the Q-scores
+|     o medianQF in samSTPtr to have the median Q-score
+|     o meanQF in samSTPtr to have the mean Q-score
+|     o qHistUI in samSTPtr to have histogram of Q-scores
+|     o samQUL in samSTPtr to have sum off all Q-scores
+|   - Returns
+|     o The value in samSTPtr->readLenUI
+\-------------------------------------------------------*/
+int
+cpQScores(
+   struct samEntry *samSTPtr, /*Copy Q-scores to*/
+   char *cpQStr               /*Q-scores to copy*/
+){/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\
+  ' Fun-08 TOC: cpQScores
+  '   o fun-08 sec-01:
+  '     - Variable declerations
+  '   o fun-08 sec-02:
+  '     - Copy Q-scores using unsigned longs
+  '   o fun-08 sec-03:
+  '     - Copy last Q-scores I could not copy with
+  '       unsigned longs
+  '   o fun-08 sec-04:
+  '     - Find the median and mean Q-scores
+  \~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+
+  /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\
+  ^ Fun-08 Sec-01:
+  ^   - Variable declerations
+  \<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
+
   char *tmpStr = 0;
   int iQ = 0;
   int iChar = 0;
@@ -197,6 +303,11 @@ int cpQScores(struct samEntry *samSTPtr, char *cpQStr){
   ulong *dupPtrUL = (ulong *) samSTPtr->qStr;
   ulong qScoreUL = 0;
   
+  /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\
+  ^ Fun-08 Sec-02:
+  ^   - Copy Q-scores using unsigned longs
+  \<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
+
   for(
      iQ = 0;
      iQ < ((samSTPtr)->readLenUI >> defShiftByUL);
@@ -216,10 +327,11 @@ int cpQScores(struct samEntry *samSTPtr, char *cpQStr){
      } /*Loop: Get the q-score entries*/
   } /*Loop: Copy the Q-score entries*/
   
-  /**************************************************
-  * Fun-03 Sec-13 Sub-03:
-  *   - Finish copying the end of the Q-score entry
-  \*************************************************/
+  /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\
+  ^ Fun-08 Sec-03:
+  ^   - Copy last Q-scores I could not copy with unsgined
+  ^     longs
+  \<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
   
   iQ = (samSTPtr)->readLenUI;
   
@@ -237,10 +349,10 @@ int cpQScores(struct samEntry *samSTPtr, char *cpQStr){
   
   (samSTPtr)->qStr[iQ] = '\0';
   
-  /**************************************************
-  * Fun-03 Sec-13 Sub-04:
-  *   - Find the mean and median Q-scores
-  \*************************************************/
+  /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\
+  ^ Fun-08 Sec-04:
+  ^   - Find the median and mean Q-scores
+  \<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
   
   (samSTPtr)->meanQF =
      (float)(samSTPtr)->sumQUL/(samSTPtr)->readLenUI;
@@ -250,7 +362,7 @@ int cpQScores(struct samEntry *samSTPtr, char *cpQStr){
 } /*cpQScores*/
 
 /*-------------------------------------------------------\
-| Fun-08: readSamLine
+| Fun-09: readSamLine
 |  - Reads in a single line from a sam file
 | Input:
 |  - samSTPtr:
@@ -276,62 +388,62 @@ int cpQScores(struct samEntry *samSTPtr, char *cpQStr){
 |    o 1 for EOF (End Of File)
 |    o 64 for memory errors
 \-------------------------------------------------------*/
-char readSamLine(
+char
+readSamLine(
    struct samEntry *samSTPtr,
    char **buffStr,
    ulong *lenBuffUL,
    void *samVoidFILE
 ){ /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\
-   ' Fun-08 TOC: readSamLine
+   ' Fun-09 TOC: readSamLine
    '   - Reads a single line from a sam file into samSTPtr
-   '   o fun-08 Sec-01:
+   '   o fun-09 sec-01:
    '     - Variable declerations
-   '   o fun-08 Sec-02:
+   '   o fun-09 sec-02:
    '     - Read in one line from the sam file
-   '   o fun-08 Sec-03:
+   '   o fun-09 sec-03:
    '     - Get the query id from the buffer
-   '   o fun-08 Sec-04:
+   '   o fun-09 sec-04:
    '     - Get the flag
-   '   o fun-08 Sec-05:
+   '   o fun-09 sec-05:
    '     - REad in the reference name/id
-   '   o fun-08 Sec-06:
+   '   o fun-09 sec-06:
    '     - Get the reference position
-   '   o fun-08 Sec-07:
+   '   o fun-09 sec-07:
    '     - Get the mapping quality
-   '   o fun-08 Sec-08:
+   '   o fun-09 sec-08:
    '     - Get the cigar entry
-   '   o fun-08 Sec-09:
+   '   o fun-09 sec-09:
    '     - Get the RNEXT entry
-   '   o fun-08 Sec-10:
+   '   o fun-09 sec-10:
    '     - Get the PNEXT entry
-   '   o fun-08 Sec-11:
+   '   o fun-09 sec-11:
    '     - Get the TLEN entry
-   '   o fun-08 Sec-12:
+   '   o fun-09 sec-12:
    '     - Get the sequence entry
-   '   o fun-08 Sec-13:
+   '   o fun-09 sec-13:
    '     - Get the Q-score entry
-   '   o fun-08 Sec-14:
+   '   o fun-09 sec-14:
    '     - Copy the extra entry; after strict sam entries
    \~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
    /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\
-   ^ Fun-08 Sec-01:
+   ^ Fun-09 Sec-01:
    ^   - Variable declerations
    \<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
 
    ushort extraBuffUS = 4096;
 
-   ulong tabUL = ulCpMakeDelim('\t');
-   ulong newLineUL = ulCpMakeDelim('\n');
-
    ulong oldLenUL = 0;
+   ulong *ulStr = 0;
+
    char *tmpStr = 0;
    char *iterStr = 0;
 
    FILE *samFILE = (FILE *) samVoidFILE;
 
    /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\
-   ^ Fun-08 Sec-02:
+   ^ Fun-09 Sec-02:
    ^   - Read in one line from the sam file
    \<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
 
@@ -347,45 +459,90 @@ char readSamLine(
       *lenBuffUL = extraBuffUS;
    } /*If: I need to create a buffer*/
 
-   /*My marker to make sure I read in a full line*/
-   (*buffStr)[*lenBuffUL - 3] = '\0';
-
+   /*I originally tried reallocs with fgets by setting
+   `   the *lenBuffUL - 2 charater to null. But this did
+   `   not always work. Aparatenly fgets is a lttle buggy,
+   `   at least on void linux. However, it was faster to 
+   `   use
+   */
+   
    tmpStr = fgets(*buffStr, *lenBuffUL, samFILE);
 
-   if(!tmpStr) return 1; /*End of file*/
+   if(! tmpStr ) return 1; /*EOF*/
 
-   /*This is not the most efficent system for memory, but
-   ` it makes the code less complex and easier to deal
-   ` with
-   */
-   while((*buffStr)[*lenBuffUL - 3] != '\0')
-   { /*Loop: Read in the full sam entry line*/
+   goto samEntry_Fun_12_Sec_02_checkEOL;
+
+   while(*tmpStr != '\n')
+   { /*Loop: Find the length of  the line*/
       oldLenUL = *lenBuffUL;
       *lenBuffUL += extraBuffUS;
-      tmpStr =realloc(*buffStr,*lenBuffUL * sizeof(char));
 
-      if(tmpStr == 0) return 64;
+      tmpStr =
+         realloc(
+            *buffStr,
+            (*lenBuffUL + 1) * sizeof(char)
+         ); /*Increase the buffers size*/
 
+      /*Check for memory errors; let user handle
+      `   freeing buffStr when have memory errors
+      */
+      if(! tmpStr) return 64;
       *buffStr = tmpStr;
-      (*buffStr)[*lenBuffUL - 3] = '\0';
+      
       tmpStr = *buffStr + oldLenUL - 1;
 
-      /*Make sure on the first null; the other method can
-      ` mess up
+      /*This is needed to avoid the rare one position off,
+      `   were two nulls are present instead of one
       */
       while(*(tmpStr - 1) == '\0') --tmpStr;
 
-        /*-1 to account for extraBuffUS being index 1*/
-
       tmpStr = fgets(tmpStr, extraBuffUS, samFILE);
-      if(!tmpStr) break; /*End of file*/
 
-   } /*Loop: Read in the full sam entry line*/
+      if(! tmpStr) break; /*End of file*/
 
+      samEntry_Fun_12_Sec_02_checkEOL:;
+
+      ulStr = (ulong *) tmpStr;
+
+      while(!
+         ((   (*ulStr & ( ~ def_samEntry_newLine) )
+            - def_samEntry_one
+          ) & def_samEntry_highBit
+        )
+      ) ++ulStr;
+
+      /*Logic:
+      ` This is a little faster then ulCpStr's if check
+      `   This is due to this not having to worry about
+      `   unintended results.
+      `   - *ulStr & ~(0x0a0a0a...0a):
+      `     o Converts new lines, start of text
+      `       (STX or 2) and backspace (BS or 8) to 0
+      `     o So I only have to worry about values not
+      `       in a text file (STX and BS)
+      `     o def_samEntry_newLine 0x0a0a0a...0a, were
+      `       0x0a = '\n'. So, it is  long with every
+      `       byte being a new line
+      `   - (*ulStr & ~(0x0a0a0a...0a)) - 0x010101...01
+      `     o Converts 0 (newline or null) to -1
+      `     o def_samEntry_one = 0x010101...01
+      `   - (-1 or postive number) & 0x808080...80
+      `     o Converts -1 to -127 (smallest char)
+      `     o Converts any positive number to 0
+      `     o def_samEntry_highBit = 0x808080...80
+      */
+
+      tmpStr = (char *) ulStr;
+
+      while( *tmpStr & ~'\n' ) ++tmpStr;
+   } /*Loop: Find the length of  the line*/
+   
+   /*Add null in for line end (not end of file)*/
+   *tmpStr = '\0';
    iterStr = *buffStr;
 
    /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\
-   ^ Fun-08 Sec-03:
+   ^ Fun-09 Sec-03:
    ^   - Get the query id from the buffer
    \<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
 
@@ -396,16 +553,17 @@ char readSamLine(
     ` hard to tell
    */
    samSTPtr->lenQryIdUC = (uchar)
-      cCpStrDelim(
+      ulCpStrDelim(
          samSTPtr->qryIdStr,
          iterStr,
+         def_samEntry_tab,
          '\t'
-      ); /*Copy the query id/name*/
+      ); /*Copy the reference id/name*/
 
    iterStr += samSTPtr->lenQryIdUC + 1; /*+1 get off tab*/
 
    /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\
-   ^ Fun-08 Sec-04:
+   ^ Fun-09 Sec-04:
    ^   - Get the flag for the alignment
    \<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
 
@@ -418,7 +576,7 @@ char readSamLine(
    ++iterStr; /*Get off the tab*/
 
    /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\
-   ^ Fun-08 Sec-05:
+   ^ Fun-09 Sec-05:
    ^   - REad in the reference name/id
    \<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
 
@@ -427,14 +585,14 @@ char readSamLine(
       ulCpStrDelim(
          samSTPtr->refIdStr,
          iterStr,
-         tabUL,
+         def_samEntry_tab,
          '\t'
       ); /*Copy the reference id/name*/
    
    iterStr += samSTPtr->lenRefIdUC + 1; /*+1 get off tab*/
 
    /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\
-   ^ Fun-08 Sec-06:
+   ^ Fun-09 Sec-06:
    ^   - Get the reference position
    \<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
 
@@ -450,7 +608,7 @@ char readSamLine(
    ++iterStr; /*Get off the tab*/
 
    /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\
-   ^ Fun-08 Sec-07:
+   ^ Fun-09 Sec-07:
    ^   - Get the mapping quality
    \<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
 
@@ -463,21 +621,21 @@ char readSamLine(
    ++iterStr; /*Get off the tab*/
 
    /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\
-   ^ Fun-08 Sec-08:
+   ^ Fun-09 Sec-08:
    ^   - Get the cigar entry
-   ^   o fun-08 sec-08 sub-01:
+   ^   o fun-09 sec-08 sub-01:
    ^     - Check if there is a cigar entry
-   ^   o fun-08 sec-08 sub-02:
+   ^   o fun-09 sec-08 sub-02:
    ^     - Read in the cigar entry
-   ^   o fun-08 sec-08 sub-03:
+   ^   o fun-09 sec-08 sub-03:
    ^     - Count number of matchs/snps/dels/inss/masks in
    ^       the cigar entry
-   ^   o fun-08 sec-08 sub-04:
+   ^   o fun-09 sec-08 sub-04:
    ^     - Get the read lengths from the cigar entries
    \<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
 
    /*****************************************************\
-   * Fun-08 Sec-08 Sub-01:
+   * Fun-09 Sec-08 Sub-01:
    *   - Check if there is a cigar entry
    \*****************************************************/
 
@@ -492,7 +650,7 @@ char readSamLine(
    } /*If: the cigar entry was not present*/
 
    /*****************************************************\
-   * Fun-08 Sec-08 Sub-02:
+   * Fun-09 Sec-08 Sub-02:
    *   - Read in the cigar entry
    \*****************************************************/
    
@@ -535,7 +693,7 @@ char readSamLine(
       samSTPtr->cigTypeStr[samSTPtr->lenCigUI]=iterStr[0];
 
       /**************************************************\
-      * Fun-08 Sec-08 Sub-03:
+      * Fun-09 Sec-08 Sub-03:
       *   - Count number of matchs/snps/dels/inss/masks in
       *     the cigar entry
       \**************************************************/
@@ -596,7 +754,7 @@ char readSamLine(
    } /*Loop: Read in the cigar entry*/
 
    /*****************************************************\
-   * Fun-08 Sec-08 Sub-04:
+   * Fun-09 Sec-08 Sub-04:
    *   - Get the read lengths from the cigar entries
    \*****************************************************/
 
@@ -616,13 +774,15 @@ char readSamLine(
 
    samSTPtr->refEndUI = samSTPtr->refStartUI;
    samSTPtr->refEndUI += samSTPtr->alnReadLenUI;
+      /*-1 to convert to index 0*/
+
    samSTPtr->refEndUI -= (samSTPtr->alnReadLenUI > 0);
       /*-1 from (alnReadLen > 0) converts to index 0*/
 
    ++iterStr; /*Get off the tab*/
 
    /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\
-   ^ Fun-08 Sec-09:
+   ^ Fun-09 Sec-09:
    ^   - Get the RNEXT entry
    \<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
 
@@ -633,14 +793,14 @@ char readSamLine(
       ulCpStrDelim(
          samSTPtr->rNextStr,
          iterStr,
-         tabUL,
+         def_samEntry_tab,
          '\t'
       ); /*Copy the query id/name*/
 
    iterStr += samSTPtr->lenRNextUC + 1; /*+1 get off tab*/
 
    /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\
-   ^ Fun-08 Sec-10:
+   ^ Fun-09 Sec-10:
    ^   - Get the PNEXT entry
    \<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
 
@@ -655,7 +815,7 @@ char readSamLine(
    ++iterStr; /*Get off the tab*/
 
    /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\
-   ^ Fun-08 Sec-11:
+   ^ Fun-09 Sec-11:
    ^   - Get the TLEN entry
    \<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
 
@@ -668,12 +828,13 @@ char readSamLine(
    ++iterStr; /*Get off the tab*/
 
    /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\
-   ^ Fun-08 Sec-12:
+   ^ Fun-09 Sec-12:
    ^   - Get the sequence entry
    \<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
 
    if(samSTPtr->readLenUI == 0 && iterStr[0] != '*')
-      samSTPtr->readLenUI= ulLenStr(iterStr, tabUL, '\t');
+      samSTPtr->readLenUI =
+         ulLenStr(iterStr, def_samEntry_tab, '\t');
 
    else if(iterStr[0] == '*')
    { /*Else If: There  is no sequence entry*/
@@ -710,7 +871,7 @@ char readSamLine(
    iterStr += samSTPtr->readLenUI + 1; /*+1 gets off tab*/
 
    /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\
-   ^ Fun-08 Sec-13:
+   ^ Fun-09 Sec-13:
    ^   - Get the Q-score entry
    ^   o fun-03 sec-13 sub-01:
    ^     - Check if I have a Q-score entry
@@ -739,14 +900,14 @@ char readSamLine(
    else iterStr += cpQScores(samSTPtr, iterStr) + 1;
 
    /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\
-   ^ Fun-08 Sec-14:
+   ^ Fun-09 Sec-14:
    ^   - Copy the extra entry; after strict sam entries
    \<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
    
    extraEntry:
 
    /*not sure if char or ul copy better here*/
-   samSTPtr->lenExtraUI= ulLenStr(iterStr,newLineUL,'\n');
+   samSTPtr->lenExtraUI = ulLenStr(iterStr, 0, '\0');
 
    if(samSTPtr->lenExtraUI > samSTPtr->lenExtraBuffUI)
    { /*If: I need to resize the buffer*/
@@ -769,8 +930,7 @@ char readSamLine(
 } /*readSamLine*/
 
 /*-------------------------------------------------------\
-| Fun-09: pSamEntry
-| Use:
+| Fun-10: pSamEntry
 |  - Prints the sam file entry to a file. This does not
 |    print any extra stats that were found.
 | Input:
@@ -796,7 +956,8 @@ char readSamLine(
 |    o 0 for no problems
 |    o 64 for memory errors
 \-------------------------------------------------------*/
-char pSamEntry(
+char
+pSamEntry(
    struct samEntry *samSTPtr,
    char **buffStr,
    ulong *lenBuffUL,
@@ -804,98 +965,203 @@ char pSamEntry(
 ){
    uint uiCig = 0;
    char *tmpStr = *buffStr;
-   char errC = 0;
-   
-   if(*(lenBuffUL) < ((samSTPtr)->lenCigUI << 3))
+   ulong maxLenUL = 0; 
+
+   maxLenUL =
+        (samSTPtr)->lenQryIdUC
+      + (samSTPtr)->lenRefIdUC
+      + ((samSTPtr)->lenCigUI << 3)
+      + (samSTPtr)->lenRNextUC
+      + ((samSTPtr)->readLenUI << 1)
+      + (samSTPtr)->lenExtraBuffUI
+      + 128; /*128 to account for numbers/tabs*/
+
+   if(*(lenBuffUL) < maxLenUL)
    { /*If: I need to add more buffer*/
       free(*buffStr);
-      *(lenBuffUL) = (samSTPtr)->lenCigUI << 3;
+      *(lenBuffUL) = maxLenUL;
       *buffStr = malloc(*(lenBuffUL) * sizeof(char));
    } /*If: I need to add more buffer*/
+
+   tmpStr = *buffStr;
    
-   if(! (*buffStr)) errC = 64;/*If I had a memory error*/
+   if(! (*buffStr)) return 64; /*If I had a memory error*/
    
    else if(
          (samSTPtr)->extraStr[0] == '@'
       && (samSTPtr)->qryIdStr[0] == '\0'
-   ) fprintf(
-        (FILE *) (outFILE),
-        "%s\n",
-        (samSTPtr)->extraStr
-     ); /*Print out the header (in extra since commnet)*/
-   
-   else if((samSTPtr)->flagUS & 4)
-   { /*Else If: this was an umapped read*/
-      
+   ){
       fprintf(
          (FILE *) (outFILE),
-         "%s\t%u\t%s\t0\t0\t*\t*\t0\t0",
-         (samSTPtr)->qryIdStr,
-         (samSTPtr)->flagUS,
-         (samSTPtr)->refIdStr
-      );
-      
-      fprintf(
-         (FILE *) (outFILE),
-         "\t%s\t%s\t%s\n",
-         (samSTPtr)->seqStr,
-         (samSTPtr)->qStr,
+         "%s\n",
          (samSTPtr)->extraStr
-      ); /*Print out the final entries*/
-   } /*Else If: this was an umapped read*/
+      ); /*Print out the header (in extra since commnet)*/
+
+      return 0;
+   } /*Else If: this was a header*/
    
+   /*Copy the query id to the buffer*/
+   ulCpStr(
+      tmpStr,
+      (samSTPtr)->qryIdStr,
+      (samSTPtr)->lenQryIdUC
+   );
+
+   tmpStr += (samSTPtr)->lenQryIdUC;
+   *tmpStr++ = '\t';
+
+   /*Copy the flag over*/
+   tmpStr += numToStr(tmpStr, (samSTPtr)->flagUS);
+   *tmpStr++ = '\t';
+
+   /*Copy the referenced id to the buffer*/
+   ulCpStr(
+      tmpStr,
+      (samSTPtr)->refIdStr,
+      (samSTPtr)->lenRefIdUC
+   );
+
+   tmpStr += (samSTPtr)->lenRefIdUC;
+   *tmpStr++ = '\t';
+
+   /*Reference position*/
+   tmpStr += numToStr(tmpStr, (samSTPtr)->refStartUI + 1);
+   *tmpStr++ = '\t';
+
+   /*mapq*/
+   tmpStr += numToStr(tmpStr, (samSTPtr)->mapqUC);
+   *tmpStr++ = '\t';
+
+   /*Check if there is a cigar entry*/
+   if((samSTPtr)->cigTypeStr[0]=='*') *tmpStr++ ='*';
+
    else
-   { /*Else: This is an entry, not a comment*/
-      
-      fprintf(
-         (FILE *) (outFILE),
-         "%s\t%u\t%s\t%u\t%u\t",
-         (samSTPtr)->qryIdStr,
-         (samSTPtr)->flagUS,
-         (samSTPtr)->refIdStr,
-         (samSTPtr)->refStartUI + 1,
-         (samSTPtr)->mapqUC
-      );
-      
-      if((samSTPtr)->cigTypeStr[0] != '*')
-      { /*If: I need to print out the cigar entry*/
-         for(
-            uiCig=0;
-            uiCig < (samSTPtr)->lenCigUI;
-            ++uiCig
-         ){
-            tmpStr +=
-               numToStr(
-                  tmpStr,
-                  (samSTPtr)->cigValAryI[uiCig]
-               );
-            tmpStr[0] = (samSTPtr)->cigTypeStr[uiCig];
-            ++tmpStr;
-          }
-          tmpStr[0] = '\0';
-          fprintf((FILE *) (outFILE), *buffStr);
-      } /*If: I need to print out the cigar entry*/
-      
-      else fprintf((outFILE), "*");
-      
-      fprintf(
-         (FILE *) (outFILE),
-         "\t%s\t%u\t%u\t%s\t%s\t%s\n",
-         (samSTPtr)->rNextStr,
-         (samSTPtr)->pNextI + ((samSTPtr)->pNextI > 0),
-         (samSTPtr)->tLenI,
-         (samSTPtr)->seqStr,
+   { /*Else: convert the cigar entry*/
+      for(
+         uiCig=0;
+         uiCig < (samSTPtr)->lenCigUI;
+         ++uiCig
+      ){ /*Loop: Convert cigar to string*/
+         tmpStr +=
+            numToStr(
+               tmpStr,
+               (samSTPtr)->cigValAryI[uiCig]
+            );
+         *tmpStr++ = (samSTPtr)->cigTypeStr[uiCig];
+      } /*Loop: Convert cigar to string*/
+   } /*Else: convert the cigar entry*/
+
+   *tmpStr++ = '\t';
+
+   /*RNEXT*/
+   ulCpStr(
+      tmpStr,
+      (samSTPtr)->rNextStr,
+      (samSTPtr)->lenRNextUC
+   );
+
+   tmpStr += (samSTPtr)->lenRNextUC;
+   *tmpStr++ = '\t';
+
+   /*PNEXT*/
+   tmpStr += numToStr(tmpStr, (samSTPtr)->mapqUC);
+   *tmpStr++ = '\t';
+
+   /*TLEN*/
+   tmpStr += numToStr(tmpStr, (samSTPtr)->mapqUC);
+   *tmpStr++ = '\t';
+
+   /*Copy the sequence to the buffer*/
+   ulCpStr(
+      tmpStr,
+      (samSTPtr)->seqStr,
+      (samSTPtr)->readLenUI
+   );
+
+   tmpStr += (samSTPtr)->readLenUI;
+   *tmpStr++ = '\t';
+
+   /*Copy the q-score entry to the buffer*/
+   if((samSTPtr)->qStr[1] == '\0') *tmpStr++ = '*';
+
+   else
+   { /*Else: there is an q-score entry*/
+      ulCpStr(
+         tmpStr,
          (samSTPtr)->qStr,
-         (samSTPtr)->extraStr
-      ); /*Print out the final entries*/
-   } /*Else: This is an entry, not a comment*/
+         (samSTPtr)->readLenUI
+      );
+
+      tmpStr += (samSTPtr)->readLenUI;
+   } /*Else: there is an q-score entry*/
+
+   *tmpStr++ = '\t';
+
+   /*Copy the extra entry*/
+   ulCpStr(
+      tmpStr,
+      (samSTPtr)->extraStr,
+      (samSTPtr)->lenExtraUI
+   );
+
+   tmpStr += (samSTPtr)->lenExtraUI;
+   *tmpStr++ = '\t';
+
+   *tmpStr++ = 'm';
+   *tmpStr++ = 'a';
+   *tmpStr++ = 't';
+   *tmpStr++ = 'c';
+   *tmpStr++ = 'h';
+   *tmpStr++ = ':';
+
+   tmpStr += numToStr(tmpStr, (samSTPtr)->numMatchUI);
+   *tmpStr++ = '\t';
+
+   *tmpStr++ = 'm';
+   *tmpStr++ = 'a';
+   *tmpStr++ = 's';
+   *tmpStr++ = 'k';
+   *tmpStr++ = ':';
+
+   tmpStr += numToStr(tmpStr, (samSTPtr)->numMaskUI);
+   *tmpStr++ = '\t';
+
+   *tmpStr++ = 's';
+   *tmpStr++ = 'n';
+   *tmpStr++ = 'p';
+   *tmpStr++ = ':';
+
+   tmpStr += numToStr(tmpStr, (samSTPtr)->numSnpUI);
+   *tmpStr++ = '\t';
+
+   *tmpStr++ = 'i';
+   *tmpStr++ = 'n';
+   *tmpStr++ = 's';
+   *tmpStr++ = ':';
+
+   tmpStr += numToStr(tmpStr, (samSTPtr)->numInsUI);
+   *tmpStr++ = '\t';
+
+   *tmpStr++ = 'd';
+   *tmpStr++ = 'e';
+   *tmpStr++ = 'l';
+   *tmpStr++ = ':';
+
+   tmpStr += numToStr(tmpStr, (samSTPtr)->numDelUI);
+   *tmpStr++ = '\n';
+
+   fwrite(
+      *buffStr,
+      sizeof(char),
+      (tmpStr - *buffStr),
+      (FILE *) (outFILE)
+   );
    
-   return errC;
-} /*printSamEntry*/
+   return 0;
+} /*pSamEntry*/
 
 /*-------------------------------------------------------\
-| Fun-10: pSamEntryAsFastq
-| Use:
+| Fun-11: pSamEntryAsFastq
 |  - Prints the sam entry as a fastq entry to a fastq file
 | Input:
 |  - samST:
@@ -952,8 +1218,7 @@ void pSamEntryAsFastq(
 } /*pSamEntryAsFq*/
 
 /*-------------------------------------------------------\
-| Fun-11: pSamEntryAsFasta
-| Use:
+| Fun-12: pSamEntryAsFasta
 |  - Prints the sam entry as a fasta entry to a fasta file
 | Input:
 |  - samST:
@@ -1001,11 +1266,10 @@ void pSamEntryAsFasta(
       );
       fprintf((outFILE), "%s\n", (samSTPtr)->seqStr);
    } /*If: This entry can be printed out*/
-} /*pSamEntryAsFq*/
+} /*pSamEntryAsFasta*/
 
 /*-------------------------------------------------------\
-| Fun-11: pSamEntryStats
-| Use:
+| Fun-13: pSamEntryStats
 |  - Prints out the stats in a samEntry struct to a file
 | Input:
 |  - samEntryST:

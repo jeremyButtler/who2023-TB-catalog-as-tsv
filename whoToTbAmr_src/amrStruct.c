@@ -27,7 +27,7 @@
 '   o fun-05: freeAmrStructArray
 '     - Frees an heap allocated array of amrStruct
 '       structures
-'   o fun-06: swapAmrStructs
+'   o fun-06: swapAmrStructs (.h only)
 '     - Swaps the values in two amrStruct structures
 '   o fun-07: sortAmrStructArray
 '     - Sort on an amrStruct array structures by reference
@@ -143,235 +143,6 @@ void freeAmrStructArray(
    free(*amrSTAry);
    *amrSTAry = 0;
 } /*freeAmrStructArray*/
-
-/*-------------------------------------------------------\
-| Fun-06: swapAmrStructs
-|   - Swaps the values in two amrStruct structures
-| Input:
-|   - firstAmrSTPtr:
-|     - Pointer to first amrStruct to swap values in
-|   - secAmrSTPtr:
-|     - Pointer to second amrStruct to swap values in
-| Output:
-|   - Modifies:
-|     o fristAmrSTPtr to have the values of secAmrSTPtr
-|     o secAmrSTPtr to have the values of frstAmrSTPtr
-\-------------------------------------------------------*/
-#define swapAmrStructs(firstAmrSTPtr, secAmrSTPtr){\
-   char tmpMacC = 0;\
-   char *tmpMacStr = 0;\
-   uint tmpMacUI = 0;\
-   ulong tmpMacUL = 0;\
-   int iAmrMac = 0;\
-   \
-   \
-   tmpMacUI = (firstAmrSTPtr).refPosUI;\
-   (firstAmrSTPtr).refPosUI = (secAmrSTPtr).refPosUI;\
-   (secAmrSTPtr).refPosUI = tmpMacUI;\
-   \
-   tmpMacUI = (firstAmrSTPtr).codonPosUI;\
-   (firstAmrSTPtr).codonPosUI = (secAmrSTPtr).codonPosUI;\
-   (secAmrSTPtr).codonPosUI = tmpMacUI;\
-   \
-   tmpMacUI = (firstAmrSTPtr).codonNumUI;\
-   (firstAmrSTPtr).codonNumUI = (secAmrSTPtr).codonNumUI;\
-   (secAmrSTPtr).codonNumUI = tmpMacUI;\
-   \
-   tmpMacUI = (firstAmrSTPtr).endCodonNumUI;\
-   (firstAmrSTPtr).endCodonNumUI =\
-      (secAmrSTPtr).endCodonNumUI;\
-   (secAmrSTPtr).endCodonNumUI = tmpMacUI;\
-   \
-   tmpMacUI = (firstAmrSTPtr).geneFirstRefUI;\
-   (firstAmrSTPtr).geneFirstRefUI =\
-      (secAmrSTPtr).geneFirstRefUI;\
-   (secAmrSTPtr).geneFirstRefUI = tmpMacUI;\
-   \
-   tmpMacUI = (firstAmrSTPtr).geneLastRefUI;\
-   (firstAmrSTPtr).geneLastRefUI =\
-      (secAmrSTPtr).geneLastRefUI;\
-   (secAmrSTPtr).geneLastRefUI = tmpMacUI;\
-   \
-   tmpMacUI = (firstAmrSTPtr).codonNumUI;\
-   (firstAmrSTPtr).codonNumUI = (secAmrSTPtr).codonNumUI;\
-   (secAmrSTPtr).codonNumUI = tmpMacUI;\
-   \
-   \
-   tmpMacStr = (firstAmrSTPtr).refAaStr;\
-   (firstAmrSTPtr).refAaStr = (secAmrSTPtr).refAaStr;\
-   (secAmrSTPtr).refAaStr = tmpMacStr;\
-   \
-   tmpMacUI = (firstAmrSTPtr).lenRefAaUI;\
-   (firstAmrSTPtr).lenRefAaUI = (secAmrSTPtr).lenRefAaUI;\
-   (secAmrSTPtr).lenRefAaUI = tmpMacUI;\
-   \
-   \
-   tmpMacStr = (firstAmrSTPtr).amrAaStr;\
-   (firstAmrSTPtr).amrAaStr = (secAmrSTPtr).amrAaStr;\
-   (secAmrSTPtr).amrAaStr = tmpMacStr;\
-   \
-   tmpMacUI = (firstAmrSTPtr).lenAmrAaUI;\
-   (firstAmrSTPtr).lenAmrAaUI = (secAmrSTPtr).lenAmrAaUI;\
-   (secAmrSTPtr).lenAmrAaUI = tmpMacUI;\
-   \
-   \
-   tmpMacC = (firstAmrSTPtr).aaDelBl;\
-   (firstAmrSTPtr).aaDelBl = (secAmrSTPtr).aaDelBl;\
-   (secAmrSTPtr).aaDelBl = tmpMacC;\
-   \
-   tmpMacC = (firstAmrSTPtr).aaMultiDupBl;\
-   (firstAmrSTPtr).aaMultiDupBl =\
-      (secAmrSTPtr).aaMultiDupBl;\
-   (secAmrSTPtr).aaMultiDupBl = tmpMacC;\
-   \
-   tmpMacC = (firstAmrSTPtr).frameshiftBl;\
-   (firstAmrSTPtr).frameshiftBl =\
-      (secAmrSTPtr).frameshiftBl;\
-   (secAmrSTPtr).frameshiftBl = tmpMacC;\
-   \
-   \
-   tmpMacStr = (firstAmrSTPtr).geneIdStr;\
-   (firstAmrSTPtr).geneIdStr = (secAmrSTPtr).geneIdStr;\
-   (secAmrSTPtr).geneIdStr = tmpMacStr;\
-   \
-   tmpMacUI = (firstAmrSTPtr).lenGeneIdUI;\
-   (firstAmrSTPtr).lenGeneIdUI=(secAmrSTPtr).lenGeneIdUI;\
-   (secAmrSTPtr).lenGeneIdUI = tmpMacUI;\
-   \
-   \
-   tmpMacStr = (firstAmrSTPtr).refSeqStr;\
-   (firstAmrSTPtr).refSeqStr = (secAmrSTPtr).refSeqStr;\
-   (secAmrSTPtr).refSeqStr = tmpMacStr;\
-   \
-   tmpMacUI = (firstAmrSTPtr).lenRefSeqUI;\
-   (firstAmrSTPtr).lenRefSeqUI=(secAmrSTPtr).lenRefSeqUI;\
-   (secAmrSTPtr).lenRefSeqUI = tmpMacUI;\
-   \
-   \
-   tmpMacStr = (firstAmrSTPtr).amrSeqStr;\
-   (firstAmrSTPtr).amrSeqStr = (secAmrSTPtr).amrSeqStr;\
-   (secAmrSTPtr).amrSeqStr = tmpMacStr;\
-   \
-   tmpMacUI = (firstAmrSTPtr).lenAmrSeqUI;\
-   (firstAmrSTPtr).lenAmrSeqUI=(secAmrSTPtr).lenAmrSeqUI;\
-   (secAmrSTPtr).lenAmrSeqUI = tmpMacUI;\
-   \
-   \
-   tmpMacStr = (firstAmrSTPtr).varIdStr;\
-   (firstAmrSTPtr).varIdStr = (secAmrSTPtr).varIdStr;\
-   (secAmrSTPtr).varIdStr = tmpMacStr;\
-   \
-   tmpMacUI = (firstAmrSTPtr).lenVarIdUI;\
-   (firstAmrSTPtr).lenVarIdUI = (secAmrSTPtr).lenVarIdUI;\
-   (secAmrSTPtr).lenVarIdUI = tmpMacUI;\
-   \
-   \
-   tmpMacStr = (firstAmrSTPtr).effectStr;\
-   (firstAmrSTPtr).effectStr = (secAmrSTPtr).effectStr;\
-   (secAmrSTPtr).effectStr = tmpMacStr;\
-   \
-   tmpMacUI = (firstAmrSTPtr).lenEffectUI;\
-   (firstAmrSTPtr).lenEffectUI=(secAmrSTPtr).lenEffectUI;\
-   (secAmrSTPtr).lenEffectUI = tmpMacUI;\
-   \
-   \
-   tmpMacStr = (firstAmrSTPtr).commentStr;\
-   (firstAmrSTPtr).commentStr = (secAmrSTPtr).commentStr;\
-   (secAmrSTPtr).commentStr = tmpMacStr;\
-   \
-   tmpMacUI = (firstAmrSTPtr).lenCommentUI;\
-   (firstAmrSTPtr).lenCommentUI =\
-      (secAmrSTPtr).lenCommentUI;\
-   (secAmrSTPtr).lenCommentUI = tmpMacUI;\
-   \
-   \
-   tmpMacC = (firstAmrSTPtr).dirFlag;\
-   (firstAmrSTPtr).dirFlag = (secAmrSTPtr).dirFlag;\
-   (secAmrSTPtr).dirFlag = tmpMacC;\
-   \
-   tmpMacC = (firstAmrSTPtr).gradeC;\
-   (firstAmrSTPtr).gradeC = (secAmrSTPtr).gradeC;\
-   (secAmrSTPtr).gradeC = tmpMacC;\
-   \
-   \
-   tmpMacUI = (firstAmrSTPtr).numSupReadsUI;\
-   (firstAmrSTPtr).numSupReadsUI =\
-       (secAmrSTPtr).numSupReadsUI;\
-   (secAmrSTPtr).numSupReadsUI = tmpMacUI;\
-   \
-   tmpMacUI = (firstAmrSTPtr).numMapReadsUI;\
-   (firstAmrSTPtr).numMapReadsUI =\
-       (secAmrSTPtr).numMapReadsUI;\
-   (secAmrSTPtr).numMapReadsUI = tmpMacUI;\
-   \
-   \
-   tmpMacC = (firstAmrSTPtr).mutTypeStr[0];\
-   \
-   (firstAmrSTPtr).mutTypeStr[0]\
-      = (secAmrSTPtr).mutTypeStr[0];\
-   \
-   (secAmrSTPtr).mutTypeStr[0] = tmpMacC;\
-   \
-   tmpMacC = (firstAmrSTPtr).mutTypeStr[1];\
-   \
-   (firstAmrSTPtr).mutTypeStr[1]\
-      = (secAmrSTPtr).mutTypeStr[1];\
-   \
-   (secAmrSTPtr).mutTypeStr[1] = tmpMacC;\
-   \
-   tmpMacC = (firstAmrSTPtr).mutTypeStr[2];\
-   \
-   (firstAmrSTPtr).mutTypeStr[2]\
-      = (secAmrSTPtr).mutTypeStr[2];\
-   \
-   (secAmrSTPtr).mutTypeStr[2] = tmpMacC;\
-   \
-   \
-   tmpMacStr = (firstAmrSTPtr).needsGeneStr;\
-   (firstAmrSTPtr).needsGeneStr =\
-      (secAmrSTPtr).needsGeneStr;\
-   (secAmrSTPtr).needsGeneStr = tmpMacStr;\
-   \
-   tmpMacUI = (firstAmrSTPtr).lenNeedsGeneUI;\
-   (firstAmrSTPtr).lenNeedsGeneUI =\
-      (secAmrSTPtr).lenNeedsGeneUI;\
-   (secAmrSTPtr).lenNeedsGeneUI = tmpMacUI;\
-   \
-   tmpMacC = (firstAmrSTPtr).highResBl;\
-   (firstAmrSTPtr).highResBl = (secAmrSTPtr).highResBl;\
-   (secAmrSTPtr).highResBl = tmpMacC;\
-   \
-   tmpMacC = (firstAmrSTPtr).lowResBl;\
-   (firstAmrSTPtr).lowResBl = (secAmrSTPtr).lowResBl;\
-   (secAmrSTPtr).lowResBl = tmpMacC;\
-   \
-   tmpMacC = (firstAmrSTPtr).additiveResBl;\
-   (firstAmrSTPtr).additiveResBl =\
-      (secAmrSTPtr).additiveResBl;\
-   (secAmrSTPtr).additiveResBl = tmpMacC;\
-   \
-   \
-   for(\
-      iAmrMac = 0;\
-      iAmrMac < def_amrST_maxDrugs;\
-      ++iAmrMac\
-   ){ /*Loop: Blank the antibiotic flags*/\
-      tmpMacUL = (firstAmrSTPtr).amrFlagsUL[iAmrMac];\
-      \
-      (firstAmrSTPtr).amrFlagsUL[iAmrMac] =\
-         (secAmrSTPtr).amrFlagsUL[iAmrMac];\
-      \
-      (secAmrSTPtr).amrFlagsUL[iAmrMac] = tmpMacUL;\
-      \
-      \
-      tmpMacUL =(firstAmrSTPtr).crossResFlagsUL[iAmrMac];\
-      \
-      (firstAmrSTPtr).crossResFlagsUL[iAmrMac] =\
-         (secAmrSTPtr).crossResFlagsUL[iAmrMac];\
-      \
-      (secAmrSTPtr).crossResFlagsUL[iAmrMac] = tmpMacUL;\
-   } /*Loop: Blank the antibiotic flags*/\
-} /*swapAmrStructs*/
 
 /*-------------------------------------------------------\
 | Fun-07: sortAmrStructArray
@@ -529,8 +300,6 @@ int findNearestAmr(
 
      else
      { /*Else: I found the query*/
-        if(midI == 0) return 0;
-
         while(midI > 0)
         { /*Loop: Make sure I am on the first amr*/
            if(amrAryST[midI - 1].refPosUI < qryUI) break;
@@ -543,11 +312,15 @@ int findNearestAmr(
      /*branchless whith an if return was slower here*/
    } /*Loop: Search for the starting coordinate*/
 
+   if(midI >= numAmrI) return -1;
+
    /*Make sure it is alwasy greater than*/
    midI += (amrAryST[midI].refPosUI < qryUI);
 
+   if(midI >= numAmrI) return -1;
+
    /*I may have the same coordinates repeated*/
-   while((midI >0) & (amrAryST[midI -1].refPosUI >qryUI))
+   while((midI >0) && (amrAryST[midI -1].refPosUI >qryUI))
       --midI;
 
    while(midI > 0)
@@ -1629,8 +1402,22 @@ struct amrStruct * readTbAmrTbl(
       *   - Read in the commenht entry
       \**************************************************/
 
+      /*This is not safe, but for some odd reason the
+      `  safer version crashes my program, except when
+      `  it is in the debugger
+      */
+      /*
       amrSTAry[uiAmr].lenCommentUI =
          ulLenStr(tmpStr, ulTab, '\t');
+      */
+
+      /*Safer, but I can not figure out why it does not
+      `  work
+      */
+      amrSTAry[uiAmr].lenCommentUI = 0;
+
+      while(tmpStr[amrSTAry[uiAmr].lenCommentUI] > 31)
+         ++amrSTAry[uiAmr].lenCommentUI;
 
       amrSTAry[uiAmr].commentStr =
          malloc(

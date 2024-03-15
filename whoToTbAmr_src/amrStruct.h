@@ -271,6 +271,236 @@ void freeAmrStructArray(
 );
 
 /*-------------------------------------------------------\
+| Fun-06: swapAmrStructs
+|   - Swaps the values in two amrStruct structures
+| Input:
+|   - firstAmrSTPtr:
+|     - first amrStruct to swap values in (not a pointer)
+|   - secAmrSTPtr:
+|     - second amrStruct to swap values in (not a pointer)
+| Output:
+|   - Modifies:
+|     o fristAmrSTPtr to have the values of secAmrSTPtr
+|     o secAmrSTPtr to have the values of frstAmrSTPtr
+\-------------------------------------------------------*/
+#define swapAmrStructs(firstAmrST, secAmrST){\
+   char tmpMacC = 0;\
+   char *tmpMacStr = 0;\
+   uint tmpMacUI = 0;\
+   ulong tmpMacUL = 0;\
+   int iAmrMac = 0;\
+   \
+   \
+   tmpMacUI = (firstAmrST).refPosUI;\
+   (firstAmrST).refPosUI = (secAmrST).refPosUI;\
+   (secAmrST).refPosUI = tmpMacUI;\
+   \
+   tmpMacUI = (firstAmrST).codonPosUI;\
+   (firstAmrST).codonPosUI = (secAmrST).codonPosUI;\
+   (secAmrST).codonPosUI = tmpMacUI;\
+   \
+   tmpMacUI = (firstAmrST).codonNumUI;\
+   (firstAmrST).codonNumUI = (secAmrST).codonNumUI;\
+   (secAmrST).codonNumUI = tmpMacUI;\
+   \
+   tmpMacUI = (firstAmrST).endCodonNumUI;\
+   (firstAmrST).endCodonNumUI =\
+      (secAmrST).endCodonNumUI;\
+   (secAmrST).endCodonNumUI = tmpMacUI;\
+   \
+   tmpMacUI = (firstAmrST).geneFirstRefUI;\
+   (firstAmrST).geneFirstRefUI =\
+      (secAmrST).geneFirstRefUI;\
+   (secAmrST).geneFirstRefUI = tmpMacUI;\
+   \
+   tmpMacUI = (firstAmrST).geneLastRefUI;\
+   (firstAmrST).geneLastRefUI =\
+      (secAmrST).geneLastRefUI;\
+   (secAmrST).geneLastRefUI = tmpMacUI;\
+   \
+   tmpMacUI = (firstAmrST).codonNumUI;\
+   (firstAmrST).codonNumUI = (secAmrST).codonNumUI;\
+   (secAmrST).codonNumUI = tmpMacUI;\
+   \
+   \
+   tmpMacStr = (firstAmrST).refAaStr;\
+   (firstAmrST).refAaStr = (secAmrST).refAaStr;\
+   (secAmrST).refAaStr = tmpMacStr;\
+   \
+   tmpMacUI = (firstAmrST).lenRefAaUI;\
+   (firstAmrST).lenRefAaUI = (secAmrST).lenRefAaUI;\
+   (secAmrST).lenRefAaUI = tmpMacUI;\
+   \
+   \
+   tmpMacStr = (firstAmrST).amrAaStr;\
+   (firstAmrST).amrAaStr = (secAmrST).amrAaStr;\
+   (secAmrST).amrAaStr = tmpMacStr;\
+   \
+   tmpMacUI = (firstAmrST).lenAmrAaUI;\
+   (firstAmrST).lenAmrAaUI = (secAmrST).lenAmrAaUI;\
+   (secAmrST).lenAmrAaUI = tmpMacUI;\
+   \
+   \
+   tmpMacC = (firstAmrST).aaDelBl;\
+   (firstAmrST).aaDelBl = (secAmrST).aaDelBl;\
+   (secAmrST).aaDelBl = tmpMacC;\
+   \
+   tmpMacC = (firstAmrST).aaMultiDupBl;\
+   (firstAmrST).aaMultiDupBl =\
+      (secAmrST).aaMultiDupBl;\
+   (secAmrST).aaMultiDupBl = tmpMacC;\
+   \
+   tmpMacC = (firstAmrST).frameshiftBl;\
+   (firstAmrST).frameshiftBl =\
+      (secAmrST).frameshiftBl;\
+   (secAmrST).frameshiftBl = tmpMacC;\
+   \
+   \
+   tmpMacStr = (firstAmrST).geneIdStr;\
+   (firstAmrST).geneIdStr = (secAmrST).geneIdStr;\
+   (secAmrST).geneIdStr = tmpMacStr;\
+   \
+   tmpMacUI = (firstAmrST).lenGeneIdUI;\
+   (firstAmrST).lenGeneIdUI=(secAmrST).lenGeneIdUI;\
+   (secAmrST).lenGeneIdUI = tmpMacUI;\
+   \
+   \
+   tmpMacStr = (firstAmrST).refSeqStr;\
+   (firstAmrST).refSeqStr = (secAmrST).refSeqStr;\
+   (secAmrST).refSeqStr = tmpMacStr;\
+   \
+   tmpMacUI = (firstAmrST).lenRefSeqUI;\
+   (firstAmrST).lenRefSeqUI=(secAmrST).lenRefSeqUI;\
+   (secAmrST).lenRefSeqUI = tmpMacUI;\
+   \
+   \
+   tmpMacStr = (firstAmrST).amrSeqStr;\
+   (firstAmrST).amrSeqStr = (secAmrST).amrSeqStr;\
+   (secAmrST).amrSeqStr = tmpMacStr;\
+   \
+   tmpMacUI = (firstAmrST).lenAmrSeqUI;\
+   (firstAmrST).lenAmrSeqUI=(secAmrST).lenAmrSeqUI;\
+   (secAmrST).lenAmrSeqUI = tmpMacUI;\
+   \
+   \
+   tmpMacStr = (firstAmrST).varIdStr;\
+   (firstAmrST).varIdStr = (secAmrST).varIdStr;\
+   (secAmrST).varIdStr = tmpMacStr;\
+   \
+   tmpMacUI = (firstAmrST).lenVarIdUI;\
+   (firstAmrST).lenVarIdUI = (secAmrST).lenVarIdUI;\
+   (secAmrST).lenVarIdUI = tmpMacUI;\
+   \
+   \
+   tmpMacStr = (firstAmrST).effectStr;\
+   (firstAmrST).effectStr = (secAmrST).effectStr;\
+   (secAmrST).effectStr = tmpMacStr;\
+   \
+   tmpMacUI = (firstAmrST).lenEffectUI;\
+   (firstAmrST).lenEffectUI=(secAmrST).lenEffectUI;\
+   (secAmrST).lenEffectUI = tmpMacUI;\
+   \
+   \
+   tmpMacStr = (firstAmrST).commentStr;\
+   (firstAmrST).commentStr = (secAmrST).commentStr;\
+   (secAmrST).commentStr = tmpMacStr;\
+   \
+   tmpMacUI = (firstAmrST).lenCommentUI;\
+   (firstAmrST).lenCommentUI =\
+      (secAmrST).lenCommentUI;\
+   (secAmrST).lenCommentUI = tmpMacUI;\
+   \
+   \
+   tmpMacC = (firstAmrST).dirFlag;\
+   (firstAmrST).dirFlag = (secAmrST).dirFlag;\
+   (secAmrST).dirFlag = tmpMacC;\
+   \
+   tmpMacC = (firstAmrST).gradeC;\
+   (firstAmrST).gradeC = (secAmrST).gradeC;\
+   (secAmrST).gradeC = tmpMacC;\
+   \
+   \
+   tmpMacUI = (firstAmrST).numSupReadsUI;\
+   (firstAmrST).numSupReadsUI =\
+       (secAmrST).numSupReadsUI;\
+   (secAmrST).numSupReadsUI = tmpMacUI;\
+   \
+   tmpMacUI = (firstAmrST).numMapReadsUI;\
+   (firstAmrST).numMapReadsUI =\
+       (secAmrST).numMapReadsUI;\
+   (secAmrST).numMapReadsUI = tmpMacUI;\
+   \
+   \
+   tmpMacC = (firstAmrST).mutTypeStr[0];\
+   \
+   (firstAmrST).mutTypeStr[0]\
+      = (secAmrST).mutTypeStr[0];\
+   \
+   (secAmrST).mutTypeStr[0] = tmpMacC;\
+   \
+   tmpMacC = (firstAmrST).mutTypeStr[1];\
+   \
+   (firstAmrST).mutTypeStr[1]\
+      = (secAmrST).mutTypeStr[1];\
+   \
+   (secAmrST).mutTypeStr[1] = tmpMacC;\
+   \
+   tmpMacC = (firstAmrST).mutTypeStr[2];\
+   \
+   (firstAmrST).mutTypeStr[2]\
+      = (secAmrST).mutTypeStr[2];\
+   \
+   (secAmrST).mutTypeStr[2] = tmpMacC;\
+   \
+   \
+   tmpMacStr = (firstAmrST).needsGeneStr;\
+   (firstAmrST).needsGeneStr =\
+      (secAmrST).needsGeneStr;\
+   (secAmrST).needsGeneStr = tmpMacStr;\
+   \
+   tmpMacUI = (firstAmrST).lenNeedsGeneUI;\
+   (firstAmrST).lenNeedsGeneUI =\
+      (secAmrST).lenNeedsGeneUI;\
+   (secAmrST).lenNeedsGeneUI = tmpMacUI;\
+   \
+   tmpMacC = (firstAmrST).highResBl;\
+   (firstAmrST).highResBl = (secAmrST).highResBl;\
+   (secAmrST).highResBl = tmpMacC;\
+   \
+   tmpMacC = (firstAmrST).lowResBl;\
+   (firstAmrST).lowResBl = (secAmrST).lowResBl;\
+   (secAmrST).lowResBl = tmpMacC;\
+   \
+   tmpMacC = (firstAmrST).additiveResBl;\
+   (firstAmrST).additiveResBl =\
+      (secAmrST).additiveResBl;\
+   (secAmrST).additiveResBl = tmpMacC;\
+   \
+   \
+   for(\
+      iAmrMac = 0;\
+      iAmrMac < def_amrST_maxDrugs;\
+      ++iAmrMac\
+   ){ /*Loop: Blank the antibiotic flags*/\
+      tmpMacUL = (firstAmrST).amrFlagsUL[iAmrMac];\
+      \
+      (firstAmrST).amrFlagsUL[iAmrMac] =\
+         (secAmrST).amrFlagsUL[iAmrMac];\
+      \
+      (secAmrST).amrFlagsUL[iAmrMac] = tmpMacUL;\
+      \
+      \
+      tmpMacUL =(firstAmrST).crossResFlagsUL[iAmrMac];\
+      \
+      (firstAmrST).crossResFlagsUL[iAmrMac] =\
+         (secAmrST).crossResFlagsUL[iAmrMac];\
+      \
+      (secAmrST).crossResFlagsUL[iAmrMac] = tmpMacUL;\
+   } /*Loop: Blank the antibiotic flags*/\
+} /*swapAmrStructs*/
+
+
+/*-------------------------------------------------------\
 | Fun-07: sortAmrStructArray
 |   - Sort on an amrStruct array structures by reference
 |     coordiante (uses shell sort)

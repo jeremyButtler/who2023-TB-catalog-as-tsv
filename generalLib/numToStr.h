@@ -39,43 +39,29 @@
 |     o Number of characters copied to cstr
 \-------------------------------------------------------*/
 #define numToStr(cstr, numUL)({\
-   unsigned long macNumUL;\
-   int macNumDigI = 0;\
-   int macSwapI = 0;\
-   int macStartI = 0;\
+   unsigned long macNumUL = (numUL);\
    int macRetI = 0;\
-   int macMidI = 0;\
+   char *startMacStr = 0;\
+   char *endMacStr = 0;\
+   char swapMacC = 0;\
    \
-   for(macNumUL=(numUL); macNumUL; macNumUL /= 10)\
-   { /*Loop: Copy number to c-string*/\
-      (cstr)[macNumDigI] = (macNumUL % 10) + 48;\
-      ++macNumDigI;\
-   } /*Loop: Copy number to c-string*/\
-    \
-   (cstr)[macNumDigI] = '\0';\
-   macRetI = macNumDigI;\
+   do{\
+      (cstr)[macRetI] = (macNumUL % 10) + 48;\
+      ++macRetI;\
+      macNumUL /= 10;\
+   } while(macNumUL);\
    \
-   macMidI = macRetI >> 1;\
-   macStartI = 0;\
+   (cstr)[macRetI] = '\0';\
    \
-   if(!(macNumDigI & 1)) \
-   { /*If: I only have two digits*/\
-      macSwapI = (cstr)[macMidI];\
-      (cstr)[macMidI] = (cstr)[macMidI - 1];\
-      (cstr)[macMidI - 1] = macSwapI;\
-   } /*If: I only have two digits*/\
+   endMacStr = (cstr) + (macRetI >> 1);\
+   startMacStr = endMacStr - (! (macRetI & 1));\
    \
-   for(\
-      macNumDigI = macNumDigI - 1;\
-      macNumDigI > macMidI;\
-     --macNumDigI\
-   ){ /*Loop: Swap digits around*/\
-      macSwapI = (cstr)[macStartI];\
-      (cstr)[macStartI] = (cstr)[macNumDigI];\
-      (cstr)[macNumDigI] = macSwapI;\
-      ++macStartI;\
-   } /*Loop: Swap digits around*/\
-   \
+   /*Swap around even digit cases*/\
+   do{ /*Loop: Reverse array*/\
+      swapMacC = *endMacStr;\
+      *endMacStr++ = *startMacStr;\
+      *startMacStr-- = swapMacC;\
+   } while(startMacStr >= (cstr)); /*Loop: reverse array*/\
    \
    macRetI;\
 }) /*numToStr*/
@@ -100,12 +86,12 @@
    unsigned long macNumUL;\
    int macNumDigI = 0;\
    \
-   for(macNumUL=(numUL); macNumUL; macNumUL /= 10)\
-   { /*Loop: Copy number to c-string*/\
+   do{\
       (cstr)[macNumDigI] = (macNumUL % 10) + 48;\
       ++macNumDigI;\
-   } /*Loop: Copy number to c-string*/\
-    \
+      macNumUL /= 10;\
+   } while(macNumUL);\
+   \
    (cstr)[macNumDigI] = '\0';\
    macNumDigI;\
 }) /*backNumToStr*/
