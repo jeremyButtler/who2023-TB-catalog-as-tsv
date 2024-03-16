@@ -17,8 +17,15 @@ These converted WHO catalogs have only variants with AMR
 
 # Update log
 
+March 16, 2024 No bugs, I am just adding some more data
+  to the README. I also got a response back from the WHO
+  and they pointed my to their using the 2023 catalog pdf.
+  I had read this before, but having worked a bit with the
+  catalog gave me a bit better understanding of some of
+  the decisions they made.
+
 March 15, 2024 I caught some variants with amino acid
-  mutations that exceded the gene lengths. These have
+  mutations that go over the gene lengths. These have
   had the amino acids removed (variant id unchanged).
 
 March 14, 2024 I found that a few codons were off in my
@@ -222,10 +229,19 @@ In there 2023 catalog there are some variant id's labeled
 **Decision**: Variants are ignored; not in converted files
 
    - List of missing AMR variants:
-   - fgd1_deletion
-   - ethA_deletion
-   - katG_deletion
-   - pncA_deletion
+   - fgd1\_deletion
+   - ethA\_deletion
+   - katG\_deletion
+   - pncA\_deletion
+
+See table four for a list of all variants missing a genome
+  indices entry.
+
+From my issue with the WHO I was pointed to there using
+  this database pdf. I did not understand this enough
+  when I first read it, but it appears that this was
+  done on purpose or was at least known. I am not sure
+  why.
 
 #### Duplicate entries? (Rare?)
 
@@ -239,29 +255,38 @@ The gene\_lof variant id's in the 2023 catalog have
 **Decision**: I ingoring these possible duplicates and
   pray they cause no problems
 
+From my issue with the WHO I was pointed to there using
+  this database pdf. I did not understand this enough
+  when I first read it, but it appears that this was
+  done on purpose to allow multiple grades to be matched
+  up (I am guessing grade 1 and 2 to be mixed). I have no
+  idea why they did this and it does not make much sense
+  to me.
+
 ##### Table 1; LoFs that are AMRs
 
-|  Variant   | Repeats | No. unique | No. dup |
-|:-----------|:-------:|:----------:|:-------:|
-| Rv0678_LoF |    2    |     604    |   604   |
-| Rv2983_LoF |    1    |    1007    |    0    |
-| ddn_LoF    |    1    |     689    |    0    |
-| ethA_LoF   |    1    |    1943    |    0    |
-| fbiA_LoF   |    1    |    1645    |    0    |
-| fbiB_LoF   |    1    |    2115    |    0    |
-| fbiC_LoF   |    1    |    4130    |    0    | 
-| fgd1_LoF   |    1    |    1487    |    0    |
-| gid_LoF    |    1    |     756    |    0    |
-| katG_LoF   |    1    |    3041    |    0    |
-| pepQ_LoF   |    2    |    1742    |  1742   |
-| pncA_LoF   |    1    |     780    |    0    |
-| tlyA_LoF   |    1    |    1195    |    0    |
+|   Variant   | Repeats | No. unique | No. dup |
+|:------------|:-------:|:----------:|:-------:|
+| Rv0678\_LoF |    2    |     604    |   604   |
+| Rv2983\_LoF |    1    |    1007    |    0    |
+| ddn\_LoF    |    1    |     689    |    0    |
+| ethA\_LoF   |    1    |    1943    |    0    |
+| fbiA\_LoF   |    1    |    1645    |    0    |
+| fbiB\_LoF   |    1    |    2115    |    0    |
+| fbiC\_LoF   |    1    |    4130    |    0    | 
+| fgd1\_LoF   |    1    |    1487    |    0    |
+| gid\_LoF    |    1    |     756    |    0    |
+| katG\_LoF   |    1    |    3041    |    0    |
+| pepQ\_LoF   |    2    |    1742    |  1742   |
+| pncA\_LoF   |    1    |     780    |    0    |
+| tlyA\_LoF   |    1    |    1195    |    0    |
 
-Table: Showing the total number of duplicates likely in
-  my conversion of the how database. No. is number.
-  Repeats is the number of times a variatn id was
-  duplicated. This table is for grade 1 and 2 variants
-  (known antibiotic resitance only).
+Table 1:
+  Showing the total number of duplicates likely in
+    my conversion of the how database. No. is number.
+    Repeats is the number of times a variatn id was
+    duplicated. This table is for grade 1 and 2 variants
+    (known antibiotic resitance only).
 
 Total known duplicates in my converted database: 2346. I
   have no idea if there are duplicate non-LoF entries.
@@ -337,17 +362,20 @@ Number of LoF entries with more than one variant id in the
 | whiB6\_LoF   |    3    |     NA     |    0    |
 | whiB7\_LoF   |    3    |     NA     |    0    |
 
-Table: Total number of LoF entries in the 2023 catalog
-  that could be duplicated (more than one LoF per gene)
-  These include the grade 3, 4, and 5 (no antibiotic
-  resistance). No. is short for number. NA means the
-  variant id could not be found in the genome indice tab.
+Table 2:
+  Total number of LoF entries in the 2023 catalog
+    that could be duplicated (more than one LoF per gene)
+    These include the grade 3, 4, and 5 (no antibiotic
+    resistance). No. is short for number. NA means the
+    variant id could not be found in the genome indice
+    tab.
   
 Total duplicates (excluding unique genes): 18835. It is
   a bit worring that some non-resitance LoF entries are
   missing from the genome indice page. At least one
-  Rv2477c entry has a see genome indice tab entry.
-  However, I have not checked any other entries.
+  Rv2477c entry has a see genome indice tab entry. See
+  table four for a list of all missing enteries. There are
+  not that many (156 out of ~40000).
   
 
 ```
@@ -377,7 +405,7 @@ rm tmp.tsv
 #### Amino acid sequences outside of genes (Rare)
 
 In the 2023 catalog there are some AMR amino acid
-  mutations that excede the genes boundries. These caused
+  mutations that go over the genes range. These caused
   some problems with my tbAmr, a program I am working on.
   I tried to fix this issue, but ran into problems of the
   fixes failing. Basically, after 6 to 8 hours I decided
@@ -386,6 +414,8 @@ In the 2023 catalog there are some AMR amino acid
 **Decision**: I removed the amino acid information from
    these entries (variant ids are not changed), but the
    extra information I added is removed.
+
+##### Table 3:
 
 Here is a table of the variant ids I found:
 
@@ -400,12 +430,13 @@ Here is a table of the variant ids I found:
 | pncA\_p.Thr61fs         |       1      | frame shift   |
 | tlyA\_p.Met1?           |      14      | removes start |
 
-Table: Table showing the variant ids that hadd an extra
-       base or extra amino acid sequences outside of
-       genes. These would have their aa sequences wiped,
-       but variant ids remain the same. Number times is
-       the number of times this was an issue. The effect
-       is the effect of the mutation.
+Table 3:
+  Table showing the variant ids that hadd an extra
+    base or extra amino acid sequences outside of
+    genes. These would have their aa sequences wiped,
+    but variant ids remain the same. Number times is
+    the number of times this was an issue. The effect
+    is the effect of the mutation.
  
 Here is the code I used to get this table
 
@@ -417,3 +448,172 @@ awk \
   sort |
   uniq -c 
 ```
+
+#### Variants missing coordinates:
+
+I was just curious how many entries had an see genome
+  coordinate entry, but were missing an genome coordinate.
+  From my previous tables (2 and 1), I know only four of
+  these entries were grade 1 or 2 (AMRs; see table 1).
+  Otherwise my conversion function would have printed
+  them out as errors.
+
+##### Table 4:
+
+Total missing ids: 156
+
+|          Variant           |  Count  |
+|:---------------------------|:-------:|
+| PPE35\_LoF                 |    1    |
+| PPE35\_deletion            |    1    |
+| Rv0010c\_LoF               |    1    |
+| Rv0010c\_p.Ter142Cysext\*? |    1    |
+| Rv0565c\_LoF               |    1    |
+| Rv0565c\_p.Ter487Trpext\*? |    1    |
+| Rv0678\_p.Ter166Argext\*?  |    2    |
+| Rv1129c\_LoF               |    4    |
+| Rv1258c\_LoF               |    3    |
+| Rv1258c\_deletion          |    3    |
+| Rv1258c\_p.Ter420Glyext\*? |    3    |
+| Rv1979c\_LoF               |    2    |
+| Rv1979c\_deletion          |    2    |
+| Rv2477c\_LoF               |    7    |
+| Rv2477c\_p.Ter559Glnext\*? |    6    |
+| Rv2680\_LoF                |    1    |
+| Rv2681\_LoF                |    1    |
+| Rv2752c\_LoF               |    5    |
+| Rv2752c\_deletion          |    5    |
+| Rv2752c\_p.Ter559Glnext\*? |    3    |
+| Rv2752c\_p.Ter559Tyrext\*? |    5    |
+| Rv2752c\_p.Ter559ext\*?    |    2    |
+| Rv2983\_p.Ter215Argext\*?  |    2    |
+| Rv3083\_LoF                |    1    |
+| Rv3083\_deletion           |    1    |
+| Rv3236c\_LoF               |    1    |
+| Rv3236c\_deletion          |    1    |
+| Rv3236c\_p.Ter386Tyrext\*? |    1    |
+| aftB\_LoF                  |    1    |
+| aftB\_p.Ter628Argext\*?    |    1    |
+| aftB\_p.Ter628Serext\*?    |    1    |
+| aftB\_p.Ter628ext\*?       |    1    |
+| ahpC\_LoF                  |    1    |
+| ahpC\_deletion             |    1    |
+| ahpC\_p.Ter196ext\*?       |    1    |
+| bacA\_LoF                  |    4    |
+| bacA\_deletion             |    4    |
+| dnaA\_LoF                  |    1    |
+| dnaA\_p.Ter508Gluext\*?    |    1    |
+| dnaA\_p.Ter508Tyrext\*?    |    1    |
+| eis\_deletion              |    2    |
+| embA\_LoF                  |    1    |
+| embR\_LoF                  |    1    |
+| embR\_deletion             |    1    |
+| embR\_p.Ter389Serext\*?    |    1    |
+| ethA\_deletion             |    1    |
+| ethR\_LoF                  |    1    |
+| fbiC\_p.Ter857Trpext\*?    |    2    |
+| fgd1\_deletion             |    2    |
+| gid\_p.Ter225Cysext\*?     |    1    |
+| glpK\_LoF                  |    6    |
+| glpK\_deletion             |    6    |
+| gyrA\_p.Ter839ext\*?       |    2    |
+| gyrB\_LoF                  |    1    |
+| hadA\_LoF                  |    1    |
+| katG\_deletion             |    1    |
+| katG\_p.Ter741Argext\*?    |    1    |
+| katG\_p.Ter741Trpext\*?    |    1    |
+| lpqB\_LoF                  |    1    |
+| mmpS5\_LoF                 |    2    |
+| mshA\_LoF                  |    2    |
+| mshA\_deletion             |    2    |
+| mshA\_p.Ter481ext\*?       |    2    |
+| mtrB\_LoF                  |    2    |
+| ndh\_LoF                   |    3    |
+| ndh\_deletion              |    3    |
+| panD\_LoF                  |    1    |
+| pncA\_deletion             |    1    |
+| pncA\_p.Ter187Argext\*?    |    1    |
+| pncA\_p.Ter187Glyext\*?    |    1    |
+| pncA\_p.Ter187Trpext\*?    |    1    |
+| rpsA\_LoF                  |    1    |
+| rpsA\_p.Ter482ext\*?       |    1    |
+| rpsL\_LoF                  |    1    |
+| sigE\_LoF                  |    1    |
+| tlyA\_p.Ter269Trpext\*?    |    1    |
+| tsnR\_LoF                  |    1    |
+| whiB6\_LoF                 |    3    |
+| whiB6\_deletion            |    3    |
+| whiB6\_p.Ter117Trpext\*?   |    2    |
+| whiB7\_LoF                 |    3    |
+
+Table 4:
+  Number of variants that have an 
+    "See genome coordinates" entry, but have no actual
+    genome coordinates entry.
+
+##### Code used to build table 4
+
+```
+awk '
+       BEGIN{OFS=FS="\t"};
+       {if($7 ~ /Genomic_coor/) print $4;};
+    ' \
+    < WHO-2023-TB-tab1-master.tsv \
+  > tmp.tsv;
+
+awk \
+    '{print $1;}' \
+    < WHO-2023-TB-tab2-indices.tsv \
+  > tmp-filt.tsv;
+
+# Get the count for variants missing locations
+grep -v -f tmp-filt.tsv tmp.tsv | wc -l
+
+# Get the table of variants missing ids
+grep \
+    -v \
+    -f tmp-filt.tsv tmp.tsv |
+  sort |
+  uniq -c |
+  awk '
+         BEGIN{
+            printf "|          Variant           |";
+            printf "  Count  |\n";
+            printf "|:---------------------------|";
+            printf ":-------:|\n";
+         }; # BEGIN (print header)
+
+         { # MAIN add formatting
+            # Escape some markdown reserved characters
+            gsub(/_/, "\\_", $2);
+            gsub(/\*/, "\\*", $2);
+
+            # Add a left pad to the variant id
+            padI = 26 - length($2);
+               # I  happen to know the longest variant id
+               #   that was printed out was 26 characters.
+               # This will need to be changed if there are
+               #   longer variant ids in the missed
+               #   entries in the future.
+
+            for(iPad=0; iPad < padI; ++iPad) $2 = $2 " ";
+
+            # Here I am adding a center padding to the
+            # number
+            if($1 < 10) $1 = "   " $1 "   ";
+            else if($1 < 100) $1 = "  " $1 "   ";
+            else if($1 < 1000) $1 = "  " $1 "  ";
+            else if($1 < 10000) $1 = " " $1 "  " ;
+            else if($1 < 100000) $1 = " " $1 " ";
+            else if($1 < 1000000) $1 = $1 " ";
+            else $1 = $1;
+
+            print "| " $2 " | " $1 " |";
+         }; # Main
+      ' \
+  > variantsMissingIndices.md
+
+rm tmp.tsv;
+rm tmp-filt.tsv;
+```
+
