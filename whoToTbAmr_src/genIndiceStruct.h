@@ -2,23 +2,18 @@
 # Name: geneIndiceStruct
 #   - Has functions for reading the genome indice (tab 2)
 #     of the WHO's 2023 TB catalog.
-#   - Based on what happened between 2021 (edition 1) and
-#     2023 (edition 2), I suspect that I will have to
-#     change this for whenever catalog edition 3 comes
-#     out. How the WHO handled their 2023 catalog is a bug
-#     of its own.
 \#######################################################*/
 
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\
 ' SOF: Start Of File
 '   o header: 
-'     - Has included libraries and defines
-'   o st-01: genIndice
+'     - Has the header guards
+'   o .h st-01: genIndice
 '     - Structure to hold a single genome indice from
 '       the who 2023 catalog
-'   o fun-01: blankGeneIndice
-'     - Blanks all non-pointer values in a genIndice
-'   o fun-02: initGeneIndice
+'   o .h fun-01: blankGeneIndice
+'     - Blanks the positon in an gene indice structure
+'   o .h fun-02: initGeneIndice
 '     - Initialize a genIndice
 '   o fun-03: makeGenIndice
 '     - Makes a new genIndice
@@ -30,13 +25,13 @@
 '       geneIndiceST
 '   o fun-06: freeGeneIndiceAry
 '     - Frees an array of geneIndiceST structures.
-'   o fun-07: cmpGenIndices
+'   o .c fun-07: cmpGenIndices
 '     - Compares to see if one genIndice structure is
 '       less than another
-'   o fun-08: cmpGenIndiceToStr
+'   o .c fun-08: cmpGenIndiceToStr
 '     - Compares to see if a genIndice structure is
 '       less than a string
-'   o fun-09: swapGenIndices
+'   o .c fun-09: swapGenIndices
 '     - Swaps two array items in a genIndice structure
 '       around
 '   o fun-10: genIndiceSort
@@ -49,10 +44,12 @@
 '     - Reads in the genome coordinates and variants from
 '       the 2023 WHO TB catalog genome indice tab (saved
 '       as a tsv)
+'   o license:
+'     - Licensing for this code (public domain / mit)
 \~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 /*-------------------------------------------------------\
 | Header: 
-|   - Has included libraries and defines
+|   - Has the header guards
 \-------------------------------------------------------*/
 
 #ifndef GENOME_INDICIE_STRUCT_H
@@ -78,7 +75,24 @@ typedef struct genIndice
 }genIndice;
 
 /*-------------------------------------------------------\
-| Fun-01: initGeneIndice
+| Fun-01: blankGeneIndice
+|   - Blanks the positon in an gene indice structure
+| Input:
+|   - geneIndiceSTPtr:
+|     o Pointer to genIndice to blank
+| Output:
+|   - Modifies:
+|     o posUI in geneIndiceSTPtr to be 0
+\-------------------------------------------------------*/
+#define \
+blankGenIndice(\
+   genIndiceSTPtr\
+){\
+   (genIndiceSTPtr)->posUI = 0;\
+} /*initGenIndice*/
+
+/*-------------------------------------------------------\
+| Fun-02: initGeneIndice
 |   - Initialize a genIndice
 | Input:
 |   - geneIndiceStPtr:
@@ -88,8 +102,11 @@ typedef struct genIndice
 |     o geneIndice to have values set to 0; including
 |       pointers
 \-------------------------------------------------------*/
-#define initGenIndice(genIndiceSTPtr){\
-   (genIndiceSTPtr)->posUI = 0;\
+#define \
+initGenIndice(\
+   genIndiceSTPtr\
+){\
+   blankGenIndice((genIndiceSTPtr));\
    \
    (genIndiceSTPtr)->varIdStr = 0;\
    (genIndiceSTPtr)->lenVarIdUI = 0;\
@@ -99,7 +116,6 @@ typedef struct genIndice
     \
    (genIndiceSTPtr)->amrSeqStr = 0;\
    (genIndiceSTPtr)->lenAmrSeqUI = 0;\
-   \
 } /*initGenIndice*/
 
 /*-------------------------------------------------------\
@@ -232,3 +248,74 @@ struct genIndice * read_who2023_indiceTabTsv(
 );
 
 #endif
+
+/*=======================================================\
+: License:
+: 
+: This code is under the unlicense (public domain).
+:   However, for cases were the public domain is not
+:   suitable, such as countries that do not respect the
+:   public domain or were working with the public domain
+:   is inconveint / not possible, this code is under the
+:   MIT license
+: 
+: Public domain:
+: 
+: This is free and unencumbered software released into the
+:   public domain.
+: 
+: Anyone is free to copy, modify, publish, use, compile,
+:   sell, or distribute this software, either in source
+:   code form or as a compiled binary, for any purpose,
+:   commercial or non-commercial, and by any means.
+: 
+: In jurisdictions that recognize copyright laws, the
+:   author or authors of this software dedicate any and
+:   all copyright interest in the software to the public
+:   domain. We make this dedication for the benefit of the
+:   public at large and to the detriment of our heirs and
+:   successors. We intend this dedication to be an overt
+:   act of relinquishment in perpetuity of all present and
+:   future rights to this software under copyright law.
+: 
+: THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF
+:   ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT
+:   LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+:   FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO
+:   EVENT SHALL THE AUTHORS BE LIABLE FOR ANY CLAIM,
+:   DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF
+:   CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR
+:   IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+:   DEALINGS IN THE SOFTWARE.
+: 
+: For more information, please refer to
+:   <https://unlicense.org>
+: 
+: MIT License:
+: 
+: Copyright (c) 2024 jeremyButtler
+: 
+: Permission is hereby granted, free of charge, to any
+:   person obtaining a copy of this software and
+:   associated documentation files (the "Software"), to
+:   deal in the Software without restriction, including
+:   without limitation the rights to use, copy, modify,
+:   merge, publish, distribute, sublicense, and/or sell
+:   copies of the Software, and to permit persons to whom
+:   the Software is furnished to do so, subject to the
+:   following conditions:
+: 
+: The above copyright notice and this permission notice
+:   shall be included in all copies or substantial
+:   portions of the Software.
+: 
+: THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF
+:   ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT
+:   LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+:   FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO
+:   EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
+:   FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
+:   AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+:   FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
+:   USE OR OTHER DEALINGS IN THE SOFTWARE.
+\=======================================================*/

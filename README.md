@@ -1,19 +1,10 @@
 # Use:
 
 This repository holds a tsv, single file of the who 2023
-  TB catalog (see who-tb-2023-catalog-tbAmr-format.tsv). I
-  I did this right, then this file should not require any
-  complicated steps to parse. However, it does have a lot
-  of columns.
-
-I have also included my converter in this repository if
-  you want to use it. However, this would only be useful
-  if the WHO updated there 2023 catalog or kept the same
-  format for their next catalog, if they ever release a
-  next addition.
-
-These converted WHO catalogs have only variants with AMR
-  resistance.
+  TB catalog (see who-tb-2023-catalog-tbAmr-format.tsv).
+  If I did this right, then this file should not require
+  any complicated steps to parse. However, it does have a
+  lot of columns as an result.
 
 First off it looks like the crew behind TBProfiler have
   gotten there parsing script working. I am not sure how
@@ -25,19 +16,58 @@ First off it looks like the crew behind TBProfiler have
    https://github.com/jodyphelan/who-catalogue-parsing
   ). 
 
+I have also included my converter in this repository if
+  you want to use it. However, this would only be useful
+  if the WHO updated there 2023 catalog or kept the same
+  format for their next catalog.
+
+The current catalog in here has only the resistant (grade
+  1 and 2) entries and excludes entire gene deletions.
+  However, you can get all entries from the catalog for
+  using the `-all-amrs ` flag. It is around 33 megabytes
+  and takes around 2.11 seconds and 134016 megabyes of RAM
+  (using gnu time (`/usr/bin/time`)). For the entire gene
+  deletions entries, just run the converter on default
+  settings.
+
 I should say that 2023 catalog from the WHO is a very
   valuable resource. I am grateful to the WHO for
   putting the 2023 catalog together. Also, I am very
   grateful for the WHO in taking time to review this
-  repository and give me feedback. It looks like there
-  were several points of which I need to improve.
-
-There are several decisions I made that may not match up
-  with the WHO catalog. These will likely be issues down
-  stream, so again use TBProfilers work before mine. I
-  have these issues listed at the bottom of this README.
+  repository and give me feedback. They gave me several
+  points that helped in improving the output.
 
 # Update log
+
+April 02, 2024:
+
+- I fixed several preivous issues, but also
+  changed how the converter runs. I replaced the sam file
+  with a set of genome coordinates for each gene
+  (see gene-tbl.tsv) and the reference genome.
+- I set the converter to keep entire deletion entires.
+  Their sequence entries are marked with 0's and they have
+  an new column, entireGene (Fourth after endAntibiotics)
+  set to 1 (2021 catalog prints 0). You can ommit these
+  entries with the `-no-whole-gene-dels` flag.
+  - The reference sequence is 0
+  - The AMR sequence is 0
+  - The start position for deletions are now the first
+    mapped reference base (gene end or gene start) 
+- I added in the primary grade (2021 catalog prints 0
+  (no grade))
+- I added in an unkownEntry (Fith after endAntibiotics) to
+  be for entries I can not identify. There is nothing
+  there currently.
+- Non-frameshift sequences outside of gene ranges are
+  now converted to aa sequences. I do not think this
+  applies to any entries, since most of these entries are
+  frameshifts.
+- Coordinates are now processed from both the genome
+  indicies tab and the master tab. So, if one is missing
+  it is caught.
+- I removed the 2021 catalog files. These can still be
+  generated if you wish to get them.
 
 March 18, 2024: I realized I had some misunderstands about
   the catalog and I am updating the README to reflect
@@ -67,10 +97,8 @@ March 06, 2024. I fixed an error with my deletion entries
 
 ## The tsv file(s)
 
-The who-tb-2021-catalog-tbAmr-format.tsv is the converted
-  2021 (first) catalog. The
-  who-tb-2023-catalog-tbAmr-format.tsv is the converted
-  2023 (second) catalog.
+The who-tb-2023-catalog-tbAmr-format.tsv is the converted
+  2023 (second edition) TB catalog.
 
 The format is as follows:
 
@@ -89,9 +117,16 @@ The format is as follows:
     is longer than the reference.
   - snp is assigned if the AMR and reference sequences are
     the same length
-- Column six has a 1 if there is a frame shift, else a 0
-- Column seven has the reference sequence
-- Column eight has the AMR sequence
+  - lof is assigned if it is in the variant id
+- Column six
+  - 1 if there is a frame shift
+  - 0 if there is no frame shift
+- Column seven
+  - Has the reference sequence
+  - 0 if there is no reference sequence (gene\_deletion)
+- Column eight
+  - Has the AMR sequence
+  - 0 if there is no AMR sequence (gene\_deletion)
 - Column nine has the position of the first reference base
   in the codon, or NA if there is no codon, or if it could
   not be found
@@ -99,24 +134,34 @@ The format is as follows:
   or NA if not present
 - Column eleven has the number of the last codon in the
   gene or NA if not present
-- Column twelve has the reference amino acid sequence or
-  0 if it is not present (I am not using NA, because both
-  N and A are amino acid codes).
+- Column twelve
+  - has the reference amino acid sequence or
+  - 0 if it is not present
+    - I am not using NA, because both N and A are amino
+      acid codes
 - Column thirteen has the AMR amino acid sequence or 0
-  0 if it is not present
+  - has the AMR amino acid sequence or
+  - 0 if it is not present
+    - I am not using NA, because both N and A are amino
+      acid codes
 - Column fourteen has the starting position of the
   reference gene.
 - Column fifteen has the ending position of the reference
   gene.
-- Column sixteen has a 1 if the AMR is an high resistance
-  AMR, else 0
-- Column seventeen has a 1 if the AMR is an low resistance
-  AMR, else 0
-- Column eighteen has a 1 if multiple AMR's in the same
-  gene can result in high resistance, else it is a 0
-- Column nineteen is NA, or has a name of a gene that is
-  is needed to be function to have the mutation confer
-  antibiotic resistance
+- Column sixteen
+  - 1 if the AMR is an high resistance
+  - 0 if not an high resistant AMR
+- Column seventeen
+  - 1 if the AMR is an low resistance
+  - 0 if the AMR is not low resistance (high/mid)
+- Column eighteen
+  - 1 if multiple low resitistance AMR's in the same gene
+    can result in high resistance
+  - 0 if not AMR effect is not additive
+- Column nineteen
+  - has a name of a gene that is is needed to be function
+    to have the mutation confer antibiotic resistance
+  - NA if there is no needed gene
 - The next columns (until the endAntibiotics column) are
   specific antibiotics that a AMR confers resistance to.
   - 0 is no known resistance
@@ -124,12 +169,29 @@ The format is as follows:
   - 2 is cross-resistance
   - 3 is the entry appears in both the resistant and
     cross-resistance entries
-- The endAntibiotics column marks the end of the
-  antibiotic entries. It is just filled with '\*'s
-- The first column after endAntibiotics has the WHO's
-  recorded effects for the AMR or NA
-- The second column (currently last) after endAntibiotics
-  has the comment (or NA) that the WHO had for the AMR
+- endAntibiotics column marks the end of the antibiotic
+  entries. It is filled with '\*'s
+- First column after endAntibiotics
+  - has the WHO's recorded effects for the AMR
+  - NA if no effect
+- Second column after endAntibiotics
+  - has the comment that the WHO had for the AMR
+  - NA if there is no comment
+  - This was the last column for the March 18, 2024
+    version
+- Third column after endAntibiotics (grade)
+  - Has the WHOs grade for the primary antibiotic
+  - 0 if there is no grade
+- Fourth column after endAntibiotics (entireGene)
+  - 1 if is this mutation applies to the whole gene.
+    - for gene\_deletion entries, this means an entire
+      gene deletion
+    - for gene\_LoF this means any frameshift or other
+      loss of function mutation in the gene
+  - 0 if the mutation only applies to a single position
+- fith column after end antibiotics (unkownEntry)
+  - 1 if I could not figure this entry out
+  - 0 if the entry was catagorized
 - There could be future columns added, so long as there
   always added at the end. So, always look for the last
   known column by looking for both newlines '\n' and tabs
@@ -137,21 +199,21 @@ The format is as follows:
   
 ## The other files (other tsv's, the csv, and sam)
 
-The WHO-2021-TB.csv is the saved genome indices tab from
-  the WHO's 2021 catalog. It is in the correct format to
-  convert.
-  
 The WHO-2023-TB-tab1-master.tsv is the master tab (tab
   one) from the WHO's 2023 catalog. It has had the extra
-  headers removed and is ready for processing.
+  headers removed and is ready for processing. May not be
+  up to date.
 
 The WHO-2023-TB-tab2-indices.tsv is the genome indices
   tab (tab two) from the WHO's 2023 catalog. It is ready
-  for processing.
+  for processing. May not be up to date.
 
-The TB-NC000962-gene-maps.sam is a sam file with the genes
-  from NC000962 mapped to its self. This is the sam file
-  you would run through this program.
+The NC000962.fa file is the reference genome used with the
+  WHO's 2023 catalog.
+
+The gene-tbl.tsv is the table of gene coordinates. The
+  help message for the converter will tell you how to
+  make this.
 
 # Running the converter
 
@@ -182,14 +244,29 @@ Help message: `whoToTbAmr -h`
 
 Converting the 2023 catalog (using files in this rep):
 
-```
-whoToTbAmr -sam TB-NC000962-gene-maps.sam -tabone-who-2023-tsv WHO-2023-TB-tab1-master.tsv -tabtwo-who-2023-tsv WHO-2023-TB-tab2-indices.tsv -out catalog.tsv
-```
-
-Converting the 2021 catalog (using files in this rep):
+To buld this database:
 
 ```
-whoToTbAmr -sam TB-NC000962-gene-maps.sam -who-2021-csv WHO-2021-TB.csv -out catalog.tsv
+whoToTbAmr -no-whole-gene-dels -ref NC000962.fa -coords gene-tbl.tsv -tabone-who-2023-tsv WHO-2023-TB-tab1-master.tsv -tabtwo-who-2023-tsv WHO-2023-TB-tab2-indices.tsv -out catalog.tsv
+```
+
+To build an resitance database with entire gene deletions
+
+```
+whoToTbAmr -no-whole-gene-dels -ref NC000962.fa -coords gene-tbl.tsv -tabone-who-2023-tsv WHO-2023-TB-tab1-master.tsv -tabtwo-who-2023-tsv WHO-2023-TB-tab2-indices.tsv -out catalog.tsv
+```
+
+To get every entry in the WHO catalog
+
+```
+whoToTbAmr -all-amrs -ref NC000962.fa -coords gene-tbl.tsv -tabone-who-2023-tsv WHO-2023-TB-tab1-master.tsv -tabtwo-who-2023-tsv WHO-2023-TB-tab2-indices.tsv -out catalog.tsv
+```
+
+To get every entry that is not an entire gene deletion in
+  the WHO catalog
+
+```
+whoToTbAmr -all-amrs -no-whole-gene-dels -ref NC000962.fa -coords gene-tbl.tsv -tabone-who-2023-tsv WHO-2023-TB-tab1-master.tsv -tabtwo-who-2023-tsv WHO-2023-TB-tab2-indices.tsv -out catalog.tsv
 ```
 
 ## The code:
@@ -205,7 +282,8 @@ Keep in mind, that the other files (non-code files) are
 The code is split up into two folders, the generalLib
   folder and the whoToTbAmr\_src folder. This organization
   is from this program being part of a larger project that
-  I am working on.
+  I am working on. The generalLib folder has some uneeded
+  files.
 
 I need to go back and document this code properly.
 
@@ -224,40 +302,6 @@ I am using the database in my own code, so please report
 
 ### With my program
 
-This has been modified because the WHO gently corrected
-  me on several of my mistakes. I am very grateful for the
-  time the WHO took to do this.
-
-First I am ignoring the "gene\_deletion" entries. Looking
-  back at page 91 of the WHO catalog it appears that these
-  refer to entire gene deletions. I will have to think how
-  to handle these, because these often would be missed in
-  amplicons.
-
-For any aa sequences that goes outside of the gene
-  regions, I am treating as strict patterns. The WHOs
-  program found these to still contribute to resistance,
-  so I am not likely handling these in the wrong way. I
-  would have to think hard to find a way to fix this
-  without breaking my other program. So, I need to add
-  more thought here.
-
-Next it appears that the variant IDs use regular
-  expressions in them in the form of \*?. This is a
-  mistake of Mine I will have to update in my program.
-  For know though, this does not seem to be a problem,
-  since I am focusing on the resistant entries only.
-
-Next I need to make sure I grab the genome coordinates
-  from both the catalog and then update it with the genome
-  indices tab if there is an update. I assumed all entries
-  in the master tab would be in the genome indices tab.
-
-It also appears that the LoF entries are general and can
-  refer to any frame shift. I should add in a separate
-  column with a 1 or 0 marking if a frame shift applies to
-  any region of the genome.
-
-I will probably not get to this right away, but I will get
-  back to this once I get some of my other programs more
-  set up.
+I am not doing an AA translation for frame shifts beyond
+  the variant id. However, This could be done. I just do
+  not see a need for this.

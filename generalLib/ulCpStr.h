@@ -24,21 +24,24 @@
 '     - This is a bit slow (9 op), 8 if delimUL can be
 '       deterimined at compile time. This is less efficent
 '       on 32 and 16 bit cpus (no longer borderline).
-'   o fun-06: ulVectCpStrDelim TODO:
-'     - ulCpStrDelim, but can be compiled with vectors
-'   o fun-06: cCpStr
+'   o fun-06: ulEndStrLine
+'     - Finds the end of a c-string. This assumes that
+'       the line ends in an '\0' or an '\n'
+'   o fun-07: cCpStr
 '    - Copies cpStr into dupStr using characters
-'   o fun-07: cCpStrDelim
+'   o fun-08: cCpStrDelim
 '     - Copies cpStr into dupStr until delimC is found
-'   o fun-08: cLenStr
+'   o fun-09: cLenStr
 '     - Finds the length of a string using characters
 '   o fun-0?: cStrEql
 '     - Checks to see if two strings are equal
-'   o fun-09: cStrMatch
+'   o fun-10: cStrMatch
 '     - Checks to see if two strings are equal, but does
 '       not check to see if there is anything past the
 '       query's deliminator. This is to deal with strings
 '       with differnt deliminators.
+'   o license:
+'     - Licensing for this code (public domain / mit)
 \~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
 /*-------------------------------------------------------\
@@ -122,8 +125,8 @@
 |     o  dupStr to hold lenUI characters from cpStr
 \-------------------------------------------------------*/
 #define ulCpStr(dupStr, cpStr, lenUI){\
-   unsigned long *macCpUL = (ulong *) (cpStr);\
-   unsigned long *macDupUL = (ulong *) (dupStr);\
+   unsigned long *macCpUL = (unsigned long *) (cpStr);\
+   unsigned long *macDupUL = (unsigned long *) (dupStr);\
    unsigned int uiCharMac = 0;\
    \
    for(\
@@ -206,7 +209,7 @@
 |   - Returns:
 |     o  unsigned long == 0; strUL has no deliminator. The
 |        position of the delimintor can be found with
-|        log2(returned ulong) >> 8. The 1 is shifted to
+|        log2(returned unsigned long) >> 8. The 1 is shifted to
 |        the left of the character.
 |     o  unsigned long > 0; strUL has deliminator
 \-------------------------------------------------------*/
@@ -257,8 +260,8 @@
 |     strings.
 \-------------------------------------------------------*/
 #define ulCpStrDelim(dupStr, cpStr, delimUL, delimC)({\
-   unsigned long *macCpUL = (ulong *) (cpStr);\
-   unsigned long *macDupUL = (ulong *) (dupStr);\
+   unsigned long *macCpUL = (unsigned long *) (cpStr);\
+   unsigned long *macDupUL = (unsigned long *) (dupStr);\
    char *dupMacStr = 0;\
    char *cpMacStr = 0;\
    unsigned long macAtDelimUL = 0;\
@@ -300,7 +303,7 @@
 |     o Number of characters in the string
 \-------------------------------------------------------*/
 #define ulLenStr(inStr, delimUL, delimC)({\
-   unsigned long *macPtrUL = (ulong *) (inStr);\
+   unsigned long *macPtrUL = (unsigned long *) (inStr);\
    unsigned long macAtDelimUL = 0;\
    unsigned int uiLenStrMac = 0;\
    \
@@ -318,11 +321,44 @@
    uiLenStrMac;\
 }) /*ulCpStrDelim*/
 
+/*-------------------------------------------------------\
+| Fun-06: ulEndStrLine
+|   - Finds the end of a c-string. This assumes that the
+|     line ends in an '\0' or an '\n'
+| Input:
+|   - inStr:
+|     o C-string or string to look for end in
+| Output:
+|   - Returns:
+|     o Number of characters in the string
+\-------------------------------------------------------*/
+#define \
+ulEndStrLine(\
+   inStr\
+)({\
+   unsigned long *macPtrUL = (unsigned long *) (inStr);\
+   unsigned int uiLenStrMac = 0;\
+   \
+   unsigned long newLineMacUL = ulCpMakeDelim('\n');\
+   unsigned long oneMacUL = ulCpMakeDelim(0x01);\
+   unsigned long highBitMacUL = ulCpMakeDelim(0x80);\
+   \
+   while( !\
+     (\
+           (((*macPtrUL++) & (~ newLineMacUL)) - oneMacUL)\
+         & highBitMacUL\
+     )\
+   ) uiLenStrMac += defCharPerUL;\
+   \
+   while((inStr)[uiLenStrMac] & (~ '\n')) ++uiLenStrMac;\
+   \
+   uiLenStrMac;\
+}) /*ulEndStrLine*/
 
 /*These are the single byte copy functions*/
 
 /*-------------------------------------------------------\
-| Fun-06: cCpStr
+| Fun-07: cCpStr
 |   - Copies cpStr into dupStr using characters
 | Input:
 |   - dupStr:
@@ -343,7 +379,7 @@
 }
 
 /*-------------------------------------------------------\
-| Fun-07: cCpStrDelim
+| Fun-08: cCpStrDelim
 |   - Copies cpStr into dupStr until delimC is found
 | Input:
 |   - dupStr:
@@ -357,7 +393,12 @@
 |   - Modifies:
 |     o  dupStr to hold the characters from cpStr
 \-------------------------------------------------------*/
-#define cCpStrDelim(dupStr, cpStr, delimC)({\
+#define \
+cCpStrDelim(\
+   dupStr,\
+   cpStr,\
+   delimC\
+)({\
    char *dupMacStr = (dupStr);\
    char *cpMacStr = (cpStr);\
    \
@@ -372,7 +413,7 @@
 */
 
 /*-------------------------------------------------------\
-| Fun-08: cLenStr
+| Fun-09: cLenStr
 |   - Finds the length of a string using characters
 | Input:
 |   - inStr:
@@ -445,7 +486,7 @@
 })
 
 /*-------------------------------------------------------\
-| Fun-09: cStrMatch
+| Fun-10: cStrMatch
 |   - Checks to see if two strings are equal, but does
 |     not check to see if there is anything past the
 |     query's deliminator. This is to deal with strings
@@ -493,3 +534,74 @@
 })
 
 #endif
+
+/*=======================================================\
+: License:
+: 
+: This code is under the unlicense (public domain).
+:   However, for cases were the public domain is not
+:   suitable, such as countries that do not respect the
+:   public domain or were working with the public domain
+:   is inconvient / not possible, this code is under the
+:   MIT license.
+: 
+: Public domain:
+: 
+: This is free and unencumbered software released into the
+:   public domain.
+: 
+: Anyone is free to copy, modify, publish, use, compile,
+:   sell, or distribute this software, either in source
+:   code form or as a compiled binary, for any purpose,
+:   commercial or non-commercial, and by any means.
+: 
+: In jurisdictions that recognize copyright laws, the
+:   author or authors of this software dedicate any and
+:   all copyright interest in the software to the public
+:   domain. We make this dedication for the benefit of the
+:   public at large and to the detriment of our heirs and
+:   successors. We intend this dedication to be an overt
+:   act of relinquishment in perpetuity of all present and
+:   future rights to this software under copyright law.
+: 
+: THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF
+:   ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT
+:   LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+:   FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO
+:   EVENT SHALL THE AUTHORS BE LIABLE FOR ANY CLAIM,
+:   DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF
+:   CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR
+:   IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+:   DEALINGS IN THE SOFTWARE.
+: 
+: For more information, please refer to
+:   <https://unlicense.org>
+: 
+: MIT License:
+: 
+: Copyright (c) 2024 jeremyButtler
+: 
+: Permission is hereby granted, free of charge, to any
+:   person obtaining a copy of this software and
+:   associated documentation files (the "Software"), to
+:   deal in the Software without restriction, including
+:   without limitation the rights to use, copy, modify,
+:   merge, publish, distribute, sublicense, and/or sell
+:   copies of the Software, and to permit persons to whom
+:   the Software is furnished to do so, subject to the
+:   following conditions:
+: 
+: The above copyright notice and this permission notice
+:   shall be included in all copies or substantial
+:   portions of the Software.
+: 
+: THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF
+:   ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT
+:   LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+:   FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO
+:   EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
+:   FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
+:   AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+:   FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
+:   USE OR OTHER DEALINGS IN THE SOFTWARE.
+\=======================================================*/

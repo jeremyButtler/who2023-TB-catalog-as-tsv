@@ -1,0 +1,114 @@
+1	drug
+2	gene
+3	mutation
+4	variant
+5	tier
+6	effect
+7	genomic position
+8	algorithm_pass_DATASET ALL
+9	Present_SOLO_SR_DATASET ALL
+10	Present_SOLO_R_DATASET ALL
+11	Present_SOLO_S_DATASET ALL
+12	Present_R_DATASET ALL
+13	Present_S_DATASET ALL
+14	Absent_R_DATASET ALL
+15	Absent_S_DATASET ALL
+16	Sens_DATASET ALL
+17	Sens_lb_DATASET ALL
+18	Sens_ub_DATASET ALL
+19	Spec_DATASET ALL
+20	Spec_lb_DATASET ALL
+21	Spec_ub_DATASET ALL
+22	PPV_DATASET ALL
+23	PPV_lb_DATASET ALL
+24	PPV_ub_DATASET ALL
+25	PPV_SOLO_DATASET ALL
+26	PPV_SOLO_lb_DATASET ALL
+27	PPV_SOLO_ub_DATASET ALL
+28	PPV_conditional_SOLO_DATASET ALL
+29	PPV_conditional_SOLO_lb_DATASET ALL
+30	PPV_conditional_SOLO_ub_DATASET ALL
+31	OR_SOLO_DATASET ALL
+32	OR_SOLO_exact_lb_DATASET ALL
+33	OR_SOLO_exact_ub_DATASET ALL
+34	OR_SOLO_pvalue_DATASET ALL
+35	OR_SOLO_pval_rank_DATASET ALL
+36	k_DATASET ALL
+37	OR_SOLO_FE_sig_DATASET ALL
+38	Neutral_masked_DATASET ALL
+39	OR_DATASET ALL
+40	OR_exact_lb_DATASET ALL
+41	OR_exact_ub_DATASET ALL
+42	Sens_SOLO_DATASET ALL
+43	Sens_SOLO_lb_DATASET ALL
+44	Sens_SOLO_ub_DATASET ALL
+45	Spec_SOLO_DATASET ALL
+46	Spec_SOLO_lb_DATASET ALL
+47	Spec_SOLO_ub_DATASET ALL
+48	Initial confidence grading ALL dataset_DATASET ALL
+49	INITIAL CONFIDENCE GRADING
+50	DATASET(S)
+51	Initial confidence grading WHO dataset_DATASET WHO
+52	algorithm_pass_DATASET WHO
+53	Present_SOLO_SR_DATASET WHO
+54	Present_SOLO_R_DATASET WHO
+55	Present_SOLO_S_DATASET WHO
+56	Present_R_DATASET WHO
+57	Present_S_DATASET WHO
+58	Absent_R_DATASET WHO
+59	Absent_S_DATASET WHO
+60	Sens_DATASET WHO
+61	Sens_lb_DATASET WHO
+62	Sens_ub_DATASET WHO
+63	Spec_DATASET WHO
+64	Spec_lb_DATASET WHO
+65	Spec_ub_DATASET WHO
+66	PPV_DATASET WHO
+67	PPV_lb_DATASET WHO
+68	PPV_ub_DATASET WHO
+69	PPV_SOLO_DATASET WHO
+70	PPV_SOLO_lb_DATASET WHO
+71	PPV_SOLO_ub_DATASET WHO
+72	PPV_conditional_SOLO_DATASET WHO
+73	PPV_conditional_SOLO_lb_DATASET WHO
+74	PPV_conditional_SOLO_ub_DATASET WHO
+75	OR_SOLO_DATASET WHO
+76	OR_SOLO_exact_lb_DATASET WHO
+77	OR_SOLO_exact_ub_DATASET WHO
+78	OR_SOLO_pvalue_DATASET WHO
+79	OR_SOLO_pval_rank_DATASET WHO
+80	k_DATASET WHO
+81	OR_SOLO_FE_sig_DATASET WHO
+82	Neutral_masked_DATASET WHO
+83	setA_DATASET WHO
+84	setB_DATASET WHO
+85	setC_DATASET WHO
+86	setD1_DATASET WHO
+87	setD2_DATASET WHO
+88	v1_DATASET WHO
+89	literature_DATASET WHO
+90	OR_DATASET WHO
+91	OR_exact_lb_DATASET WHO
+92	OR_exact_ub_DATASET WHO
+93	Sens_SOLO_DATASET WHO
+94	Sens_SOLO_lb_DATASET WHO
+95	Sens_SOLO_ub_DATASET WHO
+96	Spec_SOLO_DATASET WHO
+97	Spec_SOLO_lb_DATASET WHO
+98	Spec_SOLO_ub_DATASET WHO
+99	Present_NoPheno_no pDST
+100	(WHO guidance before cat ver1) Miotto et al. (PMID 29284687), WHO NGS Guide 2018_Source of additional grading evidence
+101	(WHO guidance before cat ver1) RIF CC guide 2021_Source of additional grading evidence
+102	(Previous WHO guidance) WHO Catalogue ver1_Source of additional grading evidence
+103	Selection evidence_Source of additional grading evidence
+104	(WHO guidance before cat ver1) WHO_endorsed_assay_Source of additional grading evidence
+105	Additional grading criteria applied
+106	FINAL CONFIDENCE GRADING
+107	Comment
+108	CHANGES vs ver1
+109	Relaxed thresholds simulation (BDQ_Rv0678, CFZ_Rv0678, INH_katG, DLM_ddn/fbiA/fbiB/fbiC/fgd1/Rv2983)
+110	Silent mutation
+111	Listed in abridged tables
+112	Additional grading
+113	Footnote
+114	CHANGES vs ver1

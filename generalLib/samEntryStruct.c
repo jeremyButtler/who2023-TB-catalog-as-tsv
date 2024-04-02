@@ -41,6 +41,8 @@
 '  o note-01: (.h file only)
 '     - Notes about the sam file format from the sam file
 '       pdf
+'   o license:
+'     - Licensing for this code (public domain / mit)
 \~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
 /*-------------------------------------------------------\
@@ -64,11 +66,6 @@
 #include "base10StrToNum.h"
 #include "ulCpStr.h"
 #include "numToStr.h"
-
-#define def_samEntry_newLine ulCpMakeDelim('\n')
-#define def_samEntry_tab ulCpMakeDelim('\t')
-#define def_samEntry_one ulCpMakeDelim(0x01)
-#define def_samEntry_highBit ulCpMakeDelim(0x80)
 
 /*-------------------------------------------------------\
 | Fun-02: initSamEntry
@@ -474,29 +471,24 @@ readSamLine(
 
    while(*tmpStr != '\n')
    { /*Loop: Find the length of  the line*/
-      oldLenUL = *lenBuffUL;
-      *lenBuffUL += extraBuffUS;
+      *lenBuffUL <<= 1;
+        /*This is a little agressive for memory usage, but
+        `   it is fast*/
 
-      tmpStr =
-         realloc(
-            *buffStr,
-            (*lenBuffUL + 1) * sizeof(char)
-         ); /*Increase the buffers size*/
+      tmpStr = malloc((*lenBuffUL + 1) * sizeof(char));
 
       /*Check for memory errors; let user handle
       `   freeing buffStr when have memory errors
       */
       if(! tmpStr) return 64;
+
+      /*This avoids odd memory issues with realloc*/
+      oldLenUL = ulCpStrDelim(tmpStr, *buffStr, 0, '\0');
+      free(*buffStr);
       *buffStr = tmpStr;
       
-      tmpStr = *buffStr + oldLenUL - 1;
-
-      /*This is needed to avoid the rare one position off,
-      `   were two nulls are present instead of one
-      */
-      while(*(tmpStr - 1) == '\0') --tmpStr;
-
-      tmpStr = fgets(tmpStr, extraBuffUS, samFILE);
+      tmpStr = *buffStr + oldLenUL;
+      tmpStr = fgets(tmpStr, *lenBuffUL >> 1, samFILE);
 
       if(! tmpStr) break; /*End of file*/
 
@@ -774,7 +766,6 @@ readSamLine(
 
    samSTPtr->refEndUI = samSTPtr->refStartUI;
    samSTPtr->refEndUI += samSTPtr->alnReadLenUI;
-      /*-1 to convert to index 0*/
 
    samSTPtr->refEndUI -= (samSTPtr->alnReadLenUI > 0);
       /*-1 from (alnReadLen > 0) converts to index 0*/
@@ -1104,50 +1095,6 @@ pSamEntry(
       (samSTPtr)->lenExtraUI
    );
 
-   tmpStr += (samSTPtr)->lenExtraUI;
-   *tmpStr++ = '\t';
-
-   *tmpStr++ = 'm';
-   *tmpStr++ = 'a';
-   *tmpStr++ = 't';
-   *tmpStr++ = 'c';
-   *tmpStr++ = 'h';
-   *tmpStr++ = ':';
-
-   tmpStr += numToStr(tmpStr, (samSTPtr)->numMatchUI);
-   *tmpStr++ = '\t';
-
-   *tmpStr++ = 'm';
-   *tmpStr++ = 'a';
-   *tmpStr++ = 's';
-   *tmpStr++ = 'k';
-   *tmpStr++ = ':';
-
-   tmpStr += numToStr(tmpStr, (samSTPtr)->numMaskUI);
-   *tmpStr++ = '\t';
-
-   *tmpStr++ = 's';
-   *tmpStr++ = 'n';
-   *tmpStr++ = 'p';
-   *tmpStr++ = ':';
-
-   tmpStr += numToStr(tmpStr, (samSTPtr)->numSnpUI);
-   *tmpStr++ = '\t';
-
-   *tmpStr++ = 'i';
-   *tmpStr++ = 'n';
-   *tmpStr++ = 's';
-   *tmpStr++ = ':';
-
-   tmpStr += numToStr(tmpStr, (samSTPtr)->numInsUI);
-   *tmpStr++ = '\t';
-
-   *tmpStr++ = 'd';
-   *tmpStr++ = 'e';
-   *tmpStr++ = 'l';
-   *tmpStr++ = ':';
-
-   tmpStr += numToStr(tmpStr, (samSTPtr)->numDelUI);
    *tmpStr++ = '\n';
 
    fwrite(
@@ -1287,13 +1234,13 @@ void pSamEntryAsFasta(
 \-------------------------------------------------------*/
 void pSamEntryStats(
    struct samEntry *samSTPtr,
-   char pHeadBl,
+   char *pHeadBl,
    void *outFILE
 ){
    if(   (samSTPtr)->extraStr[0] != '@'
       && (samSTPtr)->qryIdStr[0] != '\0'
    ){ /*If: This is not a comment*/
-      if((pHeadBl))
+      if(*(pHeadBl))
       { /*If: I need to print the header*/
         fprintf((FILE *) (outFILE), "Read\tRef\tFlag");
         fprintf((FILE *) (outFILE), "\tMapQ\tRefPos"); 
@@ -1303,7 +1250,7 @@ void pSamEntryStats(
         fprintf((FILE *) (outFILE), "\tDels\tSnps");
         fprintf((FILE *) (outFILE), "\tMedianQ\tMeanQ\n");
 
-        (pHeadBl) = 0;
+        *(pHeadBl) = 0;
       } /*If: I need to print the header*/
       
       fprintf(
@@ -1331,3 +1278,73 @@ void pSamEntryStats(
    } /*If: This is not a comment*/
 } /*pSamEntryStats*/
 
+/*=======================================================\
+: License:
+: 
+: This code is under the unlicense (public domain).
+:   However, for cases were the public domain is not
+:   suitable, such as countries that do not respect the
+:   public domain or were working with the public domain
+:   is inconvient / not possible, this code is under the
+:   MIT license.
+: 
+: Public domain:
+: 
+: This is free and unencumbered software released into the
+:   public domain.
+: 
+: Anyone is free to copy, modify, publish, use, compile,
+:   sell, or distribute this software, either in source
+:   code form or as a compiled binary, for any purpose,
+:   commercial or non-commercial, and by any means.
+: 
+: In jurisdictions that recognize copyright laws, the
+:   author or authors of this software dedicate any and
+:   all copyright interest in the software to the public
+:   domain. We make this dedication for the benefit of the
+:   public at large and to the detriment of our heirs and
+:   successors. We intend this dedication to be an overt
+:   act of relinquishment in perpetuity of all present and
+:   future rights to this software under copyright law.
+: 
+: THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF
+:   ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT
+:   LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+:   FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO
+:   EVENT SHALL THE AUTHORS BE LIABLE FOR ANY CLAIM,
+:   DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF
+:   CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR
+:   IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+:   DEALINGS IN THE SOFTWARE.
+: 
+: For more information, please refer to
+:   <https://unlicense.org>
+: 
+: MIT License:
+: 
+: Copyright (c) 2024 jeremyButtler
+: 
+: Permission is hereby granted, free of charge, to any
+:   person obtaining a copy of this software and
+:   associated documentation files (the "Software"), to
+:   deal in the Software without restriction, including
+:   without limitation the rights to use, copy, modify,
+:   merge, publish, distribute, sublicense, and/or sell
+:   copies of the Software, and to permit persons to whom
+:   the Software is furnished to do so, subject to the
+:   following conditions:
+: 
+: The above copyright notice and this permission notice
+:   shall be included in all copies or substantial
+:   portions of the Software.
+: 
+: THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF
+:   ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT
+:   LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+:   FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO
+:   EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
+:   FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
+:   AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+:   FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
+:   USE OR OTHER DEALINGS IN THE SOFTWARE.
+\=======================================================*/

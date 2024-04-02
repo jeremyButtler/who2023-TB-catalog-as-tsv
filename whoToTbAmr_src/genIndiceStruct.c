@@ -1,6 +1,67 @@
+/*#######################################################\
+# Name: geneIndiceStruct
+#   - Has functions for reading the genome indice (tab 2)
+#     of the WHO's 2023 TB catalog.
+\#######################################################*/
+
+/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\
+' SOF: Start Of File
+'   o header: 
+'     - Has included libraries
+'   o .h st-01: genIndice
+'     - Structure to hold a single genome indice from
+'       the who 2023 catalog
+'   o .h fun-01: blankGeneIndice
+'     - Blanks the positon in an gene indice structure
+'   o .h fun-02: initGeneIndice
+'     - Initialize a genIndice
+'   o fun-03: makeGenIndice
+'     - Makes a new genIndice
+'   o fun-04: freeGeneIndiceStack
+'     - Frees varialbes in geneIndiceST
+'   o fun-05: freeGeneIndice
+'     - Frees a single geneIndiceST structure. This
+'       function does 'not free the child pointers in
+'       geneIndiceST
+'   o fun-06: freeGeneIndiceAry
+'     - Frees an array of geneIndiceST structures.
+'   o .c fun-07: cmpGenIndices
+'     - Compares to see if one genIndice structure is
+'       less than another
+'   o .c fun-08: cmpGenIndiceToStr
+'     - Compares to see if a genIndice structure is
+'       less than a string
+'   o .c fun-09: swapGenIndices
+'     - Swaps two array items in a genIndice structure
+'       around
+'   o fun-10: genIndiceSort
+'     - Sorts an array of genIndice structures by variant
+'       ids with shell short.
+'   o fun-11: findGenIndiceVariant
+'     - Does a binary search for the nearest amr at or
+'       after to the input query coordiante
+'   o fun-12: read_who2023_indiceTab
+'     - Reads in the genome coordinates and variants from
+'       the 2023 WHO TB catalog genome indice tab (saved
+'       as a tsv)
+'   o license:
+'     - Licensing for this code (public domain / mit)
+\~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+
+/*-------------------------------------------------------\
+| Header:
+|   - Has the included libraries
+\-------------------------------------------------------*/
+
 #include "genIndiceStruct.h"
 
-#include <stdlib.h>
+#ifdef PLAN9
+   #include <u.h>
+   #include <libc.h>
+#else
+   #include <stdlib.h>
+#endif
+
 #include <stdio.h>
 
 /*All of these are just .h files*/
@@ -630,3 +691,74 @@ struct genIndice * read_who2023_indiceTabTsv(
 
    return indiceSTAry;
 } /*read_who2023_indiceTabTsv*/
+
+/*=======================================================\
+: License:
+: 
+: This code is under the unlicense (public domain).
+:   However, for cases were the public domain is not
+:   suitable, such as countries that do not respect the
+:   public domain or were working with the public domain
+:   is inconveint / not possible, this code is under the
+:   MIT license
+: 
+: Public domain:
+: 
+: This is free and unencumbered software released into the
+:   public domain.
+: 
+: Anyone is free to copy, modify, publish, use, compile,
+:   sell, or distribute this software, either in source
+:   code form or as a compiled binary, for any purpose,
+:   commercial or non-commercial, and by any means.
+: 
+: In jurisdictions that recognize copyright laws, the
+:   author or authors of this software dedicate any and
+:   all copyright interest in the software to the public
+:   domain. We make this dedication for the benefit of the
+:   public at large and to the detriment of our heirs and
+:   successors. We intend this dedication to be an overt
+:   act of relinquishment in perpetuity of all present and
+:   future rights to this software under copyright law.
+: 
+: THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF
+:   ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT
+:   LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+:   FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO
+:   EVENT SHALL THE AUTHORS BE LIABLE FOR ANY CLAIM,
+:   DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF
+:   CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR
+:   IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+:   DEALINGS IN THE SOFTWARE.
+: 
+: For more information, please refer to
+:   <https://unlicense.org>
+: 
+: MIT License:
+: 
+: Copyright (c) 2024 jeremyButtler
+: 
+: Permission is hereby granted, free of charge, to any
+:   person obtaining a copy of this software and
+:   associated documentation files (the "Software"), to
+:   deal in the Software without restriction, including
+:   without limitation the rights to use, copy, modify,
+:   merge, publish, distribute, sublicense, and/or sell
+:   copies of the Software, and to permit persons to whom
+:   the Software is furnished to do so, subject to the
+:   following conditions:
+: 
+: The above copyright notice and this permission notice
+:   shall be included in all copies or substantial
+:   portions of the Software.
+: 
+: THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF
+:   ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT
+:   LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+:   FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO
+:   EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
+:   FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
+:   AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+:   FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
+:   USE OR OTHER DEALINGS IN THE SOFTWARE.
+\=======================================================*/

@@ -5,7 +5,6 @@ MACCFLAGS= -O3
 DEBUGFLAGS= -static -O0 -ggdb -Wall
 
 cFiles=\
-   generalLib/samEntryStruct.c\
    whoToTbAmr_src/whoToTbAmr.c\
    whoToTbAmr_src/cnvt_whoToTbAmr.c\
    whoToTbAmr_src/genIndiceStruct.c\

@@ -10,12 +10,12 @@
 ' SOF: Start Of File
 '   o header:
 '     - Definations
-'   o st-01: amrStruct
+'   o .h st-01: amrStruct
 '     - Holds the information for a single amr mutation
 '       that was extracted from the WHO catalog
-'   o fun-01: blankAmrStruct
+'   o .h fun-01: blankAmrStruct
 '     - Sets all non-pointer values in amrStructPtr to 0
-'   o fun-02: initAmrStruct
+'   o .h fun-02: initAmrStruct
 '     - Sets all values, including pointers in the
 '       amrStruct structure to 0
 '   o fun-03: freeAmrStructStack
@@ -27,18 +27,23 @@
 '   o fun-05: freeAmrStructArray
 '     - Frees an heap allocated array of amrStruct
 '       structures
-'   o fun-06: swapAmrStructs
+'   o .h fun-06: swapAmrStructs
 '     - Swaps the values in two amrStruct structures
 '   o fun-07: sortAmrStructArray
 '     - Sort on an amrStruct array structures by reference
 '       coordiante (uses shell sort)
-'   o fun-08: findNearestAmr
+'   o fun-08: geneIdSortAmrSTAry
+'     - Sort on an amrStruct array structures by the
+'       gene names (ids) (uses shell short)
+'   o fun-09: findNearestAmr
 '      - Finds the nearest amr at or after the input query
-'   o fun-09: pAmrDB
+'   o fun-10: pAmrDB
 '     - Print out the amr database used
-'   o fun-10: readTbAmrTbl
+'   o fun-11: readTbAmrTbl
 '     - Gets data from a tbAmr tsv file output from pAmrDB
 '       (fun-09)
+'   o license:
+'     - Licensing for this code (public domain / mit)
 \~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
 /*-------------------------------------------------------\
@@ -49,14 +54,27 @@
 #ifndef AMR_STRUCT_H
 #define AMR_STRUCT_H
 
+/*This is the number of longs to hold the resistance
+`   flags. Each long holds 64 drugs on a 64 bit system
+`   or 32 drugs on an 32 bit system
+*/
 #define def_amrST_maxDrugs 5
+
+/*Reading frame direction*/
 #define def_amrST_forwardDir 0
 #define def_amrST_revCompDir 1
 #define def_amrST_unkownDir 2
-#define def_amrST_del 1
-#define def_amrST_del_and_ins 2
 
-/*This is for my database printing/read*/
+/*Deletion type*/
+#define def_amrST_del 1         /*Single base deletion*/
+#define def_amrST_del_and_ins 2 /*deletion + insertion*/
+
+/*Frame shift flags*/
+#define del_framshift_amrST 1      /*Specific location*/
+
+/*This is the flags for each resistance type when printed
+`   out
+*/
 #define def_amrST_resFlag 1
 #define def_amrST_crossResFlag 2
 #define def_amrST_maxFlags (sizeof(unsigned long) << 3)
@@ -92,7 +110,9 @@ typedef struct amrStruct{
    unsigned int lenAmrAaUI; /*Length of reference aa seq*/
 
    char frameshiftBl; /*1: is a frame shift*/
-   char aaDelBl;    /*1: means there is a deletion*/
+   char wholeGeneBl;  /*1: means an whole gene event*/
+   char unknownBl;    /*1: means I have no idea what is*/
+   char aaDelBl;      /*1: means there is a deletion*/
    char aaMultiDupBl; /*1: means range duplicated*/
 
    /*General info/ mutation*/
@@ -161,6 +181,8 @@ typedef struct amrStruct{
    (amrStructPtr)->geneLastRefUI = 0;\
    \
    (amrStructPtr)->frameshiftBl = 0;\
+   (amrStructPtr)->wholeGeneBl = 0;\
+   (amrStructPtr)->unknownBl = 0;\
    (amrStructPtr)->aaDelBl = 0;\
    (amrStructPtr)->aaMultiDupBl = 0;\
    \
@@ -318,11 +340,6 @@ void freeAmrStructArray(
       (secAmrST).geneLastRefUI;\
    (secAmrST).geneLastRefUI = tmpMacUI;\
    \
-   tmpMacUI = (firstAmrST).codonNumUI;\
-   (firstAmrST).codonNumUI = (secAmrST).codonNumUI;\
-   (secAmrST).codonNumUI = tmpMacUI;\
-   \
-   \
    tmpMacStr = (firstAmrST).refAaStr;\
    (firstAmrST).refAaStr = (secAmrST).refAaStr;\
    (secAmrST).refAaStr = tmpMacStr;\
@@ -346,14 +363,20 @@ void freeAmrStructArray(
    (secAmrST).aaDelBl = tmpMacC;\
    \
    tmpMacC = (firstAmrST).aaMultiDupBl;\
-   (firstAmrST).aaMultiDupBl =\
-      (secAmrST).aaMultiDupBl;\
+   (firstAmrST).aaMultiDupBl = (secAmrST).aaMultiDupBl;\
    (secAmrST).aaMultiDupBl = tmpMacC;\
    \
    tmpMacC = (firstAmrST).frameshiftBl;\
-   (firstAmrST).frameshiftBl =\
-      (secAmrST).frameshiftBl;\
+   (firstAmrST).frameshiftBl = (secAmrST).frameshiftBl;\
    (secAmrST).frameshiftBl = tmpMacC;\
+   \
+   tmpMacC = (firstAmrST).wholeGeneBl;\
+   (firstAmrST).wholeGeneBl = (secAmrST).wholeGeneBl;\
+   (secAmrST).wholeGeneBl = tmpMacC;\
+   \
+   tmpMacC = (firstAmrST).unknownBl;\
+   (firstAmrST).unknownBl = (secAmrST).unknownBl;\
+   (secAmrST).unknownBl = tmpMacC;\
    \
    \
    tmpMacStr = (firstAmrST).geneIdStr;\
@@ -519,7 +542,25 @@ void sortAmrStructArray(
 );
 
 /*-------------------------------------------------------\
-| Fun-08: findNearestAmr
+| Fun-08: geneIdSortAmrSTAry
+|   - Sort on an amrStruct array structures by the gene
+|     names (ids) (uses shell short)
+| Input:
+|   - amrAryST:
+|     - Pointer to start of amrStruct array to sort
+| Output:
+|   - Modifies:
+|     o The amrAryST to be sorted by starting
+|       gene names (ids)
+\-------------------------------------------------------*/
+void geneIdSortAmrSTAry(
+   struct amrStruct *amrAryST,
+   unsigned int startUI,
+   unsigned int endUI
+);
+
+/*-------------------------------------------------------\
+| Fun-09: findNearestAmr
 |  - Does a binary search for the nearest amr at or after
 |    to the input query coordiante
 | Input:
@@ -543,7 +584,7 @@ int findNearestAmr(
 );
 
 /*-------------------------------------------------------\
-| Fun-09: pAmrDB
+| Fun-10: pAmrDB
 |  - Print out the amr database used
 | Input:
 |  - amrAryST:
@@ -575,7 +616,7 @@ char pAmrDB(
 );
 
 /*-------------------------------------------------------\
-| Fun-10: readTbAmrTbl
+| Fun-11: readTbAmrTbl
 |   - Gets data from a tbAmr tsv file output from pAmrDB
 |     (fun-09)
 | Input:
@@ -621,3 +662,74 @@ struct amrStruct * readTbAmrTbl(
 );
 
 #endif
+
+/*=======================================================\
+: License:
+: 
+: This code is under the unlicense (public domain).
+:   However, for cases were the public domain is not
+:   suitable, such as countries that do not respect the
+:   public domain or were working with the public domain
+:   is inconveint / not possible, this code is under the
+:   MIT license
+: 
+: Public domain:
+: 
+: This is free and unencumbered software released into the
+:   public domain.
+: 
+: Anyone is free to copy, modify, publish, use, compile,
+:   sell, or distribute this software, either in source
+:   code form or as a compiled binary, for any purpose,
+:   commercial or non-commercial, and by any means.
+: 
+: In jurisdictions that recognize copyright laws, the
+:   author or authors of this software dedicate any and
+:   all copyright interest in the software to the public
+:   domain. We make this dedication for the benefit of the
+:   public at large and to the detriment of our heirs and
+:   successors. We intend this dedication to be an overt
+:   act of relinquishment in perpetuity of all present and
+:   future rights to this software under copyright law.
+: 
+: THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF
+:   ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT
+:   LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+:   FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO
+:   EVENT SHALL THE AUTHORS BE LIABLE FOR ANY CLAIM,
+:   DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF
+:   CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR
+:   IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+:   DEALINGS IN THE SOFTWARE.
+: 
+: For more information, please refer to
+:   <https://unlicense.org>
+: 
+: MIT License:
+: 
+: Copyright (c) 2024 jeremyButtler
+: 
+: Permission is hereby granted, free of charge, to any
+:   person obtaining a copy of this software and
+:   associated documentation files (the "Software"), to
+:   deal in the Software without restriction, including
+:   without limitation the rights to use, copy, modify,
+:   merge, publish, distribute, sublicense, and/or sell
+:   copies of the Software, and to permit persons to whom
+:   the Software is furnished to do so, subject to the
+:   following conditions:
+: 
+: The above copyright notice and this permission notice
+:   shall be included in all copies or substantial
+:   portions of the Software.
+: 
+: THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF
+:   ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT
+:   LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+:   FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO
+:   EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
+:   FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
+:   AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+:   FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
+:   USE OR OTHER DEALINGS IN THE SOFTWARE.
+\=======================================================*/
