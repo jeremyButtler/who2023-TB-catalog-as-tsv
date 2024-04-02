@@ -25,10 +25,10 @@ The current catalog in here has only the resistant (grade
   1 and 2) entries and excludes entire gene deletions.
   However, you can get all entries from the catalog for
   using the `-all-amrs ` flag. It is around 33 megabytes
-  and takes around 2.11 seconds and 134016 megabyes of RAM
-  (using gnu time (`/usr/bin/time`)). For the entire gene
-  deletions entries, just run the converter on default
-  settings.
+  and takes around 2.11 seconds and 134 megabyes of
+  RAM (using gnu time (`/usr/bin/time -f "%e\t%M\t%P"`)).
+  For the entire gene deletions entries, just run the
+  converter on default settings.
 
 I should say that 2023 catalog from the WHO is a very
   valuable resource. I am grateful to the WHO for
