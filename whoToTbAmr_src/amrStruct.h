@@ -65,12 +65,9 @@
 #define def_amrST_revCompDir 1
 #define def_amrST_unkownDir 2
 
-/*Deletion type*/
-#define def_amrST_del 1         /*Single base deletion*/
-#define def_amrST_del_and_ins 2 /*deletion + insertion*/
-
-/*Frame shift flags*/
-#define del_framshift_amrST 1      /*Specific location*/
+/*Whole gene event flags*/
+#define def_geneFrameshift_amrST 1
+#define def_geneDel_amrST 2
 
 /*This is the flags for each resistance type when printed
 `   out
@@ -110,9 +107,8 @@ typedef struct amrStruct{
    unsigned int lenAmrAaUI; /*Length of reference aa seq*/
 
    char frameshiftBl; /*1: is a frame shift*/
-   char wholeGeneBl;  /*1: means an whole gene event*/
+   char wholeGeneFlag;/*1: means an whole gene event*/
    char unknownBl;    /*1: means I have no idea what is*/
-   char aaDelBl;      /*1: means there is a deletion*/
    char aaMultiDupBl; /*1: means range duplicated*/
 
    /*General info/ mutation*/
@@ -181,9 +177,8 @@ typedef struct amrStruct{
    (amrStructPtr)->geneLastRefUI = 0;\
    \
    (amrStructPtr)->frameshiftBl = 0;\
-   (amrStructPtr)->wholeGeneBl = 0;\
+   (amrStructPtr)->wholeGeneFlag = 0;\
    (amrStructPtr)->unknownBl = 0;\
-   (amrStructPtr)->aaDelBl = 0;\
    (amrStructPtr)->aaMultiDupBl = 0;\
    \
    (amrStructPtr)->dirFlag = def_amrST_unkownDir;\
@@ -220,6 +215,7 @@ typedef struct amrStruct{
 \-------------------------------------------------------*/
 #define initAmrStruct(amrStructPtr){\
    blankAmrStruct((amrStructPtr));\
+   \
    (amrStructPtr)->geneIdStr = 0;\
    (amrStructPtr)->lenGeneIdUI = 0;\
    \
@@ -358,10 +354,6 @@ void freeAmrStructArray(
    (secAmrST).lenAmrAaUI = tmpMacUI;\
    \
    \
-   tmpMacC = (firstAmrST).aaDelBl;\
-   (firstAmrST).aaDelBl = (secAmrST).aaDelBl;\
-   (secAmrST).aaDelBl = tmpMacC;\
-   \
    tmpMacC = (firstAmrST).aaMultiDupBl;\
    (firstAmrST).aaMultiDupBl = (secAmrST).aaMultiDupBl;\
    (secAmrST).aaMultiDupBl = tmpMacC;\
@@ -370,9 +362,9 @@ void freeAmrStructArray(
    (firstAmrST).frameshiftBl = (secAmrST).frameshiftBl;\
    (secAmrST).frameshiftBl = tmpMacC;\
    \
-   tmpMacC = (firstAmrST).wholeGeneBl;\
-   (firstAmrST).wholeGeneBl = (secAmrST).wholeGeneBl;\
-   (secAmrST).wholeGeneBl = tmpMacC;\
+   tmpMacC = (firstAmrST).wholeGeneFlag;\
+   (firstAmrST).wholeGeneFlag = (secAmrST).wholeGeneFlag;\
+   (secAmrST).wholeGeneFlag = tmpMacC;\
    \
    tmpMacC = (firstAmrST).unknownBl;\
    (firstAmrST).unknownBl = (secAmrST).unknownBl;\

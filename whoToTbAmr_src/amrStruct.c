@@ -18,7 +18,7 @@
 '   o .h fun-02: initAmrStruct
 '     - Sets all values, including pointers in the
 '       amrStruct structure to 0
-'   o fun-03: freeAmrStructStack (amrStruct.h)
+'   o fun-03: freeAmrStructStack
 '     - Frees the geneIdStr, refSeqStr, and amrSeqStr
 '       arrays and sets all values to 0 in the input
 '       amrStruct 
@@ -747,7 +747,7 @@ char pAmrDB(
             outFILE,
             "\t%i\t%i\t%i",
             amrSTAry[ulAmr].gradeC,
-            amrSTAry[ulAmr].wholeGeneBl,
+            amrSTAry[ulAmr].wholeGeneFlag,
             amrSTAry[ulAmr].unknownBl
          ); /*Print out the final columns*/
 
@@ -1083,7 +1083,7 @@ struct amrStruct * readTbAmrTbl(
    ^   o fun-11 sec-05 sub-24:
    ^     - Read in the grade entry
    ^   o fun-11 sec-05 sub-25:
-   ^     - Read in the entire gene effect entry
+   ^     - Read in if the entry effects the entire gene
    ^   o fun-11 sec-05 sub-26:
    ^     - Read in the unkown type entry
    ^   o fun-11 sec-05 sub-27:
@@ -1354,58 +1354,48 @@ struct amrStruct * readTbAmrTbl(
       *   - Read in the reference amino acid sequence
       \**************************************************/
 
-      if(*tmpStr != '0')
-      { /*If: there is an reference amino acid sequence*/
-         amrSTAry[uiAmr].lenRefAaUI= cLenStr(tmpStr,'\t');
+      amrSTAry[uiAmr].lenRefAaUI= cLenStr(tmpStr,'\t');
 
-         amrSTAry[uiAmr].refAaStr =
-            malloc(
-                 (amrSTAry[uiAmr].lenRefAaUI + 1)
-               * sizeof(char)
-            ); /*Allocate memory for refernce aa seq*/
+      amrSTAry[uiAmr].refAaStr =
+         malloc(
+              (amrSTAry[uiAmr].lenRefAaUI + 1)
+            * sizeof(char)
+         ); /*Allocate memory for refernce aa seq*/
    
-         if(! amrSTAry[uiAmr].refAaStr)
-            goto memErr_sec06_sub02_readTbAmrTbl;
+      if(! amrSTAry[uiAmr].refAaStr)
+         goto memErr_sec06_sub02_readTbAmrTbl;
 
-         cCpStr(
-            amrSTAry[uiAmr].refAaStr,
-            tmpStr,
-            amrSTAry[uiAmr].lenRefAaUI
-         );
+      cCpStr(
+         amrSTAry[uiAmr].refAaStr,
+         tmpStr,
+         amrSTAry[uiAmr].lenRefAaUI
+      );
 
-         tmpStr += amrSTAry[uiAmr].lenRefAaUI + 1;
-      } /*If: there is an reference amino acid sequence*/
-
-      else while(*tmpStr++ != '\t') {}
+      tmpStr += amrSTAry[uiAmr].lenRefAaUI + 1;
 
       /**************************************************\
       * Fun-11 Sec-05 Sub-14:
       *   - Read in the amr amino acid sequence
       \**************************************************/
 
-      if(*tmpStr != '0')
-      { /*If: there is an amr amino acid sequence*/
-         amrSTAry[uiAmr].lenAmrAaUI= cLenStr(tmpStr,'\t');
+      amrSTAry[uiAmr].lenAmrAaUI= cLenStr(tmpStr,'\t');
 
-         amrSTAry[uiAmr].amrAaStr =
-            malloc(
-                 (amrSTAry[uiAmr].lenAmrAaUI + 1)
-               * sizeof(char)
-            ); /*Allocate memory for amr aa seq*/
+      amrSTAry[uiAmr].amrAaStr =
+         malloc(
+              (amrSTAry[uiAmr].lenAmrAaUI + 1)
+            * sizeof(char)
+         ); /*Allocate memory for amr aa seq*/
    
-         if(! amrSTAry[uiAmr].amrAaStr)
-            goto memErr_sec06_sub02_readTbAmrTbl;
+      if(! amrSTAry[uiAmr].amrAaStr)
+         goto memErr_sec06_sub02_readTbAmrTbl;
 
-         cCpStr(
-            amrSTAry[uiAmr].amrAaStr,
-            tmpStr,
-            amrSTAry[uiAmr].lenAmrAaUI
-         );
+      cCpStr(
+         amrSTAry[uiAmr].amrAaStr,
+         tmpStr,
+         amrSTAry[uiAmr].lenAmrAaUI
+      );
 
-         tmpStr += amrSTAry[uiAmr].lenAmrAaUI + 1;
-      } /*If: there is an amr amino acid sequence*/
-
-      else while(*tmpStr++ != '\t') {}
+      tmpStr += amrSTAry[uiAmr].lenAmrAaUI + 1;
          
       /**************************************************\
       * Fun-11 Sec-05 Sub-15:
@@ -1631,13 +1621,13 @@ struct amrStruct * readTbAmrTbl(
 
       /**************************************************\
       * Fun-11 Sec-05 Sub-25:
-      *   - Read in the entire gene effect entry
+      *   - Read in if the entry effects the entire gene
       \**************************************************/
 
       if(*tmpStr == '\n') goto nextLine_readAmrST;
       ++tmpStr; /*Get off the tab*/
 
-      amrSTAry[uiAmr].wholeGeneBl = 48 - *tmpStr;
+      amrSTAry[uiAmr].wholeGeneFlag = 48 - *tmpStr;
 
       while(*tmpStr > 31) ++tmpStr;
 

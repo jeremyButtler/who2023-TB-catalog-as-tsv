@@ -39,6 +39,14 @@ I should say that 2023 catalog from the WHO is a very
 
 # Update log
 
+April 05, 2024:
+
+- I have set this up so that the entire gene deletions
+  copy the sequence for the entire gene + the base before
+  the gene.
+- Changed entireGene to be 2 for an gene deletion event,
+  1 for an LoF anywere in the genome, and 0 for nothing.
+
 April 02, 2024:
 
 - I fixed several preivous issues, but also
@@ -183,11 +191,9 @@ The format is as follows:
   - Has the WHOs grade for the primary antibiotic
   - 0 if there is no grade
 - Fourth column after endAntibiotics (entireGene)
-  - 1 if is this mutation applies to the whole gene.
-    - for gene\_deletion entries, this means an entire
-      gene deletion
-    - for gene\_LoF this means any frameshift or other
-      loss of function mutation in the gene
+  - 1 if is this is an LoF entry (frameshift anywere in
+    the genome).
+  - 2 is for an entire gene deletion
   - 0 if the mutation only applies to a single position
 - fith column after end antibiotics (unkownEntry)
   - 1 if I could not figure this entry out

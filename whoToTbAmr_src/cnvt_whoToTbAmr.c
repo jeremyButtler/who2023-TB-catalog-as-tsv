@@ -1606,7 +1606,10 @@ struct amrStruct * read_2023_WhoAmrTsv(
                 amrST[*numAmrUL].mutTypeStr[1] = 'o';
                 amrST[*numAmrUL].mutTypeStr[2] = 'f';
 
-                amrST[*numAmrUL].wholeGeneBl = 1;
+                amrST[*numAmrUL].wholeGeneFlag =
+                   def_geneFrameshift_amrST;
+
+                amrST[*numAmrUL].frameshiftBl = 1;
              } /*If: This is an loss of function*/
 
              else if(
@@ -1623,8 +1626,8 @@ struct amrStruct * read_2023_WhoAmrTsv(
                 amrST[*numAmrUL].mutTypeStr[1] = 'e';
                 amrST[*numAmrUL].mutTypeStr[2] = 'l';
 
-                amrST[*numAmrUL].wholeGeneBl = 1;
-
+                amrST[*numAmrUL].wholeGeneFlag =
+                   def_geneDel_amrST;
              } /*If: This is an loss of function*/
 
              /*No idea what type of event it is*/
@@ -2049,7 +2052,7 @@ char who_parse_VarID(
               && (*(varStr - 1) & ~32) == 'O'
               && (*(varStr - 2) & ~32) == 'L'
               && (*(varStr - 3)) == '_'
-           ) amrST[iIndex].wholeGeneBl = 1;
+           ) amrST[iIndex].wholeGeneFlag = 1;
 
            continue; /*This not an aa mutation*/
         } /*If: this is not an aa mutation*/
@@ -2391,9 +2394,6 @@ char who_parse_VarID(
 
      parseDel:;
 
-     /*Mark that I have a deltion for the sam file*/
-     amrST[iIndex].aaDelBl = def_amrST_del_and_ins;
-
      varStr += 3; /*get off "del"*/
 
      /*Find the number of amino acids in reference*/
@@ -2458,7 +2458,6 @@ char who_parse_VarID(
      \++++++++++++++++++++++++++++++++++++++++++++++++++*/
 
      /*Get off the ins*/
-     amrST[iIndex].aaDelBl = def_amrST_del_and_ins;
      varStr += 3;
      cpStr = varStr;
 
@@ -2579,12 +2578,12 @@ char whoAddCodonPos(
    int posI = 0;
    uint tmpUI = 0; /*For temporary stuff*/
 
-   char *refSeqStr = 0;
+   char *refSeqHeapStr = 0;
    ulong lenRefUL = 0;
 
-   char *revSeqAryBl = 0;
-   int *startGeneArySI = 0;
-   int *endGeneArySI = 0;
+   char *revGene_heapAryBl = 0;
+   int *startGene_heapArySI = 0;
+   int *endGene_heapArySI = 0;
 
    char *cpStr = 0;
    char *dupStr = 0;
@@ -2596,6 +2595,8 @@ char whoAddCodonPos(
    uchar oneNtUC = 0;
    uchar twoNtUC = 0;
    uchar threeNtUC = 0;
+
+   char retErrC = 0; /*Error message to return*/
 
    FILE *tmpFILE = 0;
 
@@ -2618,7 +2619,8 @@ char whoAddCodonPos(
    \*****************************************************/
 
    tmpFILE = fopen(geneTblFileStr, "r");
-   if(! tmpFILE) return def_amrST_invalidFILE;
+
+   if(! tmpFILE) goto fileErr_fun07_sec06_sub03;
 
    buffStr[lenBuffUS - 1] = '\0';
 
@@ -2657,34 +2659,20 @@ char whoAddCodonPos(
    *   - Allocate memory for the gene coordinates
    \*****************************************************/
 
-   revSeqAryBl = malloc((numGenesI + 1) * sizeof(char));
+   revGene_heapAryBl =
+      malloc((numGenesI + 1) * sizeof(char));
 
-   if(! revSeqAryBl)
-   { /*If: I had an memory error*/
-      fclose(tmpFILE);
-      return def_amrST_memError;
-   } /*If: I had an memory error*/
+   if(! revGene_heapAryBl) goto memErr_fun07_sec06_sub02;
 
-   startGeneArySI = malloc((numGenesI + 1) * sizeof(int));
+   startGene_heapArySI =
+      malloc((numGenesI + 1) * sizeof(int));
 
-   if(! startGeneArySI)
-   { /*If: I had an memory error*/
-      fclose(tmpFILE);
-      free(revSeqAryBl);
+   if(! startGene_heapArySI)
+      goto memErr_fun07_sec06_sub02;
 
-      return def_amrST_memError;
-   } /*If: I had an memory error*/
+   endGene_heapArySI= malloc((numGenesI+1) * sizeof(int));
 
-   endGeneArySI = malloc((numGenesI + 1) * sizeof(int));
-
-   if(! endGeneArySI)
-   { /*If: I had an memory error*/
-      fclose(tmpFILE);
-      free(revSeqAryBl);
-      free(startGeneArySI);
-
-      return def_amrST_memError;
-   } /*If: I had an memory error*/
+   if(! endGene_heapArySI) goto memErr_fun07_sec06_sub02;
    
    /*****************************************************\
    * Fun-07 Sec-02 Sub-04:
@@ -2704,16 +2692,20 @@ char whoAddCodonPos(
       while(*cpStr++ != '\t') ;
 
       /*Sets to 1 if I have an '-', else it is 0*/
-      revSeqAryBl[posI] = (*cpStr == '-');
+      revGene_heapAryBl[posI] = (*cpStr == '-');
 
       while(*cpStr++ != '\t') ;
 
-      cpStr = base10StrToSI(cpStr, startGeneArySI[posI]);
-      --startGeneArySI[posI]; /*Convert to index 0*/
+      cpStr =
+         base10StrToSI(cpStr, startGene_heapArySI[posI]);
+
+      --startGene_heapArySI[posI]; /*Convert to index 0*/
       ++cpStr; /*Get off the tab*/
 
-      cpStr  = base10StrToSI(cpStr, endGeneArySI[posI]);
-      --endGeneArySI[posI]; /*Convert to index 0*/
+      cpStr  =
+         base10StrToSI(cpStr, endGene_heapArySI[posI]);
+
+      --endGene_heapArySI[posI]; /*Convert to index 0*/
 
       ++posI;
    } /*Loop: Read in the file*/
@@ -2722,9 +2714,9 @@ char whoAddCodonPos(
    tmpFILE = 0;
 
    threeArySortNumeric(
-      startGeneArySI,
-      endGeneArySI,
-      revSeqAryBl,
+      startGene_heapArySI,
+      endGene_heapArySI,
+      revGene_heapAryBl,
       0,
       posI
    ); /*Sort the genes by starting position*/
@@ -2749,14 +2741,7 @@ char whoAddCodonPos(
 
    tmpFILE = fopen(refFileStr, "r");
 
-   if(! tmpFILE)
-   { /*If: I could not open the reference sequence file*/
-      free(revSeqAryBl);
-      free(startGeneArySI);
-      free(endGeneArySI);
-
-      return def_amrST_invalidFILE;
-   } /*If: I could not open the reference sequence file*/
+   if(! tmpFILE) goto fileErr_fun07_sec06_sub03;
 
    /*****************************************************\
    * Fun-07 Sec-02 Sub-02:
@@ -2778,17 +2763,8 @@ char whoAddCodonPos(
    *   - Allocate memory for the reference sequence
    \*****************************************************/
 
-   refSeqStr = malloc((lenRefUL + 1) * sizeof(char));
-
-   if(! refSeqStr)
-   { /*If: I had an memory error*/
-      free(revSeqAryBl);
-      free(startGeneArySI);
-      free(endGeneArySI);
-
-      fclose(tmpFILE);
-      return def_amrST_memError;
-   } /*If: I had an memory error*/
+   refSeqHeapStr = malloc((lenRefUL + 1) * sizeof(char));
+   if(! refSeqHeapStr) goto memErr_fun07_sec06_sub02;
 
    /*****************************************************\
    * Fun-07 Sec-02 Sub-04:
@@ -2801,24 +2777,24 @@ char whoAddCodonPos(
    fseek(tmpFILE, bytesInBuffUL, SEEK_SET);
 
    bytesInBuffUL =
-      fread(refSeqStr, sizeof(char), lenRefUL, tmpFILE);
+      fread(refSeqHeapStr,sizeof(char),lenRefUL,tmpFILE);
 
-   refSeqStr[lenRefUL + 1] = '\0';
+   refSeqHeapStr[lenRefUL + 1] = '\0';
 
    lenRefUL = 0;
-   cpStr = refSeqStr;
+   cpStr = refSeqHeapStr;
 
    while(*cpStr != '\0')
    { /*Loop: Remove white space*/
       /*This is just a gaurd for multiple sequences*/
       if(*cpStr == '>') break;
 
-      refSeqStr[lenRefUL] = *cpStr;
+      refSeqHeapStr[lenRefUL] = *cpStr;
       lenRefUL += (*cpStr > 32);
       ++cpStr;
    } /*Loop: Remove white space*/
 
-   refSeqStr[lenRefUL] = '\0';
+   refSeqHeapStr[lenRefUL] = '\0';
 
    fclose(tmpFILE);
    tmpFILE = 0;
@@ -2866,8 +2842,10 @@ char whoAddCodonPos(
     { /*Loop: Assign aa sequences to each AMR*/
 
        /*Find the position of the AMRs gene*/
-       while(endGeneArySI[posI++] <amrST[iIndex].refPosUI)
-          if(posI > numGenesI) break;
+       while(
+            endGene_heapArySI[posI++]
+          < amrST[iIndex].refPosUI
+       ) if(posI > numGenesI) break;
 
        --posI; /*I am always one gene off*/
 
@@ -2883,7 +2861,7 @@ char whoAddCodonPos(
             amrST[iIndex].refPosUI
           + amrST[iIndex].lenRefSeqUI;
 
-       if(tmpUI >= endGeneArySI[posI])
+       if(tmpUI >= endGene_heapArySI[posI])
        { /*If: I have sequences outside of gene bounds*/
           /*See if this AMR is really on the next gene
           `   by comparing it to the last/next AMR
@@ -2906,18 +2884,23 @@ char whoAddCodonPos(
       \**************************************************/
 
        /*Make sure the start is the first mapped base*/
-       if(startGeneArySI[posI] < endGeneArySI[posI])
-       { /*If: the start comes first*/
+       if(  startGene_heapArySI[posI]
+          < endGene_heapArySI[posI]
+       ){ /*If: the start comes first*/
           amrST[iIndex].geneFirstRefUI =
-             startGeneArySI[posI];
+             startGene_heapArySI[posI];
 
-          amrST[iIndex].geneLastRefUI= endGeneArySI[posI];
+          amrST[iIndex].geneLastRefUI=
+             endGene_heapArySI[posI];
        } /*If: the start comes first*/
 
        else
        { /*Else: the start comes last*/
-         amrST[iIndex].geneLastRefUI=startGeneArySI[posI];
-         amrST[iIndex].geneFirstRefUI=endGeneArySI[posI];
+         amrST[iIndex].geneLastRefUI =
+            startGene_heapArySI[posI];
+
+         amrST[iIndex].geneFirstRefUI =
+            endGene_heapArySI[posI];
        } /*Else: the start comes last*/
 
       /**************************************************\
@@ -2937,7 +2920,7 @@ char whoAddCodonPos(
        +   - Add in the direction and check if aa sequence
        \++++++++++++++++++++++++++++++++++++++++++++++++*/
 
-       if(revSeqAryBl[posI])
+       if(revGene_heapAryBl[posI])
        { /*If: This is an reverse complement gene*/
           amrST[iIndex].dirFlag = def_amrST_revCompDir;
 
@@ -2951,7 +2934,7 @@ char whoAddCodonPos(
 
           /*Update the starting position*/
           amrST[iIndex].codonPosUI =
-               endGeneArySI[posI]
+               endGene_heapArySI[posI]
              - ((amrST[iIndex].codonNumUI - 1) * 3);
 
           if(amrST[iIndex].endCodonNumUI == 0)
@@ -2982,7 +2965,8 @@ char whoAddCodonPos(
           dupStr = amrST[iIndex].refAaStr + 1;
 
           /*-3 to get off the first codon*/
-          cpStr = refSeqStr + amrST[iIndex].codonPosUI -3;
+          cpStr =
+             refSeqHeapStr + amrST[iIndex].codonPosUI - 3;
 
           for(
              iCodon = amrST[iIndex].codonNumUI + 1;
@@ -3037,7 +3021,7 @@ char whoAddCodonPos(
 
           /*Update the starting position*/
           amrST[iIndex].codonPosUI =
-               startGeneArySI[posI]
+               startGene_heapArySI[posI]
              + ((amrST[iIndex].codonNumUI - 1) * 3);
 
           if(amrST[iIndex].endCodonNumUI == 0)
@@ -3068,7 +3052,8 @@ char whoAddCodonPos(
           dupStr = amrST[iIndex].refAaStr + 1;
 
           /*+3 to get off the first codon*/
-          cpStr = refSeqStr + amrST[iIndex].codonPosUI +3;
+          cpStr =
+             refSeqHeapStr + amrST[iIndex].codonPosUI + 3;
 
           for(
 
@@ -3114,24 +3099,32 @@ char whoAddCodonPos(
    *   - Clean up the allocated memory
    \*****************************************************/
 
-   free(revSeqAryBl);
-   free(startGeneArySI);
-   free(endGeneArySI);
+   free(revGene_heapAryBl);
+   free(startGene_heapArySI);
+   free(endGene_heapArySI);
 
-   revSeqAryBl = 0;
-   startGeneArySI = 0;
-   endGeneArySI = 0;
+   revGene_heapAryBl = 0;
+   startGene_heapArySI = 0;
+   endGene_heapArySI = 0;
 
    /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\
    ^ Fun-07 Sec-05:
    ^   - Add in the whole gene target data
+   ^   o fun-07 sec-05 sub-01:
+   ^   o fun-07 sec-05 sub-02:
+   ^     - Add in the genes sequecne
    \<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
+
+   /*****************************************************\
+   * Fun-07 Sec-05 Sub-01:
+   *   - Set up the gene coordinates for deletions
+   \*****************************************************/
 
    geneIdSortAmrSTAry(amrST, 0, numAmrI - 1);
 
    for(iIndex = 0; iIndex < numAmrI; ++iIndex)
    { /*Loop: Add gene start & end to entire gene events*/
-      if(amrST[iIndex].wholeGeneBl)
+      if(amrST[iIndex].wholeGeneFlag)
       { /*If: This is an entire gene event*/
          if(   iIndex > 1
             && (! cStrEql(
@@ -3140,8 +3133,9 @@ char whoAddCodonPos(
                  '\0'
               ))
          ){ /*If: I the last amr is the same gene*/
+            /*I want to grab the base before the gene*/
             amrST[iIndex].refPosUI =
-               amrST[iIndex - 1].geneFirstRefUI;
+               amrST[iIndex - 1].geneFirstRefUI - 1;
 
             amrST[iIndex].geneFirstRefUI =
                amrST[iIndex - 1].geneFirstRefUI;
@@ -3151,12 +3145,13 @@ char whoAddCodonPos(
 
             amrST[iIndex].dirFlag =
                amrST[iIndex - 1].dirFlag;
+
          } /*If: I the last amr is the same gene*/
 
          else
          { /*Else: The AMR is same as the next gene*/
             amrST[iIndex].geneFirstRefUI =
-               amrST[iIndex + 1].geneFirstRefUI;
+               amrST[iIndex + 1].geneFirstRefUI - 1;
 
             amrST[iIndex].geneLastRefUI =
                amrST[iIndex + 1].geneLastRefUI;
@@ -3167,17 +3162,150 @@ char whoAddCodonPos(
             amrST[iIndex].dirFlag =
                amrST[iIndex + 1].dirFlag;
          } /*Else: The AMR is same as the next gene*/
+
+         if(!
+            (  amrST[iIndex].wholeGeneFlag
+             & def_geneDel_amrST
+            )
+         ) continue; /*If this is not an gene deletion*/
+
+         /***********************************************\
+         * Fun-07 Sec-05 Sub-02:
+         *   - Add in the genes sequecne
+         *   o fun-07 sec-05 sub-02 cat-01:
+         *     - copy gene + base before gene to reference
+         *   o fun-07 sec-05 sub-02 cat-02:
+         *     - copy the base before the gene to the AMR
+         \***********************************************/
+
+         /*++++++++++++++++++++++++++++++++++++++++++++++\
+         + Fun-07 Sec-05 Sub-02 Cat-01:
+         +   - copy gene + base before gene into reference
+         \++++++++++++++++++++++++++++++++++++++++++++++*/
+
+         /*Get the length of the deletion*/
+         tmpUI =
+              amrST[iIndex - 1].geneLastRefUI
+            - amrST[iIndex - 1].geneFirstRefUI;
+
+         if(amrST[iIndex].refSeqStr)
+            free(amrST[iIndex].refSeqStr);
+
+         amrST[iIndex].refSeqStr = 0;
+
+         ++tmpUI; /*Account for base before gene*/
+
+         amrST[iIndex].refSeqStr =
+            malloc((tmpUI + 1) * sizeof(char));
+
+         if(! amrST[iIndex].refSeqStr)
+            goto memErr_fun07_sec06_sub02;
+
+         amrST[iIndex].lenRefSeqUI = tmpUI;
+
+         ulCpStr(
+            amrST[iIndex].refSeqStr,
+            &refSeqHeapStr[ amrST[iIndex].refPosUI ],
+            amrST[iIndex].lenRefSeqUI
+         ); /*Copy the genes sequence + 1 base*/
+
+         /*++++++++++++++++++++++++++++++++++++++++++++++\
+         + Fun-07 Sec-05 Sub-02 Cat-02:
+         +   - copy the base before the gene to the AMR
+         \++++++++++++++++++++++++++++++++++++++++++++++*/
+
+         if(amrST[iIndex].amrSeqStr)
+            free(amrST[iIndex].amrSeqStr);
+
+         amrST[iIndex].amrSeqStr = 0;
+
+         amrST[iIndex].amrSeqStr =
+            malloc(2 * sizeof(char));
+
+         if(! amrST[iIndex].amrSeqStr)
+            goto memErr_fun07_sec06_sub02;
+
+         amrST[iIndex].amrSeqStr[0] =
+            refSeqHeapStr[amrST[iIndex].refPosUI];
+
+         amrST[iIndex].amrSeqStr[1] = '\0';
       } /*If: This is an entire gene event*/
    } /*Loop: Add gene start & end to entire gene events*/
 
    /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\
    ^ Fun-07 Sec-06:
    ^   - Clean up and return
+   ^   o fun-07 sec-06 sub-01:
+   ^     - Handle clean up/return for no errors
+   ^   o fun-07 sec-06 sub-02:
+   ^     - Handle memory errors
+   ^   o fun-07 sec-06 sub-03:
+   ^     - Handle file errors
+   ^   o fun-07 sec-06 sub-04:
+   ^     - Clean up for errors
    \<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
+
+   /*****************************************************\
+   * Fun-07 Sec-06 Sub-01:
+   *   - Handle clean up/return for no errors
+   \*****************************************************/
+
+   free(refSeqHeapStr);
+   refSeqHeapStr = 0;
 
    /*Resort by starting position*/
    sortAmrStructArray(amrST, 0, numAmrI - 1); 
+
    return 0; /*No errors*/
+
+   /*****************************************************\
+   * Fun-07 Sec-06 Sub-02:
+   *   - Handle memory errors
+   \*****************************************************/
+
+   memErr_fun07_sec06_sub02:;
+
+   retErrC = def_amrST_memError;
+
+   goto errCleanUp_fun07_sec06_sub04;
+
+   /*****************************************************\
+   * Fun-07 Sec-06 Sub-03:
+   *   - Handle file errors
+   \*****************************************************/
+
+   fileErr_fun07_sec06_sub03:;
+
+   retErrC = def_amrST_invalidFILE;
+
+   goto errCleanUp_fun07_sec06_sub04;
+
+   /*****************************************************\
+   * Fun-07 Sec-06 Sub-04:
+   *   - Clean up for errors
+   \*****************************************************/
+
+   errCleanUp_fun07_sec06_sub04:;
+
+   /*Make sure the AMR array is sorted correctly*/
+   sortAmrStructArray(amrST, 0, numAmrI - 1); 
+
+   if(refSeqHeapStr) free(refSeqHeapStr);
+   refSeqHeapStr = 0;
+
+   if(revGene_heapAryBl) free(revGene_heapAryBl);
+   revGene_heapAryBl = 0;
+
+   if(startGene_heapArySI) free(startGene_heapArySI);
+   startGene_heapArySI = 0;
+
+   if(endGene_heapArySI) free(endGene_heapArySI);
+   endGene_heapArySI = 0;
+
+   if(tmpFILE) fclose(tmpFILE);
+   tmpFILE = 0;
+
+   return retErrC;
 } /*whoAddCodonPos*/
 
 /*=======================================================\
