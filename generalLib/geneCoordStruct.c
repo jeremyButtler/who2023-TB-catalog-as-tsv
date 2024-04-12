@@ -32,7 +32,7 @@
 '   o fun-08: findStartCoordInGeneCoord
 '     - Does a binary search by starting coordinate for a
 '       potentail gene in a geneCoords structure
-'   o fun-09: pafGetGeneCoords
+'   o fun-09: getGeneCoords
 '     - Gets the gene coordinates from a paf file
 '   o license:
 '     - Licensing for this code (public domain / mit)
@@ -57,6 +57,7 @@
 #include "dataTypeShortHand.h"
 #include "base10StrToNum.h"
 #include "genMath.h"
+#include "ulCpStr.h"
 
 /*-------------------------------------------------------\
 | Fun-01: freeGeneCoordsStack
@@ -73,23 +74,14 @@ void
 freeGeneCoordsStack(
    struct geneCoords *geneCoordsST
 ){
-   if((geneCoordsST)->idStrAry != 0)
-   { /*If: there are ids to free*/
-      free((geneCoordsST)->idStrAry);
-      (geneCoordsST)->idStrAry = 0;
-   } /*If: there are ids to free*/
+   free((geneCoordsST)->idStrAry);
+   (geneCoordsST)->idStrAry = 0;
    
-   if((geneCoordsST)->startAryUI != 0)
-   { /*If: there are starting positions to free*/
-      free((geneCoordsST)->startAryUI);
-      (geneCoordsST)->startAryUI = 0;
-   } /*If: there are starting positions to free*/
+   free((geneCoordsST)->startAryUI);
+   (geneCoordsST)->startAryUI = 0;
    
-   if((geneCoordsST)->endAryUI != 0)
-   { /*If: there are ending positions to free*/
-      free((geneCoordsST)->endAryUI);
-      (geneCoordsST)->endAryUI = 0;
-   } /*If: there are ending positions to free*/
+   free((geneCoordsST)->endAryUI);
+   (geneCoordsST)->endAryUI = 0;
 } /*freeGeneCoordsStack*/
 
 /*-------------------------------------------------------\
@@ -100,15 +92,14 @@ freeGeneCoordsStack(
 |     o Pointer to a geneCoords structure to free
 | Output:
 |   - Frees:
-|     o geneCoordsST (and sets to 0)
+|     o geneCoordsST
 \-------------------------------------------------------*/
 void
 freeGeneCoords(
-   struct geneCoords **geneCoordsST
+   struct geneCoords *geneCoordsST
 ){
-   freeGeneCoordsStack(*(geneCoordsST));
-   free(*(geneCoordsST));
-   *(geneCoordsST) = 0;
+   if(geneCoordsST) freeGeneCoordsStack(geneCoordsST);
+   free(geneCoordsST);
 } /*freeGeneCoords*/
 
 /*-------------------------------------------------------\
@@ -147,34 +138,34 @@ makeGeneCoords(
    struct geneCoords *retST =
       malloc(sizeof(struct geneCoords));
    
-   if(retST != 0)
-   { /*If: I had allocated a structure*/
-      
-      initGeneCoords(retST);
-      
-      retST->idStrAry =
-         malloc((numGenesUI) * sizeof(*retST->idStrAry));
-      
-      if(retST->idStrAry != 0)
-      { /*If: I had no errors for the gene ids array*/
-         retST->startAryUI =
-            malloc((numGenesUI) * sizeof(uint));
-         
-         if(retST->startAryUI ==0)
-           {freeGeneCoords(&retST);}
-         
-         else
-         { /*Else: I can try getting memory for the end*/
-            retST->endAryUI =
-               malloc((numGenesUI) * sizeof(uint));
-            
-            if(retST->startAryUI == 0)
-               {freeGeneCoords(&retST);}
-         } /*Else: I can try getting memory for the end*/
-      } /*If: I had no errors for the gene ids array*/
-   } /*If: I had allocated a structure*/
+   if(! retST)
+      goto memErr_fun04;
+
+   initGeneCoords(retST);
    
+   retST->idStrAry =
+      malloc((numGenesUI) * sizeof(*retST->idStrAry));
+   
+   if(! retST->idStrAry)
+      goto memErr_fun04;
+
+   retST->startAryUI= malloc((numGenesUI) * sizeof(uint));
+   
+   if(! retST->startAryUI)
+      goto memErr_fun04;
+   
+   retST->endAryUI = malloc((numGenesUI) * sizeof(uint));
+   
+   if(! retST->startAryUI)
+      goto memErr_fun04;
+
    return retST;
+
+   memErr_fun04:;
+
+   freeGeneCoords(retST);
+   retST = 0;
+   return 0;
 } /*makeGeneCoords*/
 
 /*-------------------------------------------------------\
@@ -477,65 +468,361 @@ findStartCoordInGeneCoord(
 } /*findStartCoordInGeneCoords*/
 
 /*-------------------------------------------------------\
-| Fun-09: pafGetGeneCoords
-|  - Gets the gene coordinates from a paf file
+| Fun-09: getGeneCoords
+|  - Gets the gene coordinates from a gene table (tsv)
 | Input:
-|  - pafFILE:
-|    o Pointer to paf FILE to get gene coordinates from
-|  - numGenesUI:
-|    o Number of genes extracted
+|  - geneTblFileStr:
+|    o C-string with name of the gene table file to
+|      extract the gene coordinates and names from
+|  - numGenesSI:
+|    o Will hold the Number of genes extracted
+|  - errULPtr:
+|    o Will hold the error return value
 | Output:
 |  - Returns:
 |    o Pointer to an sorted geneCoords structure with the 
 |      gene coordinates
-|    o 0 for memory error
+|    o 0 for errors
 |  - Modifies:
 |    o numGenesI to have the number of genes (index 0)
 |      extracted
+|    o errULPtr to hold the error
+|      - 0 for no errors
+|      - def_fileErr_geneCoord for an file opening error
+|      - def_memErr_geneCoord for an memor error
+|      - (line_number << 8) | def_invalidEntry_geneCoord
+|        for an invalid line in the file
+|        o Get the line number with (*errULPtr >> 8)
 \-------------------------------------------------------*/
 struct geneCoords *
-pafGetGeneCoords(
-   void *pafFILE, /*Paf file get gene coordinates from*/\
-   int *numGenesI  /*Number of genes extracted*/\
-){
-   ushort lenBuffUS = 1024;
-   char buffStr[lenBuffUS];
-   
-   char alnTypeC = 0;     /*To check alignment type*/
-   ulong numLinesUL = 0;
-   
-   struct geneCoords *genesST = 0;
-   
-   /*Find the number of entries in the paf file*/
-   while(fgets(buffStr, lenBuffUS, (FILE *) pafFILE))
-      ++numLinesUL;
-   
-   /*Extract each entry*/
-   fseek((pafFILE), 0, SEEK_SET);
-   genesST = makeGeneCoords(numLinesUL);
-   
-   if(genesST)
-   { /*If: I did not have a memory error*/
-      while(fgets(buffStr, lenBuffUS, (FILE *) pafFILE)
-      ){ /*Loop: Get entries from the paf file*/
-         /*Get the gene locations from the paf line*/
-         getPafGene(
-            genesST,
-            *(numGenesI),
-            &alnTypeC,
-            buffStr
-         );
-         
-         (*numGenesI) += (alnTypeC == 'P');
-      } /*Loop: Get entries from the paf file*/
-      
-      --(*numGenesI); /*Convert to index 0*/
-      sortGeneCoords(genesST, 0, *(numGenesI));
-      fseek((FILE *) pafFILE, 0, SEEK_SET);
-   } /*If: I did not have a memory error*/
+getGeneCoords(
+   char *geneTblFileStr,
+   int *numGenesSI, /*Number of genes extracted*/\
+   unsigned long *errULPtr
+){ /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\
+   ' Fun-09 TOC: getGeneCoords
+   '   - Gets the gene coordinates from a gene table (tsv)
+   '   o fun-09 Sec-01:
+   '     - Variable declerations
+   '   o fun-09 Sec-02:
+   '     - Check input and allocate memory for buffer
+   '   o fun-09 Sec-03:
+   '     - Find number lines/max line length in table file
+   '   o fun-09 Sec-04:
+   '     - Allocate memory and go back to start of file
+   '   o fun-09 Sec-05:
+   '     - Read in the gene coordinates from the file
+   '   o fun-09 Sec-06:
+   '     - Clean up and return
+   \~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
-   return genesST;
-}
+   /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\
+   ^ Fun-09 Sec-01:
+   ^   - Variable declerations
+   \<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
+
+   int lenBuffSI = 1 << 10; /*~ 2000*/
+   char *buffHeapStr = 0;
+   
+   char newLineBl = 0;     /*Check if on an new line*/
+   char *cpStr = 0;
+   char *dupStr = 0;
+
+   int numLinesSI = 0;
+   int maxLineLenSI = 0;
+   int lineLenSI = 0;
+
+   ulong bytesUL = 0;
+   ulong ulByte = 0;
+   int tmpUI = 0;
+   
+   struct geneCoords *genesHeapST = 0;
+
+   FILE *tblFILE  = 0;
+   
+   /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\
+   ^ Fun-09 Sec-02:
+   ^   - Check input and allocate memory for buffer
+   \<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
+
+   *numGenesSI = 0;
+   *errULPtr = 0;
+
+   tblFILE  = fopen(geneTblFileStr, "r");
+
+   if(! tblFILE)
+      goto fileErr_fun09;
+
+   buffHeapStr  = malloc((lenBuffSI + 1) * sizeof(char));
+
+   if(! buffHeapStr)
+       goto memErr_fun09;
+
+   /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\
+   ^ Fun-09 Sec-03:
+   ^   - Find number lines/max line length in table file
+   \<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
+
+   bytesUL =
+      fread(
+         buffHeapStr,
+         sizeof(char),
+         lenBuffSI,
+         tblFILE
+      ); /*Read in the first part of the file*/
+
+   while(bytesUL > 0)
+   { /*Loop: Scan through the file for new lines*/
+
+      ulByte = 0;
+      buffHeapStr[bytesUL] = '\0';
+         /*I made sure I always have one byte to spare*/
+
+      while(buffHeapStr[ulByte] != '\0')
+      { /*Loop: Count the number of newlines in buffer*/
+         tmpUI = ulEndStrLine(&buffHeapStr[ulByte]);
+         ulByte += tmpUI;
+         newLineBl = buffHeapStr[ulByte] == '\n';
+         numLinesSI += newLineBl;
+
+         lineLenSI += tmpUI;
+
+         maxLineLenSI =
+            noBranchMax(
+               maxLineLenSI,
+               lineLenSI
+            );
+
+         lineLenSI &= ((int) (newLineBl - 1));
+         ulByte += newLineBl; /*get off new line*/
+      } /*Loop: Count the number of newlines in buffer*/
+            
+
+      bytesUL =
+         fread(
+            buffHeapStr,
+            sizeof(char),
+            lenBuffSI,
+            tblFILE
+         ); /*Read in the next part of the file*/
+   } /*Loop: Scan through the file for new lines*/
+
+   /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\
+   ^ Fun-09 Sec-04:
+   ^   - Allocate memory and go back to start of file
+   \<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
+
+   /*Make sure I have a full sized buffer*/
+   if(lenBuffSI < maxLineLenSI)
+   { /*If: I need to make an larger buffer*/
+      free(buffHeapStr);
+      buffHeapStr = 0;
+
+      lenBuffSI = maxLineLenSI;
+      buffHeapStr = malloc((lenBuffSI +1) * sizeof(char));
+
+      if(! buffHeapStr)
+         goto memErr_fun09;
+   } /*If: I need to make an larger buffer*/
+
+   genesHeapST = makeGeneCoords(numLinesSI + 1);
+      /*+ 1 to account for no header*/
+   
+   if(! genesHeapST)
+      goto memErr_fun09;
+
+   /*Extract each entry*/
+   fseek((tblFILE), 0, SEEK_SET);
+
+   /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\
+   ^ Fun-09 Sec-05:
+   ^   - Read in the gene coordinates from the file
+   ^   o fun-09 sec-05 sub-01:
+   ^     - Start loop and copy gene name
+   ^   o fun-09 sec-05 sub-02:
+   ^     - Move past the refernce id
+   ^   o fun-09 sec-05 sub-03:
+   ^     - Move past the gene direction
+   ^   o fun-09 sec-05 sub-04:
+   ^     - Get coordiante of frist reference base in gene
+   ^   o fun-09 sec-05 sub-05:
+   ^     - Get coordiante of last reference base in gene
+   ^   o fun-09 sec-05 sub-06:
+   ^     - Move to the next gene
+   \<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
+
+   /*****************************************************\
+   * Fun-09 Sec-05 Sub-01:
+   *   - Start loop and copy gene name
+   \*****************************************************/
+
+   while(fgets(buffHeapStr, lenBuffSI, tblFILE))
+   { /*Loop: Get entries from the paf file*/
+
+      cpStr = buffHeapStr;
+      dupStr = genesHeapST->idStrAry[*numGenesSI];
+
+      /*Copy the gene name*/
+      while(*cpStr > 32)
+         *dupStr++ = *cpStr++;
+
+      *dupStr = '\0';
+
+      if(*cpStr == '\t') ;      /*Expected*/
+      else if(*cpStr == ' ') ;  /*Odd, but works*/
+      else                      /*new line or null*/
+         goto invalidEntry_fun09;
+
+      ++cpStr; /*get off the tab*/
+
+      /**************************************************\
+      * Fun-09 Sec-05 Sub-02:
+      *   - Move past the refernce id
+      \**************************************************/
+
+      while(*cpStr++ > 32) ; /*Move past reference id*/
+
+      if(*(cpStr - 1) == '\t') ;      /*Expected*/
+      else if(*(cpStr - 1) == ' ') ;  /*Odd, but works*/
+      else                            /*new line or null*/
+         goto invalidEntry_fun09;
+
+      /**************************************************\
+      * Fun-09 Sec-05 Sub-03:
+      *   - Move past the gene direction
+      \**************************************************/
+
+      while(*cpStr++ > 32) ;
+
+      if(*(cpStr - 1) == '\t') ;      /*Expected*/
+      else if(*(cpStr - 1) == ' ') ;  /*Odd, but works*/
+      else                            /*new line or null*/
+         goto invalidEntry_fun09;
+
+      /**************************************************\
+      * Fun-09 Sec-05 Sub-04:
+      *   - Get coordiante of frist reference base in gene
+      \**************************************************/
+
+      cpStr =
+         base10StrToSI(
+            cpStr,
+            genesHeapST->startAryUI[*numGenesSI]
+         ); /*Get the genes frist reference base*/
+
+      --genesHeapST->endAryUI[*numGenesSI];
+
+      if(*cpStr == '\t') ;      /*Expected*/
+      else if(*cpStr == ' ') ;  /*Odd, but works*/
+      else                      /*new line or null*/
+         goto invalidEntry_fun09;
+
+      ++cpStr; /*Get off the tab*/
+
+      /**************************************************\
+      * Fun-09 Sec-05 Sub-05:
+      *   - Get coordiante of last reference base in gene
+      \**************************************************/
+
+      cpStr =
+         base10StrToSI(
+            cpStr,
+            genesHeapST->endAryUI[*numGenesSI]
+         ); /*Get the genes frist reference base*/
+
+      --genesHeapST->endAryUI[*numGenesSI];
+
+      if(*cpStr > 32)
+         goto invalidEntry_fun09; /*Not an tsv*/
+
+      /**************************************************\
+      * Fun-09 Sec-05 Sub-06:
+      *   - Move to the next gene
+      \**************************************************/
+
+      ++(*numGenesSI);
+   } /*Loop: Get entries from the paf file*/
+   
+   /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\
+   ^ Fun-09 Sec-06:
+   ^   - Clean up and return
+   ^   o fun-09 sec-06 sub-01:
+   ^     - Clean up and return after success
+   ^   o fun-09 sec-06 sub-02:
+   ^     - Deal with memory errors
+   ^   o fun-09 sec-06 sub-03:
+   ^     - Deal with file opening errors
+   ^   o fun-09 sec-06 sub-04:
+   ^     - Deal with invalid entries in files
+   ^   o fun-09 sec-06 sub-05:
+   ^     - Clean up and return after an error
+   \<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
+
+   /*****************************************************\
+   * Fun-09 Sec-06 Sub-01:
+   *   - Clean up and return after success
+   \*****************************************************/
+
+   --(*numGenesSI); /*Convert to index 0*/
+   sortGeneCoords(genesHeapST, 0, *(numGenesSI));
+
+   free(buffHeapStr);
+   buffHeapStr = 0;
+
+   fclose(tblFILE);
+   tblFILE = 0;
+
+   return genesHeapST;
+
+   /*****************************************************\
+   * Fun-09 Sec-06 Sub-02:
+   *   - Deal with memory errors
+   \*****************************************************/
+
+   memErr_fun09:;
+
+   *errULPtr = def_memErr_geneCoord;
+   goto errCleanUp_fun09;
+
+   /*****************************************************\
+   * Fun-09 Sec-06 Sub-03:
+   *   - Deal with file opening errors
+   \*****************************************************/
+
+   fileErr_fun09:;
+
+   *errULPtr = def_fileErr_geneCoord;
+   goto errCleanUp_fun09;
+
+   /*****************************************************\
+   * Fun-09 Sec-06 Sub-04:
+   *   - Deal with invalid entries in files
+   \*****************************************************/
+
+   invalidEntry_fun09:;
+
+   *errULPtr = def_invalidEntry_geneCoord;
+   *errULPtr |= (*numGenesSI << 8);
+   goto errCleanUp_fun09;
+
+   /*****************************************************\
+   * Fun-09 Sec-06 Sub-05:
+   *   - Clean up and return after an error
+   \*****************************************************/
+
+   errCleanUp_fun09:;
+
+   free(buffHeapStr);
+   buffHeapStr = 0;
+
+   freeGeneCoords(genesHeapST);
+   genesHeapST = 0;
+
+   if(tblFILE) fclose(tblFILE);
+   tblFILE = 0;
+
+   return 0;
+} /*getGeneCoords*/
 
 /*=======================================================\
 : License:

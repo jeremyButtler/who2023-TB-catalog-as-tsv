@@ -500,7 +500,26 @@ char pAmrDB(
    char *drugStrAry,
    int numDrugsI,
    char *outStr
-){
+){ /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\
+   ' Fun-10 TOC: pAmrDB
+   '   - Prints out the AMRs to an tbAmr database
+   '   o fun-10 sec-01:
+   '     - Variable declerations
+   '   o fun-10 sec-02:
+   '     - Open output file check
+   '   o fun-10 sec-03:
+   '     - Print the header
+   '   o fun-10 sec-04:
+   '     - Print the AMRs
+   '   o fun-10 sec-05:
+   '     - Close file and exit
+   \~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+
+   /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\
+   ^ Fun-10 Sec-01:
+   ^   - Variable declerations
+   \<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
+
    ulong ulAmr = 0;  /*For looping through amrSTAry*/
 
    int iDrug = 0;    /*For looping through drugStrAry*/
@@ -515,6 +534,11 @@ char pAmrDB(
    char *tmpStr = 0;
 
    FILE *outFILE = 0;
+
+   /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\
+   ^ Fun-10 Sec-02:
+   ^   - Open output file check
+   \<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
 
    if(! outStr) outFILE = stdout;
    else if(*outStr == '-') outFILE = stdout;
@@ -545,6 +569,35 @@ char pAmrDB(
    fprintf(outFILE, "\tgrade\tentireGene\tunkownEntry");
    fprintf(outFILE, "\n");
 
+   /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\
+   ^ Fun-10 Sec-04:
+   ^   - Print the AMRs
+   ^   o fun-10 sec-04 sub-01:
+   ^     - Start loop; print out ids & reference position
+   ^   o fun-10 sec-04 sub-02:
+   ^     - Print out direction and AMR type/sequence
+   ^   o fun-10 sec-04 sub-03:
+   ^     - Print out amino acid sequence and coordinates
+   ^   o fun-10 sec-04 sub-04:
+   ^     - Print out gene coordinates
+   ^   o fun-10 sec-04 sub-05:
+   ^     - Print out resistance level/if additive
+   ^   o fun-10 sec-04 sub-06:
+   ^     - Print out the drugs resistant to
+   ^   o fun-10 sec-04 sub-07:
+   ^     - Print out the effect entry
+   ^   o fun-10 sec-04 sub-08:
+   ^     - Print out the comment entry
+   ^   o fun-10 sec-04 sub-09:
+   ^     - Print grade (main drug), if the effect
+   ^       appies to entire gene, and if unknown entry
+   \<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
+
+   /*****************************************************\
+   * Fun-10 Sec-04 Sub-01:
+   *   - Start loop; print out ids and reference position
+   \*****************************************************/
+
    for(ulAmr = 0; ulAmr < numAmrUL; ++ulAmr)
    { /*Loop: Print out each  amr*/
       fprintf(
@@ -554,6 +607,11 @@ char pAmrDB(
          amrSTAry[ulAmr].varIdStr,  /*variant name*/
          amrSTAry[ulAmr].refPosUI + 1   /*ref position*/
       ); /*Print out the first few entries*/
+
+      /**************************************************\
+      * Fun-10 Sec-04 Sub-02:
+      *   - Print out direction and AMR type/sequence
+      \**************************************************/
 
       /*Print out the reading frame of the gene*/
       if(amrSTAry[ulAmr].dirFlag == def_amrST_forwardDir)
@@ -576,6 +634,11 @@ char pAmrDB(
          amrSTAry[ulAmr].refSeqStr,
          amrSTAry[ulAmr].amrSeqStr
       );
+
+      /**************************************************\
+      * Fun-10 Sec-04 Sub-03:
+      *   - Print out amino acid sequence and coordinates
+      \**************************************************/
 
       if(amrSTAry[ulAmr].refAaStr != 0)
       { /*If: I had an amino acid change*/
@@ -610,17 +673,27 @@ char pAmrDB(
 
       else fprintf(outFILE, "\tNA\tNA\tNA\t0\t0");
 
+      /**************************************************\
+      * Fun-10 Sec-04 Sub-04:
+      *   - Print out gene coordinates
+      \**************************************************/
+
       /*Print out the gene position*/
       if(amrSTAry[ulAmr].geneLastRefUI > 0)
          fprintf(
             outFILE,
             "\t%u\t%u",
-            amrSTAry[ulAmr].geneFirstRefUI,
-            amrSTAry[ulAmr].geneLastRefUI 
+            amrSTAry[ulAmr].geneFirstRefUI + 1,
+            amrSTAry[ulAmr].geneLastRefUI + 1
          );
 
       else fprintf(outFILE, "\tNA\tNA");
             
+      /**************************************************\
+      * Fun-10 Sec-04 Sub-05:
+      *   - Print out resistance level/if additive
+      \**************************************************/
+
       fprintf(
          outFILE,
         "\t%i\t%i\t%i",
@@ -642,6 +715,11 @@ char pAmrDB(
            "\t%s",
            amrSTAry[ulAmr].needsGeneStr
         );
+
+      /**************************************************\
+      * Fun-10 Sec-04 Sub-06:
+      *   - Print out the drugs resistant to
+      \**************************************************/
 
       iDrugOn = 0;
 
@@ -695,7 +773,11 @@ char pAmrDB(
          /*Mark end of antibiotics*/
          fprintf(outFILE, "\t*");
 
-         /*Print out the effect entry*/
+         /***********************************************\
+         * Fun-10 Sec-04 Sub-07:
+         *   - Print out the effect entry
+         \***********************************************/
+
          if(! amrSTAry[ulAmr].effectStr)
             fprintf(outFILE, "\tNA");
          else
@@ -718,7 +800,11 @@ char pAmrDB(
                );
          } /*Else: If I may have an comment*/
  
-         /*Print out the comment entry*/
+         /***********************************************\
+         * Fun-10 Sec-04 Sub-08:
+         *   - Print out the comment entry
+         \***********************************************/
+
          if(! amrSTAry[ulAmr].commentStr)
             fprintf(outFILE, "\tNA");
          else
@@ -740,9 +826,12 @@ char pAmrDB(
                );
          } /*Else: If I may have an comment*/
  
-         /*Print out the assigned grade for the main
-         `  restistance
-         */
+         /***********************************************\
+         * Fun-10 Sec-04 Sub-09:
+         *   - Print grade (main drug), if the effect
+         *     appies to entire gene, and if unknown entry
+         \***********************************************/
+
          fprintf(
             outFILE,
             "\t%i\t%i\t%i",
@@ -756,6 +845,11 @@ char pAmrDB(
       } /*Loop: Print out the AMR's resitant to*/
 
    } /*Loop: Print out each  amr*/
+
+   /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\
+   ^ Fun-10 Sec-05:
+   ^   - Close file and exit
+   \<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
 
    if(outFILE != stdout) fclose(outFILE);
 

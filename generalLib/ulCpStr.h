@@ -33,9 +33,9 @@
 '     - Copies cpStr into dupStr until delimC is found
 '   o fun-09: cLenStr
 '     - Finds the length of a string using characters
-'   o fun-0?: cStrEql
+'   o fun-10: cStrEql
 '     - Checks to see if two strings are equal
-'   o fun-10: cStrMatch
+'   o fun-11: cStrMatch
 '     - Checks to see if two strings are equal, but does
 '       not check to see if there is anything past the
 '       query's deliminator. This is to deal with strings
@@ -432,7 +432,7 @@ cCpStrDelim(\
 })
 
 /*-------------------------------------------------------\
-| Fun-0?: cStrEql
+| Fun-10: cStrEql
 |   - Checks to see if two strings are equal
 | Input:
 |   - qryStr:
@@ -486,7 +486,7 @@ cCpStrDelim(\
 })
 
 /*-------------------------------------------------------\
-| Fun-10: cStrMatch
+| Fun-11: cStrMatch
 |   - Checks to see if two strings are equal, but does
 |     not check to see if there is anything past the
 |     query's deliminator. This is to deal with strings

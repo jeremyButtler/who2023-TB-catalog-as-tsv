@@ -35,7 +35,6 @@
 #include <string.h>
 
 #include "amrStruct.h"
-#include "../generalLib/samEntryStruct.h"
 #include "genIndiceStruct.h"
 #include "cnvt_whoToTbAmr.h"
 
@@ -177,6 +176,7 @@ main(
       \n                 if($6 !~ /^[0-9]*M$/) next;\
       \n                 if($2 != 16 && $2 != 0) next;\
       \n                 sub(/M/, \"\", $6);\
+      \n                 --$6; # account for index 1\
       \n                 if($2 == 16) dirC = \"-\";\
       \n                 else dirC = \"+\";\
       \n                 print $1, $3, dirC, $4, $4 + $6;\
@@ -248,7 +248,7 @@ main(
          | ! strcmp("--version", errStr)
          | ! strcmp("version", errStr)
       ){ /*Pirnt out the help message*/
-         fprintf(stdout, "March 15, 2024\n");
+         fprintf(stdout, "2024-04-12\n");
          exit(0);
       } /*Pirnt out the help message*/
 

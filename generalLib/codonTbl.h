@@ -19,7 +19,21 @@
 '      then the code used in the codon table.
 '  o tbl-03 codonLkTbl:
 '    - Table to convert three bases to codons
-'  o fun-01: aaThreeLetterToChar
+'  o fun-01: codonToAA
+'    - Converts an codon (three bases) to its amino acid
+'  o fun-02: revCompCodonToAA
+'    - Reverses and complements the input codon. This then
+'      converts the reverse complement codon into an amino
+'      acid
+'  o fun-03: bacteriaStartCode_check
+'    - Checks to see in input bases (converted with codon
+'      look up tables) are an bacterial start codon
+'  o fun-04: bacteriaStart_check
+'    - Checks to is if an codon is bacterial start codon
+'  o fun-05: bacteriaReverseStart_check
+'    - Reverse complements codon and then checks to see if
+'      codont is codon is an bacterial start codon
+'  o fun-06: aaThreeLetterToChar
 '    - Converts a three letter amino acid idenity to its
 '      single letter amino acid identity
 '   o license:
@@ -40,7 +54,7 @@
 |  - Table to convert bases to codes used in the codon
 |    table.
 \--------------------------------------------------------*/
-static char baseToCodeLkTbl[] =
+static unsigned char baseToCodeLkTbl[] =
    {  /*baseToCodeLkTbl*/
       /*White space/invisible charactes block*/
       8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
@@ -102,13 +116,12 @@ static char baseToCodeLkTbl[] =
       8, 8, 8, 8, 8, 8,
    }; /*baseToCodeLkTbl*/
 
-
 /*--------------------------------------------------------\
 | Tbl-02 compBaseToCodeLkTbl:
 |  - Table to convert bases to its complement base and
 |    then the code used in the codon table.
 \--------------------------------------------------------*/
-static char compBaseToCodeLkTbl[] =
+static unsigned char compBaseToCodeLkTbl[] =
    {  /*baseToCodeLkTbl*/
       /*White space/invisible charactes block*/
       8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
@@ -218,7 +231,276 @@ static char codonLkTbl[5][5][5] =
    }; /*codonLkTbl*/
 
 /*-------------------------------------------------------\
-| Fun-01: aaThreeLetterToChar
+| Fun-01: codonToAA
+|   - Converts an codon (three bases) to its amino acid
+| Input:
+|   - firstBaseC:
+|     o First base in the codon
+|   - secBaseC:
+|     o Second base in the codon
+|   - thirdBaseC:
+|     o Last base in the codon
+| Output:
+|   - Returns:
+|     o The amino acid of the input codon
+\-------------------------------------------------------*/
+#define \
+codonToAA(\
+   firstBaseC,\
+   secBaseC,\
+   thirdBaseC\
+)(\
+   codonLkTbl[\
+      baseToCodeLkTbl[(unsigned char) (firstBaseC)]\
+   ][\
+      baseToCodeLkTbl[(unsigned char) (secBaseC)]\
+   ][\
+      baseToCodeLkTbl[(unsigned char) (thirdBaseC)]\
+   ]\
+) /*codonToAA*/
+
+/*-------------------------------------------------------\
+| Fun-02: revCompCodonToAA
+|   - Reverses and complements the input codon. This Then
+|     converts the reverse complement codon into an amino
+|     acid
+| Input:
+|   - firstBaseC:
+|     o First base in the foward codon, but third (last)
+|       base in the reverse complement codon
+|   - secBaseC:
+|     o Second base in forward codon, but second (middle)
+|       base in the reverse complement codon
+|   - thirdBaseC:
+|     o Last base in forward codon, but first base in the
+|       reverse complement codon
+| Output:
+|   - Returns:
+|     o The reverse complement amino acid of the input
+|       codon
+\-------------------------------------------------------*/
+#define \
+revCompCodonToAA(\
+   firstBaseC,/*First base at position (third in codon)*/\
+   secBaseC,  /*Second base at ref position (mid codon)*/\
+   thirdBaseC /*Third base ref position (first codon)*/\
+)(\
+   codonLkTbl[\
+      compBaseToCodeLkTbl[(unsigned char) (thirdBaseC)]\
+   ][\
+      compBaseToCodeLkTbl[(unsigned char) (secBaseC)]\
+   ][\
+      compBaseToCodeLkTbl[(unsigned char) (firstBaseC)]\
+   ]\
+) /*revCompCodonToAA*/\
+
+/*-------------------------------------------------------\
+| Fun-03: bacteriaStartCode_check
+|   - Checks to see in input bases (converted with codon
+|     look up tables) are an bacterial start codon
+| Input:
+|   - firstBaseC:
+|     o first base to check; it needs to be the output of
+|       an base to code look up table
+|   - secBaseC:
+|     o second base to check; it needs to be the output
+|       of an base to code look up table
+|   - thirdBaseC:
+|     o third base to check; it needs to be the output
+|       of an base to code look up table
+| Output:
+|   - Returns:
+|     o 1 if this is an bacterial start codon
+|     o 0 if this is not an bacterial start codon
+\-------------------------------------------------------*/
+#define \
+bacteriaStartCode_check(\
+   firstBaseC,\
+   secBaseC,\
+   thirdBaseC\
+)(\
+     ( /*Check if first base is g, t or a*/\
+        ( /*Check if the first bsae is an g or an t*/\
+            ((firstBaseC) == g_code_codon_tbl)\
+          | ((firstBaseC) == t_code_codon_tbl)\
+        ) /*Check if the first bsae is an g or an t*/\
+      \
+      | ((firstBaseC) == a_code_codon_tbl)\
+     ) /*Check if first base is g, t or a*/\
+     \
+     & ((secBaseC) == t_code_codon_tbl)\
+     & ((thirdBaseC) == g_code_codon_tbl)\
+     \
+     /*Logic:
+     `   - x = firstBaseC == g_code_codon_tbl:
+     `     o 1 if the first base is a G
+     `     o 0 if not a g
+     `   - x |= (firstBaseC == t_code_codon_tbl):
+     `     o 1 if the first base is an "G" or "T"
+     `     o 0 if not an "G" or "T"
+     `   - x |= (firstBaseC == a_code_codon_tbl):
+     `     o 1 if the first base is an "G", "T", or "A"
+     `     o 0 if not an "G", "T", or "A"
+     `     o This covers the first codon for all posible
+     `       start codons (ATG, GTG, and TTG)
+     `   - The second and thrid base comparisions clear
+     `     the bit (set to 0) if I do not have an
+     `     TTG, GTG, or ATG codon
+     */\
+) /*bacteriaStartCode_check*/
+
+/*-------------------------------------------------------\
+| Fun-04: bacteriaStart_check
+|   - Checks to is if an input codon is an bacterial start
+|     codon
+| Input:
+|   - firstBaseC:
+|     o first base in codon
+|   - secBaseC:
+|     o second base in codon
+|   - thirdBaseC:
+|     o third base in codon
+| Output:
+|   - Returns:
+|     o 1 if this is an bacterial start codon
+|     o 0 if this is not an bacterial start codon
+\-------------------------------------------------------*/
+#define \
+bacteriaStart_check(\
+   firstBaseC,\
+   secBaseC,\
+   thirdBaseC\
+)(\
+     ( /*Check if first base is g, t or a*/\
+        ( /*Check if the first bsae is an g or an t*/\
+            (     baseToCodeLkTbl[\
+                     (unsigned char) (firstBaseC)\
+                  ]\
+               == g_code_codon_tbl\
+            )\
+          | (     baseToCodeLkTbl[\
+                     (unsigned char) (firstBaseC)\
+                  ]\
+               == t_code_codon_tbl\
+            )\
+        ) /*Check if the first bsae is an g or an t*/\
+      \
+      | (     baseToCodeLkTbl[\
+                 (unsigned char) (firstBaseC)\
+              ]\
+           == a_code_codon_tbl\
+        )\
+     ) /*Check if first base is g, t or a*/\
+     \
+     /*Check if the second base is an t*/\
+     & (    baseToCodeLkTbl[\
+               (unsigned char) (secBaseC)\
+            ]\
+         == t_code_codon_tbl\
+       )\
+     \
+     /*Check if the third base is an t*/\
+     & (    baseToCodeLkTbl[\
+               (unsigned char) (thirdBaseC)\
+            ]\
+         == g_code_codon_tbl\
+       )\
+     \
+     /*Logic:
+     `   - x = firstBaseC == g_code_codon_tbl:
+     `     o 1 if the first base is a G
+     `     o 0 if not a g
+     `   - x |= (firstBaseC == t_code_codon_tbl):
+     `     o 1 if the first base is an "G" or "T"
+     `     o 0 if not an "G" or "T"
+     `   - x |= (firstBaseC == a_code_codon_tbl):
+     `     o 1 if the first base is an "G", "T", or "A"
+     `     o 0 if not an "G", "T", or "A"
+     `     o This covers the first codon for all posible
+     `       start codons (ATG, GTG, and TTG)
+     `   - The second and thrid base comparisions clear
+     `     the bit (set to 0) if I do not have an
+     `     TTG, GTG, or ATG codon
+     */\
+) /*bacteriaStart_check*/
+
+/*-------------------------------------------------------\
+| Fun-05: bacteriaReverseStart_check
+|   - Reverse complements codon and then checks to see if
+|     codont is codon is an bacterial start codon
+| Input:
+|   - firstBaseC:
+|     o first base in sequence, last base in codon
+|   - secBaseC:
+|     o second base in sequence, second base in codon
+|   - thirdBaseC:
+|     o third base in sequence, first base in
+| Output:
+|   - Returns:
+|     o 1 if this is an bacterial start codon
+|     o 0 if this is not an bacterial start codon
+\-------------------------------------------------------*/
+#define \
+bacteriaReverseStart_check(\
+   firstBaseC,\
+   secBaseC,\
+   thirdBaseC\
+)(\
+     ( /*Check if first base is g, t or a*/\
+        ( /*Check if the first bsae is an g or an t*/\
+            (    compBaseToCodeLkTbl[\
+                    (unsigned char) (thirdBaseC)\
+                 ]\
+              == g_code_codon_tbl\
+            )\
+          | (    compBaseToCodeLkTbl[\
+                    (unsigned char) (thirdBaseC)\
+                 ]\
+              == t_code_codon_tbl\
+            )\
+        ) /*Check if the first bsae is an g or an t*/\
+      \
+      | (     compBaseToCodeLkTbl[\
+                 (unsigned char) (thirdBaseC)\
+              ]\
+           == a_code_codon_tbl\
+        )\
+     ) /*Check if first base is g, t or a*/\
+     \
+     /*Check if the second base is an t*/\
+     & (    compBaseToCodeLkTbl[\
+               (unsigned char) (secBaseC)\
+            ]\
+         == t_code_codon_tbl\
+       )\
+     \
+     /*Check if the third base is an t*/\
+     & (    compBaseToCodeLkTbl[\
+               (unsigned char) (firstBaseC)\
+            ]\
+         == g_code_codon_tbl\
+       )\
+     \
+     /*Logic:
+     `   - x = firstBaseC == g_code_codon_tbl:
+     `     o 1 if the first base is a G
+     `     o 0 if not a g
+     `   - x |= (firstBaseC == t_code_codon_tbl):
+     `     o 1 if the first base is an "G" or "T"
+     `     o 0 if not an "G" or "T"
+     `   - x |= (firstBaseC == a_code_codon_tbl):
+     `     o 1 if the first base is an "G", "T", or "A"
+     `     o 0 if not an "G", "T", or "A"
+     `     o This covers the first codon for all posible
+     `       start codons (ATG, GTG, and TTG)
+     `   - The second and thrid base comparisions clear
+     `     the bit (set to 0) if I do not have an
+     `     TTG, GTG, or ATG codon
+     */\
+) /*bacteriaReverseStart_check*/
+
+/*-------------------------------------------------------\
+| Fun-06: aaThreeLetterToChar
 |   - Converts a three letter amino acid idenity to its
 |     single letter amino acid identity
 | Input:
@@ -341,27 +623,31 @@ static char codonLkTbl[5][5][5] =
 
 /*Table
      T         C        A        G
-  +--------+--------+--------+--------+
-  | TTT  F | TCT  S | TAT  Y | TGT  C | T
-T | TTC  F | TCC  S | TAC  Y | TGC  C | C
-  | TTA  L | TCA  S | TAA  * | TGA  * | A
-  | TTG  L | TCG  S | TAG  * | TGG  W | G
-  +--------+--------+--------+--------+
-  | CTT  L | CCT  P | CAT  H | CGT  R | T
-C | CTC  L | CCC  P | CAC  H | CGC  R | C
-  | CTA  L | CCA  P | CAA  Q | CGA  R | A
-  | CTG  L | CCG  P | CAG  Q | CGG  R | G
-  +--------+--------+--------+--------+
-  | ATT  I | ACT  T | AAT  N | AGT  S | T
-A | ATC  I | ACC  T | AAC  N | AGC  S | C
-  | ATA  I | ACA  T | AAA  K | AGA  R | A
-  | ATG  M | ACG  T | AAG  K | AGG  R | G
-  +--------+--------+--------+--------+
-  | GTT  V | GCT  A | GAT  D | GGT  G | T
-G | GTC  V | GCC  A | GAC  D | GGC  G | C
-  | GTA  V | GCA  A | GAA  E | GGA  G | A
-  | GTG  V | GCG  A | GAG  E | GGG  G | G
-  +--------+--------+--------+--------+
+  +----------+----------+----------+----------+
+  | TTT  F . | TCT  S . | TAT  Y . | TGT  C . | T
+T | TTC  F . | TCC  S . | TAC  Y . | TGC  C . | C
+  | TTA  L . | TCA  S . | TAA  * . | TGA  * . | A
+  | TTG  L 2 | TCG  S . | TAG  * . | TGG  W . | G
+  +----------+----------+----------+----------+
+  | CTT  L . | CCT  P . | CAT  H . | CGT  R . | T
+C | CTC  L . | CCC  P . | CAC  H . | CGC  R . | C
+  | CTA  L . | CCA  P . | CAA  Q . | CGA  R . | A
+  | CTG  L . | CCG  P . | CAG  Q . | CGG  R . | G
+  +----------+----------+----------+----------+
+  | ATT  I . | ACT  T . | AAT  N . | AGT  S . | T
+A | ATC  I . | ACC  T . | AAC  N . | AGC  S . | C
+  | ATA  I . | ACA  T . | AAA  K . | AGA  R . | A
+  | ATG  M 1 | ACG  T . | AAG  K . | AGG  R . | G
+  +----------+----------+----------+----------+
+  | GTT  V . | GCT  A . | GAT  D . | GGT  G . | T
+G | GTC  V . | GCC  A . | GAC  D . | GGC  G . | C
+  | GTA  V . | GCA  A . | GAA  E . | GGA  G . | A
+  | GTG  V 2 | GCG  A . | GAG  E . | GGG  G . | G
+  +----------+----------+----------+----------+
+
+  1 = Canonical start codon
+  2 = Bacterial non-canconical start codon
+  . = Nothing
 */
 
 /*=======================================================\

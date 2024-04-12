@@ -39,6 +39,16 @@ I should say that 2023 catalog from the WHO is a very
 
 # Update log
 
+April 12, 2024
+
+- Fixed an memory leak that would cause crashes on more
+  memory limted systems
+- Fixed an issue were gene_LoF entries reference position
+  would be the start of the gene
+- Fixed an error were I was adding two index one values to
+  get an index two for the gene ending positions in the
+  gene-tbl.tsv
+
 April 05, 2024:
 
 - I have set this up so that the entire gene deletions
@@ -131,10 +141,8 @@ The format is as follows:
   - 0 if there is no frame shift
 - Column seven
   - Has the reference sequence
-  - 0 if there is no reference sequence (gene\_deletion)
 - Column eight
   - Has the AMR sequence
-  - 0 if there is no AMR sequence (gene\_deletion)
 - Column nine has the position of the first reference base
   in the codon, or NA if there is no codon, or if it could
   not be found
@@ -275,6 +283,46 @@ To get every entry that is not an entire gene deletion in
 whoToTbAmr -all-amrs -no-whole-gene-dels -ref NC000962.fa -coords gene-tbl.tsv -tabone-who-2023-tsv WHO-2023-TB-tab1-master.tsv -tabtwo-who-2023-tsv WHO-2023-TB-tab2-indices.tsv -out catalog.tsv
 ```
 
+## To build the gene table for `-coords`
+
+This is just a table of gene coordinates in the TB genome.
+
+Do not use paf files from minimap2. For some odd reason
+  the coordinates disagree with the sam file by a one or
+  two bases.
+
+```
+minimap2 \
+    -a \
+    NC000962.fa \
+    genes.fa |
+  awk '
+      BEGIN{FS=OFS="\t";};
+
+      { # MAIN
+         if($0 ~ /^@/) next; # Comment entry
+         if($2 == 16) dirSC = "-"; # is reverse complement
+         else dirSC = "+";         # is an foward gene
+
+         sub(/M/, "", $6); #Remove matches; becomes length
+         --$6; # Acount for index 1
+               # Avoids adding two index 1 values
+
+         geneEndSI = $4 + $6;
+            # $4 +$6 = gene_start + gene_length = gene_end
+
+         if(geneEndSI < $4)
+            print $1, $3, dirSC, geneEndSI, $4;
+         else
+            print $1, $3, dirSC, $4, geneEndSI;
+            # $1 = gene name
+            # $3 = reference name
+            # dirSC = direction (+ or -)
+            # $4 = starting position (index 1)
+      } # MAIN
+' > gene-tbl.tsv
+```
+
 ## The code:
 
 This code is under a dual license of the Unlicense (public
@@ -291,7 +339,10 @@ The code is split up into two folders, the generalLib
   I am working on. The generalLib folder has some uneeded
   files.
 
-I need to go back and document this code properly.
+There are some files that are not used in generalLib. This
+  is because this is part of an larger project and I am to
+  lazy to remove the extra files. Feel free to use them if
+  you are intrested in one.
 
 # Bugs/errors in output:
 

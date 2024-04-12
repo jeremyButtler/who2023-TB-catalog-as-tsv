@@ -51,6 +51,10 @@
 #ifndef GENE_COORD_STRUCT_H
 #define GENE_COORD_STRUCT_H
 
+#define def_fileErr_geneCoord 2
+#define def_invalidEntry_geneCoord 4
+#define def_memErr_geneCoord 64
+
 /*-------------------------------------------------------\
 | ST: geneCoords
 |   - Holds the arrays for the gene coordinates and ids 
@@ -87,11 +91,11 @@ freeGeneCoordsStack(
 |     o Pointer to a geneCoords structure to free
 | Output:
 |   - Frees:
-|     o geneCoordsST (and sets to 0)
+|     o geneCoordsST
 \-------------------------------------------------------*/
 void
 freeGeneCoords(
-   struct geneCoords **geneCoordsST
+   struct geneCoords *geneCoordsST
 );
 
 /*-------------------------------------------------------\
@@ -205,26 +209,37 @@ findStartCoordInGeneCoord(
 );
 
 /*-------------------------------------------------------\
-| Fun-09: pafGetGeneCoords
-|  - Gets the gene coordinates from a paf file
+| Fun-09: getGeneCoords
+|  - Gets the gene coordinates from a gene table (tsv)
 | Input:
-|  - pafFILE:
-|    o Pointer to paf FILE to get gene coordinates from
-|  - numGenesUI:
-|    o Number of genes extracted
+|  - geneTblFileStr:
+|    o C-string with name of the gene table file to
+|      extract the gene coordinates and names from
+|  - numGenesSI:
+|    o Will hold the Number of genes extracted
+|  - errULPtr:
+|    o Will hold the error return value
 | Output:
 |  - Returns:
 |    o Pointer to an sorted geneCoords structure with the 
 |      gene coordinates
-|    o 0 for memory error
+|    o 0 for errors
 |  - Modifies:
 |    o numGenesI to have the number of genes (index 0)
 |      extracted
+|    o errULPtr to hold the error
+|      - 0 for no errors
+|      - def_fileErr_geneCoord for an file opening error
+|      - def_memErr_geneCoord for an memor error
+|      - (line_number << 8) | def_invalidEntry_geneCoord
+|        for an invalid line in the file
+|        o Get the line number with (*errULPtr >> 8)
 \-------------------------------------------------------*/
 struct geneCoords *
-pafGetGeneCoords(
-   void *pafFILE, /*Paf file get gene coordinates from*/\
-   int *numGenesI /*Number of genes extracted*/\
+getGeneCoords(
+   char *geneTblFileStr,
+   int *numGenesSI, /*Number of genes extracted*/\
+   unsigned long *errULPtr
 );
 
 #endif

@@ -9,9 +9,9 @@
 ' SOF: Start Of File
 '  o header:
 '    - header guards and definitions
-'  o st-01 samEntry:
+'  o .h st-01 samEntry:
 '    - Holds a single samfile entry
-'  o fun-01 blankSamEntry:
+'  o .h fun-01 blankSamEntry:
 '    - Sets all non-alloacted variables in samEntryST to 0
 '  o fun-02 initSamEntry:
 '    - Initalize a samEntry struct to 0's
@@ -22,23 +22,26 @@
 '    - Frees a samEntry structer (and sets to null)
 '  o fun-05: makeSamEntry
 '    - Makes an heap allocated samEntry structure
-'  o fun-08: cpQScore (.c file only)
+'  o .c fun-08: cpQScore
 '    - Copies Q-scores from a string into a samEntry
 '      structure
 '  o fun-09: readSamLine
 '    - Reads in a single line from a sam file
-'  o fun-10: pSamEntry
+'  o .h fun-10: samEntryFindRefPos
+'    - Find an reference coordinate in an sequence in
+'      an sam entry structure
+'  o fun-11: pSamEntry
 '    - Prints the sam file entry to a file. This does not
 '      print any extra stats that were found.
-'  o fun-11: pSamEntryAsFastq
+'  o fun-12: pSamEntryAsFastq
 '    - Prints the sam entry as a fastq entry to a fastq
 '      file
-'  o fun-12: pSamEntryAsFasta
+'  o fun-13: pSamEntryAsFasta
 '    - Prints the sam entry as a fasta entry to a fasta
 '      file
-'  o fun-13: pSamEntryStats
+'  o fun-14: pSamEntryStats
 '    - Prints out the stats in a samEntry struct to a file
-'  o note-01:
+'  o .h note-01:
 '     - Notes about the sam file format from the sam file
 '       pdf
 '   o license:
@@ -112,11 +115,11 @@ typedef struct samEntry
     unsigned int readLenUI;   /*Holds read length*/
     unsigned int alnReadLenUI;/*Number ref basea aligned*/
 
-    unsigned int numMatchUI;  /*Holds number of matches*/
-    unsigned int numSnpUI;    /*Holds number of mismatches*/
-    unsigned int numInsUI;    /*Holds number of insertions*/
-    unsigned int numDelUI;    /*number of deletions*/
-    unsigned int numMaskUI;   /*number soft masked bases*/
+    unsigned int numMatchUI;/*Holds number of matches*/
+    unsigned int numSnpUI;  /*Holds number of mismatches*/
+    unsigned int numInsUI;  /*Holds number of insertions*/
+    unsigned int numDelUI;  /*number of deletions*/
+    unsigned int numMaskUI; /*number soft masked bases*/
 
     /*These variables are used in finding the Q-scores*/
     unsigned int qHistUI[defMaxQScore];/*medianHistogram*/
@@ -155,10 +158,15 @@ typedef struct samEntry
     (samSTPtr)->rNextStr[0] = '\0'; /*rNext entry*/\
     (samSTPtr)->lenRNextUC = 0;     /*Length of rNext*/\
     \
-    (samSTPtr)->seqStr[0] = '\0';   /*sequence entry*/\
-    (samSTPtr)->qStr[0] = '\0';     /*q-score entry*/\
+    if((samSTPtr)->seqStr)\
+       (samSTPtr)->seqStr[0] = '\0';\
     \
-    (samSTPtr)->extraStr[0] = '\0';    /*Extra entries*/\
+    if((samSTPtr)->qStr)\
+       (samSTPtr)->qStr[0] = '\0';\
+    \
+    if((samSTPtr)->extraStr)\
+       (samSTPtr)->extraStr[0] = '\0';\
+    \
     (samSTPtr)->lenExtraUI = 0;\
     \
     /*Flags/single numeric values in the sam entry*/\
@@ -309,7 +317,7 @@ void samEntryFindQScores(struct samEntry *samSTPtr);
 /*I am not making cpQScores available globally*/
 
 /*-------------------------------------------------------\
-| Fun-08: readSamLine
+| Fun-09: readSamLine
 |  - Reads in a single line from a sam file
 | Input:
 |  - samSTPtr:
@@ -343,7 +351,175 @@ char readSamLine(
 );
 
 /*-------------------------------------------------------\
-| Fun-09: pSamEntry
+| Fun-10: samEntryFindRefPos
+|   - Find an reference coordinate in an sequence in
+|     an sam entry structure
+| Input:
+|   - samSTPtr:
+|     o Pointer to samEntry structu with sequence to find
+|       the reference position in
+|   - siCig:
+|     o Index of the cigar entry I am on
+|   - cigBaseOnSI:
+|     o Number of bases left in the cigar entry
+|   - targPosSI:
+|     o Reference position I wish to find
+|   - refPosSI:
+|     o Position I am currently at in the reference
+|       sequence
+|   - seqPosSI:
+|     o Position I am currently at in the sequence in
+|       samSTPtr
+| Output:
+|   - Modifies:
+|     o siCig to point to the next open cigar entry
+|       - will be > samSTPtr->lenCigUI when the sequence
+|         does not end at at targPosSI
+|     o cigBaseOnSI to have the number of bases remianing
+|       in the current siCig entry
+|     o refPosSI to be the index to the position in targSI
+|     o seqPosSI to be the index of the sequence base at
+|       refPosSI (check cigar to see if deletion)
+|   - Returns:
+|     o Index of last cigar entry I incurmented
+\-------------------------------------------------------*/
+#define \
+samEntryFindRefPos(\
+   samSTPtr,    /*Sam entry structure with cigar*/\
+   siCig,       /*Current cigar entry on*/\
+   cigBaseOnSI, /*Number of base left in cigar entry*/\
+   targPosSI,   /*Position looking for*/\
+   refPosSI,    /*Current reference position*/\
+   seqPosSI     /*Current sequence position*/\
+)({/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\
+   ` Fun-10 TOC: samEntryFindRefPos\
+   `   - Find an reference coordinate in an sequence in\
+   `     an sam entry structure\
+   `   o fun-10 sec-01:\
+   `     - Start loop and check insertions/soft masking\
+   `   o fun-10 sec-02:\
+   `     - Move position in deletion cases\
+   `   o fun-10 sec-03:\
+   `     - Move position for snp/match cases\
+   `   o fun-10 sec-04:\
+   `     - Move to the next cigar entry\
+   \~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/\
+   \
+   /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\
+   ^ Fun-10 Sec-01:\
+   ^   - Start loop and check insertions/soft masking\
+   \<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/\
+   \
+   int lastCigMacSI = siCig;\
+   \
+   /*Check if I did a full cigar entry move*/\
+   while(refPosSI < targPosSI)\
+   { /*Loop: till I am on the target base*/\
+      lastCigMacSI = (siCig);\
+      \
+      switch((samSTPtr)->cigTypeStr[(siCig)])\
+      { /*Switch: check what the next entry is*/\
+         case 'S':\
+         case 'I':\
+         /*Case: Softmasking or insertions*/\
+            (seqPosSI) += (cigBaseOnSI);\
+            ++(siCig);\
+            (cigBaseOnSI) = 0;\
+            break;\
+         /*Case: Softmasking or insertions*/\
+         \
+         /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\
+         ^ Fun-10 Sec-02:\
+         ^   - Move position in deletion cases\
+         \<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/\
+         \
+         case 'D':\
+         /*Case: Deletion*/\
+            (refPosSI) += (cigBaseOnSI);\
+            \
+            /*This is the case most of the time, so\
+            `   branchless will be slower than if\
+            */\
+            if((refPosSI) <= (targPosSI))\
+            { /*If: I have not found target position*/\
+               ++(siCig);\
+               (cigBaseOnSI) = 0;\
+            } /*If: I have not found target position*/\
+            \
+            else \
+            { /*Else: I overshot the target*/\
+               (cigBaseOnSI) =\
+                  (int) (\
+                       (refPosSI)\
+                     - (targPosSI)\
+                  ); /*Find how many bases overshot by*/\
+               \
+               /*Make corrections for overshooting*/\
+               (refPosSI) -= (cigBaseOnSI);\
+            } /*Else: I overshot the target*/\
+            \
+            break;\
+         /*Case: Deletion*/\
+         \
+         /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\
+         ^ Fun-10 Sec-03:\
+         ^   - Move position for snp/match cases\
+         \<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/\
+         \
+         case 'M':\
+         case 'X':\
+         case '=':\
+         /*Case: match (M or =) or snp (M or X)*/\
+            (refPosSI) += (cigBaseOnSI);\
+            (seqPosSI) += (cigBaseOnSI);\
+            \
+            /*This is the case most of the time, so\
+            `   branchless will be slower than if\
+            */\
+            if((refPosSI) <= (targPosSI))\
+            { /*If: I have not found target position*/\
+               (cigBaseOnSI) = 0;\
+               ++(siCig);\
+            } /*If: I have not found target position*/\
+            \
+            else \
+            { /*Else: I overshot the target*/\
+               (cigBaseOnSI) =\
+                  (int) (\
+                       (refPosSI)\
+                     - (targPosSI)\
+                  ); /*Find how many bases overshot by*/\
+               \
+               /*Make corrections for overshooting*/\
+               (refPosSI) -= (cigBaseOnSI);\
+               (seqPosSI) -= (cigBaseOnSI);\
+            } /*Else: I overshot the target*/\
+            \
+            break;\
+         /*Case: match (M or =) or snp (M or X)*/\
+      } /*Switch: check what the next entry is*/\
+      \
+      /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\
+      ^ Fun-10 Sec-03:\
+      ^   - Move to the next cigar entry\
+      \<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/\
+      \
+      if((siCig) >= (samSTPtr)->lenCigUI)\
+         break; /*End of the sequence*/\
+      \
+      /*This case will be true most of the time, unless\
+      `   the start has already been found\
+      */\
+      if((cigBaseOnSI) == 0)\
+         (cigBaseOnSI) = (samSTPtr)->cigValAryI[(siCig)];\
+   } /*Loop: till I am on the target base*/\
+   \
+   lastCigMacSI;\
+}) /*samEntryFindRefPos*/
+
+
+/*-------------------------------------------------------\
+| Fun-11: pSamEntry
 | Use:
 |  - Prints the sam file entry to a file. This does not
 |    print any extra stats that were found.
@@ -378,7 +554,7 @@ char pSamEntry(
 );
 
 /*-------------------------------------------------------\
-| Fun-10: pSamEntryAsFastq
+| Fun-12: pSamEntryAsFastq
 | Use:
 |  - Prints the sam entry as a fastq entry to a fastq file
 | Input:
@@ -397,7 +573,7 @@ void pSamEntryAsFastq(
 );
 
 /*-------------------------------------------------------\
-| Fun-11: pSamEntryAsFasta
+| Fun-13: pSamEntryAsFasta
 | Use:
 |  - Prints the sam entry as a fasta entry to a fasta file
 | Input:
@@ -416,7 +592,7 @@ void pSamEntryAsFasta(
 );
 
 /*-------------------------------------------------------\
-| Fun-11: pSamEntryStats
+| Fun-14: pSamEntryStats
 | Use:
 |  - Prints out the stats in a samEntry struct to a file
 | Input:

@@ -601,7 +601,7 @@ struct genIndice * read_who2023_indiceTabTsv(
 
       tmpStr = 
          base10StrToUI(
-            &buffStr[uiPos],
+           &buffStr[uiPos],
            indiceSTAry[uiElm].posUI
          ); /*Get the genome coordiant*/
 

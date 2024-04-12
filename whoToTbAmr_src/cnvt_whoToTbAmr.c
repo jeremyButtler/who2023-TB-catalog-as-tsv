@@ -2052,7 +2052,10 @@ char who_parse_VarID(
               && (*(varStr - 1) & ~32) == 'O'
               && (*(varStr - 2) & ~32) == 'L'
               && (*(varStr - 3)) == '_'
-           ) amrST[iIndex].wholeGeneFlag = 1;
+           ){ /*If: is an gene loss of function entry*/
+               amrST[iIndex].wholeGeneFlag |=
+                  def_geneFrameshift_amrST;
+           } /*If: is an gene loss of function entry*/
 
            continue; /*This not an aa mutation*/
         } /*If: this is not an aa mutation*/
@@ -2105,6 +2108,9 @@ char who_parse_VarID(
      { /*If: this could be any aa change*/
         secAaC = '?';
 
+        amrST[iIndex].endCodonNumUI =
+           amrST[iIndex].codonNumUI;
+
         if(amrSTAddSingleAa(&amrST[iIndex],firstAaC,'?'))
            return def_amrST_memError;
 
@@ -2114,6 +2120,9 @@ char who_parse_VarID(
      else if(varStr[0] == '*')
      { /*If: this could be any aa change*/
         secAaC = '*';
+
+        amrST[iIndex].endCodonNumUI =
+           amrST[iIndex].codonNumUI;
 
         if(amrSTAddSingleAa(&amrST[iIndex],firstAaC,'*'))
            return def_amrST_memError;
@@ -2137,6 +2146,10 @@ char who_parse_VarID(
         amrST[iIndex].refAaStr[1] = '\0';
 
         /*No amr amino acid, because it is a frame shift*/
+
+        amrST[iIndex].endCodonNumUI =
+           amrST[iIndex].codonNumUI;
+
         continue;
      } /*Else If: this was a frame shift*/
 
@@ -2171,6 +2184,10 @@ char who_parse_VarID(
         amrST[iIndex].amrAaStr[0] = firstAaC;
         amrST[iIndex].amrAaStr[1] = firstAaC;
         amrST[iIndex].amrAaStr[2] = '\0';
+
+        amrST[iIndex].endCodonNumUI =
+           amrST[iIndex].codonNumUI;
+
         continue;
      } /*Else If: This is a one aa duplication*/
 
@@ -2192,6 +2209,9 @@ char who_parse_VarID(
              secAaC
         )) return def_amrST_memError;
  
+        amrST[iIndex].endCodonNumUI =
+           amrST[iIndex].codonNumUI;
+
         continue;
      } /*Else If: for 2023 this is a single change*/
 
@@ -2245,9 +2265,22 @@ char who_parse_VarID(
      +   - Find the position of the last amino acid
      \++++++++++++++++++++++++++++++++++++++++++++++++++*/
 
+     /*This adds some extra checks, but also makes sure
+     `   the end codon number is set
+     */
+     parseDel:;
+
      /*Last codon in deletion/insertion*/
-     varStr =
+     cpStr =
        base10StrToUI(varStr,amrST[iIndex].endCodonNumUI);
+
+     if(cpStr == varStr)
+     { /*If: There was no end codon number*/
+        amrST[iIndex].endCodonNumUI =
+           amrST[iIndex].codonNumUI;
+     } /*If: There was no end codon number*/
+
+     varStr = cpStr;
 
      /*++++++++++++++++++++++++++++++++++++++++++++++++++\
      + Fun-06 Sec-02 Sub-05 Cat-03: who2023ParsVar
@@ -2391,8 +2424,6 @@ char who_parse_VarID(
      + Fun-06 Sec-02 Sub-05 Cat-06: who2023ParsVar
      +   - Deletion; add first and last aa to refAaStr
      \++++++++++++++++++++++++++++++++++++++++++++++++++*/
-
-     parseDel:;
 
      varStr += 3; /*get off "del"*/
 
@@ -2587,6 +2618,7 @@ char whoAddCodonPos(
 
    char *cpStr = 0;
    char *dupStr = 0;
+   char outBoundsBl = 0; /*Is outside of gene bounds*/
    int iIndex = 0;
    /*int iSwap = 0;*/ /*off gene correction attempt*/
 
@@ -2718,7 +2750,7 @@ char whoAddCodonPos(
       endGene_heapArySI,
       revGene_heapAryBl,
       0,
-      posI
+      posI - 1
    ); /*Sort the genes by starting position*/
 
    /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\
@@ -2875,7 +2907,9 @@ char whoAddCodonPos(
                 '\0'
              ); /*Check if I have the same ids*/
 
-          posI += (!!tmpUI); /*Add 1 if different gene*/
+          /*1 if is an different gene*/
+          outBoundsBl = !!tmpUI;
+          posI += outBoundsBl;
        } /*If: I have sequences outside of gene bounds*/
 
       /**************************************************\
@@ -2933,10 +2967,16 @@ char whoAddCodonPos(
           \+++++++++++++++++++++++++++++++++++++++++++++*/
 
           /*Update the starting position*/
+          /*This assumes the codon number is correct. I
+          `   had one case (pncA_p.Ter187Argext*?) were I
+          `   am not sure if this was true. Ref: 2288680,
+          `   codon: 187. The output was 2288675, which
+          `   is off
+          */
           amrST[iIndex].codonPosUI =
                endGene_heapArySI[posI]
              - ((amrST[iIndex].codonNumUI - 1) * 3);
-
+          
           if(amrST[iIndex].endCodonNumUI == 0)
           { /*If: this is a single aa change*/
              amrST[iIndex].endCodonNumUI =
@@ -3020,6 +3060,12 @@ char whoAddCodonPos(
           \+++++++++++++++++++++++++++++++++++++++++++++*/
 
           /*Update the starting position*/
+          /*This assumes the codon number is correct. I
+          `   had one case (pncA_p.Ter187Argext*?) were I
+          `   am not sure if this was true. Ref: 2288680,
+          `   codon: 187. The output was 2288675, which
+          `   is off. This was an reverse case
+          */
           amrST[iIndex].codonPosUI =
                startGene_heapArySI[posI]
              + ((amrST[iIndex].codonNumUI - 1) * 3);
@@ -3056,7 +3102,6 @@ char whoAddCodonPos(
              refSeqHeapStr + amrST[iIndex].codonPosUI + 3;
 
           for(
-
              iCodon = amrST[iIndex].codonNumUI + 1;
              iCodon < amrST[iIndex].endCodonNumUI;
              ++iCodon
@@ -3133,10 +3178,6 @@ char whoAddCodonPos(
                  '\0'
               ))
          ){ /*If: I the last amr is the same gene*/
-            /*I want to grab the base before the gene*/
-            amrST[iIndex].refPosUI =
-               amrST[iIndex - 1].geneFirstRefUI - 1;
-
             amrST[iIndex].geneFirstRefUI =
                amrST[iIndex - 1].geneFirstRefUI;
 
@@ -3146,6 +3187,14 @@ char whoAddCodonPos(
             amrST[iIndex].dirFlag =
                amrST[iIndex - 1].dirFlag;
 
+            if(
+                 amrST[iIndex].wholeGeneFlag
+               & def_geneDel_amrST
+            ){ /*If: Add in coordinate for gene deletion*/
+               /*I want to grab the base before the gene*/
+               amrST[iIndex].refPosUI =
+                  amrST[iIndex - 1].geneFirstRefUI - 1;
+            } /*If: Add in coordinate for gene deletion*/
          } /*If: I the last amr is the same gene*/
 
          else
@@ -3156,11 +3205,17 @@ char whoAddCodonPos(
             amrST[iIndex].geneLastRefUI =
                amrST[iIndex + 1].geneLastRefUI;
 
-            amrST[iIndex].refPosUI =
-               amrST[iIndex + 1].geneFirstRefUI;
-
             amrST[iIndex].dirFlag =
                amrST[iIndex + 1].dirFlag;
+
+            if(
+                 amrST[iIndex].wholeGeneFlag
+               & def_geneDel_amrST
+            ){ /*If: Add in coordinate for gene deletion*/
+               /*I want to grab the base before the gene*/
+               amrST[iIndex].refPosUI =
+                  amrST[iIndex + 1].geneFirstRefUI - 1;
+            } /*If: Add in coordinate for gene deletion*/
          } /*Else: The AMR is same as the next gene*/
 
          if(!
@@ -3185,8 +3240,8 @@ char whoAddCodonPos(
 
          /*Get the length of the deletion*/
          tmpUI =
-              amrST[iIndex - 1].geneLastRefUI
-            - amrST[iIndex - 1].geneFirstRefUI;
+              amrST[iIndex].geneLastRefUI
+            - amrST[iIndex].geneFirstRefUI;
 
          if(amrST[iIndex].refSeqStr)
             free(amrST[iIndex].refSeqStr);
