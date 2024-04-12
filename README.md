@@ -43,7 +43,7 @@ April 12, 2024
 
 - Fixed an memory leak that would cause crashes on more
   memory limted systems
-- Fixed an issue were gene_LoF entries reference position
+- Fixed an issue were gene\_LoF entries reference position
   would be the start of the gene
 - Fixed an error were I was adding two index one values to
   get an index two for the gene ending positions in the
