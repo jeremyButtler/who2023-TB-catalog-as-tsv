@@ -8,37 +8,36 @@
 #  - dual: CC0 or MIT; choose the license you prefer
 #########################################################*/
 
-/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\
-' hiLowPathLookUpTbls TOT: Table Of Tables
-'  - Table Of Contents for look up tables
-'  o tbl-01 baseToCodeLkTbl:
-'    - Table to convert bases to codes used in the codon
-'      table.
-'  o tbl-02 compBaseToCodeLkTbl:
-'    - Table to convert bases to its complement base and
-'      then the code used in the codon table.
-'  o tbl-03 codonLkTbl:
-'    - Table to convert three bases to codons
-'  o fun-01: codonToAA
-'    - Converts an codon (three bases) to its amino acid
-'  o fun-02: revCompCodonToAA
-'    - Reverses and complements the input codon. This then
-'      converts the reverse complement codon into an amino
-'      acid
-'  o fun-03: bacteriaStartCode_check
-'    - Checks to see in input bases (converted with codon
-'      look up tables) are an bacterial start codon
-'  o fun-04: bacteriaStart_check
-'    - Checks to is if an codon is bacterial start codon
-'  o fun-05: bacteriaReverseStart_check
-'    - Reverse complements codon and then checks to see if
-'      codont is codon is an bacterial start codon
-'  o fun-06: aaThreeLetterToChar
-'    - Converts a three letter amino acid idenity to its
-'      single letter amino acid identity
+/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\
+' SOF: Start Of File
+'   o tbl-01 baseToCodeLkTbl:
+'     - Table to convert bases to codes used in the codon
+'       table.
+'   o tbl-02 compBaseToCodeLkTbl:
+'     - Table to convert bases to its complement base and
+'       then the code used in the codon table.
+'   o tbl-03 codonLkTbl:
+'     - Table to convert three bases to codons
+'   o fun-01: codonToAA
+'     - Converts an codon (three bases) to its amino acid
+'   o fun-02: revCompCodonToAA
+'     - Reverses and complements the input codon. This
+'       then converts the reverse complement codon into an
+'       amino acid
+'   o fun-03: bacteriaStartCode_check
+'     - Checks to see in input bases (converted with codon
+'       look up tables) are an bacterial start codon
+'   o fun-04: bacteriaStart_check
+'     - Checks to is if an codon is bacterial start codon
+'   o fun-05: bacteriaReverseStart_check
+'     - Reverse complements codon and then checks to see
+'       if codon is codon is an bacterial start codon
+'   o fun-06: aaThreeLetterToChar
+'     - Converts a three letter amino acid idenity to its
+'       single letter amino acid identity
 '   o license:
 '     - Licensing for this code (public domain / mit)
-\~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+\~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
 #ifndef CODON_TABLE_H
 #define CODON_TABLE_H
@@ -48,72 +47,159 @@
 #define a_code_codon_tbl 2
 #define g_code_codon_tbl 3
 #define n_code_codon_tbl 4
+#define err_code_codon_tbl 8
 
-/*--------------------------------------------------------\
+/*-------------------------------------------------------\
 | Tbl-01 baseToCodeLkTbl:
 |  - Table to convert bases to codes used in the codon
 |    table.
-\--------------------------------------------------------*/
+\-------------------------------------------------------*/
 static unsigned char baseToCodeLkTbl[] =
    {  /*baseToCodeLkTbl*/
       /*White space/invisible charactes block*/
-      8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
-      8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
+      err_code_codon_tbl, /*0   = Null character*/
+
+      err_code_codon_tbl, /*1   = Start of Heading*/
+      err_code_codon_tbl, /*2   = Start of Text*/
+      err_code_codon_tbl, /*3   = End of Text*/
+      err_code_codon_tbl, /*4   = End of Transmission*/
+      err_code_codon_tbl, /*5   = Enquiry*/
+      err_code_codon_tbl, /*6   = Acknowledge*/
+      err_code_codon_tbl, /*7   = Bell*/
+      err_code_codon_tbl, /*8   = Backspace*/
+
+      err_code_codon_tbl, /*9   =  tab (horizontal)*/
+      err_code_codon_tbl, /*10  = New line*/
+
+      err_code_codon_tbl, /*11  = Vertical Tab (not key)*/
+      err_code_codon_tbl, /*12  = Form Feed*/
+
+      err_code_codon_tbl, /*13  = Carriage Return*/
+
+      err_code_codon_tbl, /*14  = Shift Out*/
+      err_code_codon_tbl, /*15  = Shift In*/
+      err_code_codon_tbl, /*16  = Data Link Escape*/
+      err_code_codon_tbl, /*17  = Device Control One*/
+      err_code_codon_tbl, /*18  = Device Control Two*/
+      err_code_codon_tbl, /*19  = Device Contol Three*/
+      err_code_codon_tbl, /*20  = Device Control Four*/
+      err_code_codon_tbl, /*21  = Negative Acknowledge*/
+      err_code_codon_tbl, /*22  = Synchronous Idle*/
+      err_code_codon_tbl, /*23  = End Transmission Block*/
+      err_code_codon_tbl, /*24  = Cancle*/
+      err_code_codon_tbl, /*25  = End of medium*/
+      err_code_codon_tbl, /*26  = Substitute*/
+      err_code_codon_tbl, /*27  = escape*/
+      err_code_codon_tbl, /*28  = File Separator*/
+      err_code_codon_tbl, /*29  = Group Separator*/
+      err_code_codon_tbl, /*30  = Record Separator*/
+      err_code_codon_tbl, /*31  = Unit Separator*/
 
       /*symbol/number block*/
-      8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
-      8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 
+      err_code_codon_tbl, /*32  = space*/
+      err_code_codon_tbl, /*33  = !*/
+      err_code_codon_tbl, /*34  = "*/
+      err_code_codon_tbl, /*35  = #*/
+      err_code_codon_tbl, /*36  = $*/
+      err_code_codon_tbl, /*37  = %*/
+      err_code_codon_tbl, /*38  = &*/
+      err_code_codon_tbl, /*39  = '*/
+      err_code_codon_tbl, /*40  = (*/
+      err_code_codon_tbl, /*41  = )*/
+      err_code_codon_tbl, /*42  = **/
+      err_code_codon_tbl, /*43  = +*/
+      err_code_codon_tbl, /*44  = ,*/
+      err_code_codon_tbl, /*45  = -*/
+      err_code_codon_tbl, /*46  = .*/
+      err_code_codon_tbl, /*47  = /*/
+      err_code_codon_tbl, /*48  = 0*/
+      err_code_codon_tbl, /*49  = 1*/
+      err_code_codon_tbl, /*50  = 2*/
+      err_code_codon_tbl, /*51  = 3*/
+      err_code_codon_tbl, /*52  = 4*/
+      err_code_codon_tbl, /*53  = 5*/
+      err_code_codon_tbl, /*54  = 6*/
+      err_code_codon_tbl, /*55  = 7*/
+      err_code_codon_tbl, /*56  = 8*/
+      err_code_codon_tbl, /*57  = 9*/
+      err_code_codon_tbl, /*58  = :*/
+      err_code_codon_tbl, /*59  = ;*/
+      err_code_codon_tbl, /*60  = <*/
+      err_code_codon_tbl, /*61  = =*/
+      err_code_codon_tbl, /*62  = >*/
+      err_code_codon_tbl, /*63  = ?*/
+      err_code_codon_tbl, /*64  = @*/
 
-      a_code_codon_tbl, /*A (65)*/
-      n_code_codon_tbl, /*B, (C/G/T) treat as N*/
-      c_code_codon_tbl, /*C*/
-      n_code_codon_tbl, /*D (AGT), treat as N*/
-      8, 8,
-      g_code_codon_tbl, /*G*/
-      n_code_codon_tbl, /*H (ACT) treat as N*/
-      8, 8,
-      n_code_codon_tbl, /*K (GT), treat as N*/
-      8,
-      n_code_codon_tbl, /*M (AC), treat as N*/
-      n_code_codon_tbl, /*N (AGCT)*/
-      8, 8, 8,
-      n_code_codon_tbl, /*R (AG), treat as N*/
-      n_code_codon_tbl, /*S (CG), treat as N*/
-      t_code_codon_tbl, /*T*/
-      t_code_codon_tbl, /*U*/
-      n_code_codon_tbl, /*V (ACG), treat as N*/
-      8,
-      n_code_codon_tbl, /*X, as an N, is for amino acids*/
-      8, 8,
+      /*Uppercase letters*/
+      a_code_codon_tbl,   /*65  = A*/
+      n_code_codon_tbl,   /*66  = B, (C/G/T) treat as N*/
+      c_code_codon_tbl,   /*67  = C*/
+      n_code_codon_tbl,   /*68  = D (AGT), treat as N*/
+      err_code_codon_tbl, /*69  = E not nucleotide*/
+      err_code_codon_tbl, /*70  = F not nucleotide*/
+      g_code_codon_tbl,   /*71  = G*/
+      n_code_codon_tbl,   /*72  = H (ACT) treat as N*/
+      err_code_codon_tbl, /*73  = I not nucleotide*/
+      err_code_codon_tbl, /*74  = J not nucleotide*/
+      n_code_codon_tbl,   /*75  = K (GT), treat as N*/
+      err_code_codon_tbl, /*76  = L not nucleotide*/
+      n_code_codon_tbl,   /*77  = M (AC), treat as N*/
+      n_code_codon_tbl,   /*78  = N (AGCT)*/
+      err_code_codon_tbl, /*79  = O not nucleotide*/
+      err_code_codon_tbl, /*80  = P not nucleotide*/
+      err_code_codon_tbl, /*81  = Q not nucleotide*/
+      n_code_codon_tbl,   /*82  = R (AG), treat as N*/
+      n_code_codon_tbl,   /*83  = S (CG), treat as N*/
+      t_code_codon_tbl,   /*84  = T*/
+      t_code_codon_tbl,   /*85  = U*/
+      n_code_codon_tbl,   /*86  = V (ACG), treat as N*/
+      n_code_codon_tbl,   /*87  = W (AT), treat as N*/
+      n_code_codon_tbl,   /*88  = X is N for amino acid*/
+      n_code_codon_tbl,   /*89  = Y (CT), treat as N*/
+      err_code_codon_tbl, /*90  = Z not nucleotide*/
 
       /*Special characters after upercase letters*/
-      8, 8, 8, 8, 8, 8,
+      err_code_codon_tbl, /*91  = [*/
+      err_code_codon_tbl, /*92  = \*/
+      err_code_codon_tbl, /*93  = ]*/
+      err_code_codon_tbl, /*94  = ^*/
+      err_code_codon_tbl, /*95  = _*/
+      err_code_codon_tbl, /*96  = `*/
 
       /*lower case letters*/
-      a_code_codon_tbl, /*a (65)*/
-      n_code_codon_tbl, /*b, (c/g/t) treat as n*/
-      c_code_codon_tbl, /*c*/
-      n_code_codon_tbl, /*d (agt), treat as n*/
-      8, 8,
-      g_code_codon_tbl, /*g*/
-      n_code_codon_tbl, /*h (act) treat as n*/
-      8, 8,
-      n_code_codon_tbl, /*k (gt), treat as n*/
-      8,
-      n_code_codon_tbl, /*m (ac), treat as n*/
-      n_code_codon_tbl, /*n (agct)*/
-      8, 8, 8,
-      n_code_codon_tbl, /*r (ag), treat as n*/
-      n_code_codon_tbl, /*s (cg), treat as n*/
-      t_code_codon_tbl, /*t*/
-      t_code_codon_tbl, /*u*/
-      n_code_codon_tbl, /*v (acg), treat as n*/
-      8,
-      n_code_codon_tbl, /*x, as an n, is for amino acids*/
-      8, 8,
+      a_code_codon_tbl,   /*97  = a*/
+      n_code_codon_tbl,   /*98  = b, (C/G/T) treat as N*/
+      c_code_codon_tbl,   /*99  = c*/
+      n_code_codon_tbl,   /*100 = d (AGT), treat as N*/
+      err_code_codon_tbl, /*101 = e not nucleotide*/
+      err_code_codon_tbl, /*102 = f not nucleotide*/
+      g_code_codon_tbl,   /*103 = g*/
+      n_code_codon_tbl,   /*104 = h (ACT) treat as N*/
+      err_code_codon_tbl, /*105 = i not nucleotide*/
+      err_code_codon_tbl, /*106 = j not nucleotide*/
+      n_code_codon_tbl,   /*107 = k (GT), treat as N*/
+      err_code_codon_tbl, /*108 = l not nucleotide*/
+      n_code_codon_tbl,   /*109 = m (AC), treat as N*/
+      n_code_codon_tbl,   /*110 = n (AGCT)*/
+      err_code_codon_tbl, /*111 = o not nucleotide*/
+      err_code_codon_tbl, /*112 = p not nucleotide*/
+      err_code_codon_tbl, /*113 = q not nucleotide*/
+      n_code_codon_tbl,   /*114 = r (AG), treat as N*/
+      n_code_codon_tbl,   /*115 = s (CG), treat as N*/
+      t_code_codon_tbl,   /*116 = t*/
+      t_code_codon_tbl,   /*117 = u*/
+      n_code_codon_tbl,   /*118 = v (ACG), treat as N*/
+      n_code_codon_tbl,   /*119 = w (AT), treat as N*/
+      n_code_codon_tbl,   /*120 = x is N for amino acid*/
+      n_code_codon_tbl,   /*121 = y (CT), treat as N*/
+      err_code_codon_tbl, /*122 = z not nucleotide*/
 
       /*Special characters after lowercase letters*/
-      8, 8, 8, 8, 8, 8,
+      err_code_codon_tbl, /*123 = {*/
+      err_code_codon_tbl, /*124 = |*/
+      err_code_codon_tbl, /*125 = }*/
+      err_code_codon_tbl, /*126 = ~*/
+      err_code_codon_tbl, /*127 = Del*/
    }; /*baseToCodeLkTbl*/
 
 /*--------------------------------------------------------\
@@ -124,63 +210,149 @@ static unsigned char baseToCodeLkTbl[] =
 static unsigned char compBaseToCodeLkTbl[] =
    {  /*baseToCodeLkTbl*/
       /*White space/invisible charactes block*/
-      8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
-      8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
+      err_code_codon_tbl, /*0   = Null character*/
+
+      err_code_codon_tbl, /*1   = Start of Heading*/
+      err_code_codon_tbl, /*2   = Start of Text*/
+      err_code_codon_tbl, /*3   = End of Text*/
+      err_code_codon_tbl, /*4   = End of Transmission*/
+      err_code_codon_tbl, /*5   = Enquiry*/
+      err_code_codon_tbl, /*6   = Acknowledge*/
+      err_code_codon_tbl, /*7   = Bell*/
+      err_code_codon_tbl, /*8   = Backspace*/
+
+      err_code_codon_tbl, /*9   =  tab (horizontal)*/
+      err_code_codon_tbl, /*10  = New line*/
+
+      err_code_codon_tbl, /*11  = Vertical Tab (not key)*/
+      err_code_codon_tbl, /*12  = Form Feed*/
+
+      err_code_codon_tbl, /*13  = Carriage Return*/
+
+      err_code_codon_tbl, /*14  = Shift Out*/
+      err_code_codon_tbl, /*15  = Shift In*/
+      err_code_codon_tbl, /*16  = Data Link Escape*/
+      err_code_codon_tbl, /*17  = Device Control One*/
+      err_code_codon_tbl, /*18  = Device Control Two*/
+      err_code_codon_tbl, /*19  = Device Contol Three*/
+      err_code_codon_tbl, /*20  = Device Control Four*/
+      err_code_codon_tbl, /*21  = Negative Acknowledge*/
+      err_code_codon_tbl, /*22  = Synchronous Idle*/
+      err_code_codon_tbl, /*23  = End Transmission Block*/
+      err_code_codon_tbl, /*24  = Cancle*/
+      err_code_codon_tbl, /*25  = End of medium*/
+      err_code_codon_tbl, /*26  = Substitute*/
+      err_code_codon_tbl, /*27  = escape*/
+      err_code_codon_tbl, /*28  = File Separator*/
+      err_code_codon_tbl, /*29  = Group Separator*/
+      err_code_codon_tbl, /*30  = Record Separator*/
+      err_code_codon_tbl, /*31  = Unit Separator*/
 
       /*symbol/number block*/
-      8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
-      8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 
+      err_code_codon_tbl, /*32  = space*/
+      err_code_codon_tbl, /*33  = !*/
+      err_code_codon_tbl, /*34  = "*/
+      err_code_codon_tbl, /*35  = #*/
+      err_code_codon_tbl, /*36  = $*/
+      err_code_codon_tbl, /*37  = %*/
+      err_code_codon_tbl, /*38  = &*/
+      err_code_codon_tbl, /*39  = '*/
+      err_code_codon_tbl, /*40  = (*/
+      err_code_codon_tbl, /*41  = )*/
+      err_code_codon_tbl, /*42  = **/
+      err_code_codon_tbl, /*43  = +*/
+      err_code_codon_tbl, /*44  = ,*/
+      err_code_codon_tbl, /*45  = -*/
+      err_code_codon_tbl, /*46  = .*/
+      err_code_codon_tbl, /*47  = /*/
+      err_code_codon_tbl, /*48  = 0*/
+      err_code_codon_tbl, /*49  = 1*/
+      err_code_codon_tbl, /*50  = 2*/
+      err_code_codon_tbl, /*51  = 3*/
+      err_code_codon_tbl, /*52  = 4*/
+      err_code_codon_tbl, /*53  = 5*/
+      err_code_codon_tbl, /*54  = 6*/
+      err_code_codon_tbl, /*55  = 7*/
+      err_code_codon_tbl, /*56  = 8*/
+      err_code_codon_tbl, /*57  = 9*/
+      err_code_codon_tbl, /*58  = :*/
+      err_code_codon_tbl, /*59  = ;*/
+      err_code_codon_tbl, /*60  = <*/
+      err_code_codon_tbl, /*61  = =*/
+      err_code_codon_tbl, /*62  = >*/
+      err_code_codon_tbl, /*63  = ?*/
+      err_code_codon_tbl, /*64  = @*/
 
-      t_code_codon_tbl, /*A (complement is T) (65)*/
-      n_code_codon_tbl, /*B, (C/G/T) treat as N*/
-      g_code_codon_tbl, /*C; complement is G*/
-      n_code_codon_tbl, /*D (AGT), treat as N*/
-      8, 8,
-      c_code_codon_tbl, /*G; complement is C*/
-      n_code_codon_tbl, /*H (ACT) treat as N*/
-      8, 8,
-      n_code_codon_tbl, /*K (GT), treat as N*/
-      8,
-      n_code_codon_tbl, /*M (AC), treat as N*/
-      n_code_codon_tbl, /*N (AGCT)*/
-      8, 8, 8,
-      n_code_codon_tbl, /*R (AG), treat as N*/
-      n_code_codon_tbl, /*S (CG), treat as N*/
-      a_code_codon_tbl, /*T; complement is A*/
-      a_code_codon_tbl, /*U; complement is A*/
-      n_code_codon_tbl, /*V (ACG), treat as N*/
-      8,
-      n_code_codon_tbl, /*X, as an N, for amino acids*/
-      8, 8,
+      /*Uppercase letters*/
+      t_code_codon_tbl,   /*65  = A*/
+      n_code_codon_tbl,   /*66  = B, (C/G/T) treat as N*/
+      g_code_codon_tbl,   /*67  = C*/
+      n_code_codon_tbl,   /*68  = D (AGT), treat as N*/
+      err_code_codon_tbl, /*69  = E not nucleotide*/
+      err_code_codon_tbl, /*70  = F not nucleotide*/
+      c_code_codon_tbl,   /*71  = G*/
+      n_code_codon_tbl,   /*72  = H (ACT) treat as N*/
+      err_code_codon_tbl, /*73  = I not nucleotide*/
+      err_code_codon_tbl, /*74  = J not nucleotide*/
+      n_code_codon_tbl,   /*75  = K (GT), treat as N*/
+      err_code_codon_tbl, /*76  = L not nucleotide*/
+      n_code_codon_tbl,   /*77  = M (AC), treat as N*/
+      n_code_codon_tbl,   /*78  = N (AGCT)*/
+      err_code_codon_tbl, /*79  = O not nucleotide*/
+      err_code_codon_tbl, /*80  = P not nucleotide*/
+      err_code_codon_tbl, /*81  = Q not nucleotide*/
+      n_code_codon_tbl,   /*82  = R (AG), treat as N*/
+      n_code_codon_tbl,   /*83  = S (CG), treat as N*/
+      a_code_codon_tbl,   /*84  = T*/
+      a_code_codon_tbl,   /*85  = U*/
+      n_code_codon_tbl,   /*86  = V (ACG), treat as N*/
+      n_code_codon_tbl,   /*87  = W (AT), treat as N*/
+      n_code_codon_tbl,   /*88  = X is N for amino acid*/
+      n_code_codon_tbl,   /*89  = Y (CT), treat as N*/
+      err_code_codon_tbl, /*90  = Z not nucleotide*/
 
       /*Special characters after upercase letters*/
-      8, 8, 8, 8, 8, 8,
+      err_code_codon_tbl, /*91  = [*/
+      err_code_codon_tbl, /*92  = \*/
+      err_code_codon_tbl, /*93  = ]*/
+      err_code_codon_tbl, /*94  = ^*/
+      err_code_codon_tbl, /*95  = _*/
+      err_code_codon_tbl, /*96  = `*/
 
       /*lower case letters*/
-      t_code_codon_tbl, /*a; complement is T (65)*/
-      n_code_codon_tbl, /*b, (c/g/t) treat as n*/
-      g_code_codon_tbl, /*c; complement is G*/
-      n_code_codon_tbl, /*d (agt), treat as n*/
-      8, 8,
-      c_code_codon_tbl, /*g; complement is C*/
-      n_code_codon_tbl, /*h (act) treat as n*/
-      8, 8,
-      n_code_codon_tbl, /*k (gt), treat as n*/
-      8,
-      n_code_codon_tbl, /*m (ac), treat as n*/
-      n_code_codon_tbl, /*n (agct)*/
-      8, 8, 8,
-      n_code_codon_tbl, /*r (ag), treat as n*/
-      n_code_codon_tbl, /*s (cg), treat as n*/
-      a_code_codon_tbl, /*t; complement is A*/
-      a_code_codon_tbl, /*u; complement is A*/
-      n_code_codon_tbl, /*v (acg), treat as n*/
-      8,
-      n_code_codon_tbl, /*x, treat as n, for amino acids*/
-      8, 8,
+      t_code_codon_tbl,   /*97  = a*/
+      n_code_codon_tbl,   /*98  = b, (C/G/T) treat as N*/
+      g_code_codon_tbl,   /*99  = c*/
+      n_code_codon_tbl,   /*100 = d (AGT), treat as N*/
+      err_code_codon_tbl, /*101 = e not nucleotide*/
+      err_code_codon_tbl, /*102 = f not nucleotide*/
+      c_code_codon_tbl,   /*103 = g*/
+      n_code_codon_tbl,   /*104 = h (ACT) treat as N*/
+      err_code_codon_tbl, /*105 = i not nucleotide*/
+      err_code_codon_tbl, /*106 = j not nucleotide*/
+      n_code_codon_tbl,   /*107 = k (GT), treat as N*/
+      err_code_codon_tbl, /*108 = l not nucleotide*/
+      n_code_codon_tbl,   /*109 = m (AC), treat as N*/
+      n_code_codon_tbl,   /*110 = n (AGCT)*/
+      err_code_codon_tbl, /*111 = o not nucleotide*/
+      err_code_codon_tbl, /*112 = p not nucleotide*/
+      err_code_codon_tbl, /*113 = q not nucleotide*/
+      n_code_codon_tbl,   /*114 = r (AG), treat as N*/
+      n_code_codon_tbl,   /*115 = s (CG), treat as N*/
+      a_code_codon_tbl,   /*116 = t*/
+      a_code_codon_tbl,   /*117 = u*/
+      n_code_codon_tbl,   /*118 = v (ACG), treat as N*/
+      n_code_codon_tbl,   /*119 = w (AT), treat as N*/
+      n_code_codon_tbl,   /*120 = x is N for amino acid*/
+      n_code_codon_tbl,   /*121 = y (CT), treat as N*/
+      err_code_codon_tbl, /*122 = z not nucleotide*/
 
       /*Special characters after lowercase letters*/
-      8, 8, 8, 8, 8, 8,
+      err_code_codon_tbl, /*123 = {*/
+      err_code_codon_tbl, /*124 = |*/
+      err_code_codon_tbl, /*125 = }*/
+      err_code_codon_tbl, /*126 = ~*/
+      err_code_codon_tbl, /*127 = Del*/
    }; /*baseToCodeLkTbl*/
 
 /*--------------------------------------------------------\
@@ -648,6 +820,142 @@ G | GTC  V . | GCC  A . | GAC  D . | GGC  G . | C
   1 = Canonical start codon
   2 = Bacterial non-canconical start codon
   . = Nothing
+*/
+
+/*ASCII table
+   Dec Hex  Binary   Value  Description
+   0    00  00000000 NUL    Null character
+   1    01  00000001 SOH    Start of Heading
+   2    02  00000010 STX    Start of Text
+   3    03  00000011 ETX    End of Text
+   4    04  00000100 EOT    End of Transmission
+   5    05  00000101 ENQ    Enquiry
+   6    06  00000110 ACK    Acknowledge
+   7    07  00000111 BEL    Bell, Alert
+   8    08  00001000 BS     Backspace
+   9    09  00001001 HT     Horizontal Tab
+   10   0A  00001010 LF     Line Feed
+   11   0B  00001011 VT     Vertical Tabulation
+   12   0C  00001100 FF     Form Feed
+   13   0D  00001101 CR     Carriage Return
+   14   0E  00001110 SO     Shift Out
+   15   0F  00001111 SI     Shift In
+   16   10  00010000 DLE    Data Link Escape
+   17   11  00010001 DC1    Device Control One (XON)
+   18   12  00010010 DC2    Device Control Two
+   19   13  00010011 DC3    Device Control Three (XOFF)
+   20   14  00010100 DC4    Device Control Four
+   21   15  00010101 NAK    Negative Acknowledge
+   22   16  00010110 SYN    Synchronous Idle
+   23   17  00010111 ETB    End of Transmission Block
+   24   18  00011000 CAN    Cancel
+   25   19  00011001 EM     End of medium
+   26   1A  00011010 SUB    Substitute
+   27   1B  00011011 ESC    Escape
+   28   1C  00011100 FS     File Separator
+   29   1D  00011101 GS     Group Separator
+   30   1E  00011110 RS     Record Separator
+   31   1F  00011111 US     Unit Separator
+
+   32   20  00100000 SP     Space
+   33   21  00100001 !      Exclamation mark
+   34   22  00100010 "      Double quotes
+   35   23  00100011 #      Number sign
+   36   24  00100100 $      Dollar
+   37   25  00100101 %      Per cent sign
+   38   26  00100110 &      Ampersand
+   39   27  00100111 '      Single quote
+   40   28  00101000 (      Open parenthesis
+   41   29  00101001 )      Close parenthesis
+   42   2A  00101010 *      Asterisk
+   43   2B  00101011 +      Plus
+   44   2C  00101100 ,      Comma
+   45   2D  00101101 -      Hyphen-minus
+   46   2E  00101110 .      Period, dot or full stop
+   47   2F  00101111 /      Slash or divide
+   48   30  00110000 0      Zero
+   49   31  00110001 1      One
+   50   32  00110010 2      Two
+   51   33  00110011 3      Three
+   52   34  00110100 4      Four
+   53   35  00110101 5      Five
+   54   36  00110110 6      Six
+   55   37  00110111 7      Seven
+   56   38  00111000 8      Eight
+   57   39  00111001 9      Nine
+   58   3A  00111010 :      Colon
+   59   3B  00111011 ;      Semicolon
+   60   3C  00111100 <      Less than
+   61   3D  00111101 =      Equals
+   62   3E  00111110 >      Greater than
+   63   3F  00111111 ?      Question mark
+   64   40  01000000 @      At sign
+   65   41  01000001 A      Uppercase A
+   66   42  01000010 B      Uppercase B
+   67   43  01000011 C      Uppercase C
+   68   44  01000100 D      Uppercase D
+   69   45  01000101 E      Uppercase E
+   70   46  01000110 F      Uppercase F
+   71   47  01000111 G      Uppercase G
+   72   48  01001000 H      Uppercase H
+   73   49  01001001 I      Uppercase I
+   74   4A  01001010 J      Uppercase J
+   75   4B  01001011 K      Uppercase K
+   76   4C  01001100 L      Uppercase L
+   77   4D  01001101 M      Uppercase M
+   78   4E  01001110 N      Uppercase N
+   79   4F  01001111 O      Uppercase O
+   80   50  01010000 P      Uppercase P
+   81   51  01010001 Q      Uppercase Q
+   82   52  01010010 R      Uppercase R
+   83   53  01010011 S      Uppercase S
+   84   54  01010100 T      Uppercase T
+   85   55  01010101 U      Uppercase U
+   86   56  01010110 V      Uppercase V
+   87   57  01010111 W      Uppercase W
+   88   58  01011000 X      Uppercase X
+   89   59  01011001 Y      Uppercase Y
+   90   5A  01011010 Z      Uppercase Z
+   91   5B  01011011 [      Opening bracket
+   92   5C  01011100 \      Backslash
+   93   5D  01011101 ]      Closing bracket
+   94   5E  01011110 ^      Caret - circumflex
+   95   5F  01011111 _      Underscore
+   96   60  01100000 `      Grave accent
+   97   61  01100001 a      Lowercase a
+   98   62  01100010 b      Lowercase b
+   99   63  01100011 c      Lowercase c
+   100  64  01100100 d      Lowercase d
+   101  65  01100101 e      Lowercase e
+   102  66  01100110 f      Lowercase f
+   103  67  01100111 g      Lowercase g
+   104  68  01101000 h      Lowercase h
+   105  69  01101001 i      Lowercase i
+   106  6A  01101010 j      Lowercase j
+   107  6B  01101011 k      Lowercase k
+   108  6C  01101100 l      Lowercase l
+   109  6D  01101101 m      Lowercase m
+   110  6E  01101110 n      Lowercase n
+   111  6F  01101111 o      Lowercase o
+   112  70  01110000 p      Lowercase p
+   113  71  01110001 q      Lowercase q
+   114  72  01110010 r      Lowercase r
+   115  73  01110011 s      Lowercase s
+   116  74  01110100 t      Lowercase t
+   117  75  01110101 u      Lowercase u
+   118  76  01110110 v      Lowercase v
+   119  77  01110111 w      Lowercase w
+   120  78  01111000 x      Lowercase x
+   121  79  01111001 y      Lowercase y
+   122  7A  01111010 z      Lowercase z
+   123  7B  01111011 {      Opening brace
+   124  7C  01111100 |      Vertical bar
+   125  7D  01111101 }      Closing brace
+   126  7E  01111110 ~      Equivalency sign - tilde
+   127  7F  01111111 DEL    Delete
+
+There is an extended ascii table, but I do not use it
+  here since fasta/fastq use regular ascii
 */
 
 /*=======================================================\

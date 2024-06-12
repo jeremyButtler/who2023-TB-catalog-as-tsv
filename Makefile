@@ -4,28 +4,18 @@ CFLAGS= -static -O3 -std=c89
 MACCFLAGS= -O3
 DEBUGFLAGS= -static -O0 -ggdb -Wall
 
-SOURCE=\
-   whoToTbAmr_src/whoToTbAmr.c\
-   whoToTbAmr_src/cnvt_whoToTbAmr.c\
-   whoToTbAmr_src/genIndiceStruct.c\
-   whoToTbAmr_src/drug_str_ary.c\
-   whoToTbAmr_src/amrStruct.c
-
 
 all:
-	$(CC) $(CFLAGS) -o whoToTbAmr $(SOURCE)
-
-debug:
-	$(CC) $(DEBUGFLAGS) -o debugWhoToTbAmr $(SOURCE)
-	gdb -x bug-cmds.txt debugWhoToTbAmr
+	make CC="$(CC)" CFLAGS="$(CFLAGS)" -C whoToTbAmr_src
+	make CC="$(CC)" CFLAGS="$(CFLAGS)" -C swapDbRefSrc
 
 mac:
-	$(CC) $(MACCFLAGS) -o whoToTbAmr $(SOURCE)
-
-check:
-	$(CC) $(DEBUGFLAGS) -o debugWhoToTbAmr $(SOURCE)
+	make mac CC="$(CC)" MACCFLAGS="$(MACCFLAGS)" -C whoToTbAmr_src
+	make mac CC="$(CC)" MACCFLAGS="$(MACCFLAGS)" -C swapDbRefSrc
 
 # Not really worth installing, but just in case
 install: 
-	cp whoToTbAmr $(PREFIX);
+	mv whoToTbAmr_src whoToTbAmr $(PREFIX);
+	mv swapDbRef whoToTbAmr $(PREFIX);
 	chmod a+x $(PREFIX)/whoToTbAmr;
+	chmod a+x $(PREFIX)/swapDbRef;

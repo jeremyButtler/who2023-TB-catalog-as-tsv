@@ -1,0 +1,30 @@
+b whoToTbAmr.c:420
+
+# LOF assignment in tab1 read in
+#b cnvt_whoToTbAmr.c:1605
+
+# Parse variant Ids, whole Gene LoF
+#b cnvt_whoToTbAmr.c:2056
+
+b cnvt_whoToTbAmr.c:3069 if amrST[iIndex].codonNumUI == 499
+
+b ../amrStruct.c:645 if amrSTAry[ulAmr].codonNumUI == 499
+
+#b cnvt_whoToTbAmr.c:3123
+
+#r -all-amrs -tabone-who-2023-tsv ../../../who2023-TB-catalog-as-tsv/WHO-2023-TB-tab1-master.tsv -tabtwo-who-2023-tsv ../../../who2023-TB-catalog-as-tsv/WHO-2023-TB-tab2-indices.tsv -ref ../../freezeTbFiles/TB-NC000962.fa -coords gene-tbl.tsv
+
+r -tabone-who-2023-tsv ~/files/publicGitRepositories/who2023-TB-catalog-as-tsv/WHO-2023-TB-tab1-master.tsv -tabtwo-who-2023-tsv ~/files/publicGitRepositories/who2023-TB-catalog-as-tsv/WHO-2023-TB-tab2-indices.tsv -ref ../../freezeTbFiles/TB-NC000962.fa -coords gene-tbl.tsv
+
+define pcross
+   set $icnt = 0
+   set $tmpAmrST = $0
+   set $lenAmr = $1
+
+   while($icnt < lenAmr)
+      if(tmpAmrST[icnt].crossResFlagsUL)
+         p icnt
+      end
+      set $icnt = $icnt + 1
+   end
+end

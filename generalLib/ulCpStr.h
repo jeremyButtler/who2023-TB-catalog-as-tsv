@@ -13,29 +13,29 @@
 '   o header:
 '     - Included libraries, definitions and preprocessor
 '       checks
-'   o fun-01: ulCpStr
+'   o fun01: ulCpStr
 '     - Copies cpStr into dupStr using unsigned longs
-'   o fun-02: ulCpMakeDelim
+'   o fun02: ulCpMakeDelim
 '     - Makes an unsigned long delimintor from a character
 '       deliminator for use in cpStrDelim
-'   o fun-03: ulIfDelim
+'   o fun03: ulIfDelim
 '     - Detect if the input deliminator is in the input
 '       unsigned long
 '     - This is a bit slow (9 op), 8 if delimUL can be
 '       deterimined at compile time. This is less efficent
 '       on 32 and 16 bit cpus (no longer borderline).
-'   o fun-06: ulEndStrLine
+'   o fun06: ulEndStrLine
 '     - Finds the end of a c-string. This assumes that
 '       the line ends in an '\0' or an '\n'
-'   o fun-07: cCpStr
+'   o fun07: cCpStr
 '    - Copies cpStr into dupStr using characters
-'   o fun-08: cCpStrDelim
+'   o fun08: cCpStrDelim
 '     - Copies cpStr into dupStr until delimC is found
-'   o fun-09: cLenStr
+'   o fun09: cLenStr
 '     - Finds the length of a string using characters
-'   o fun-10: cStrEql
+'   o fun10: cStrEql
 '     - Checks to see if two strings are equal
-'   o fun-11: cStrMatch
+'   o fun11: cStrMatch
 '     - Checks to see if two strings are equal, but does
 '       not check to see if there is anything past the
 '       query's deliminator. This is to deal with strings
@@ -111,7 +111,7 @@
 */
 
 /*-------------------------------------------------------\
-| Fun-01: ulCpStr
+| Fun01: ulCpStr
 |   - Copies cpStr into dupStr using unsigned longs
 | Input:
 |   - dupStr:
@@ -146,7 +146,7 @@
 } /*ulCpStr*/
 
 /*-------------------------------------------------------\
-| Fun-02: ulCpMakeDelim
+| Fun02: ulCpMakeDelim
 |   - Makes an unsigned long delimintor from a character
 |     deliminator for use in cpStrDelim
 | Input:
@@ -187,7 +187,7 @@
    */
 
 /*-------------------------------------------------------\
-| Fun-03: ulIfDelim
+| Fun03: ulIfDelim
 |   - Detect if the input deliminator is in the input
 |     unsigned long
 | Variations:
@@ -242,7 +242,7 @@
    */
    
 /*-------------------------------------------------------\
-| Fun-04: ulCpStrDelim
+| Fun04: ulCpStrDelim
 |   - Copies cpStr into dupStr until delimC is found
 | Input:
 |   - dupStr:
@@ -290,7 +290,7 @@
 }) /*ulCpStrDelim*/
 
 /*-------------------------------------------------------\
-| Fun-05: ulLenStr
+| Fun05: ulLenStr
 |   - Finds the length of a string using unsigned longs
 | Input:
 |   - inStr:
@@ -322,7 +322,7 @@
 }) /*ulCpStrDelim*/
 
 /*-------------------------------------------------------\
-| Fun-06: ulEndStrLine
+| Fun06: ulEndStrLine
 |   - Finds the end of a c-string. This assumes that the
 |     line ends in an '\0' or an '\n'
 | Input:
@@ -358,7 +358,7 @@ ulEndStrLine(\
 /*These are the single byte copy functions*/
 
 /*-------------------------------------------------------\
-| Fun-07: cCpStr
+| Fun07: cCpStr
 |   - Copies cpStr into dupStr using characters
 | Input:
 |   - dupStr:
@@ -379,7 +379,7 @@ ulEndStrLine(\
 }
 
 /*-------------------------------------------------------\
-| Fun-08: cCpStrDelim
+| Fun08: cCpStrDelim
 |   - Copies cpStr into dupStr until delimC is found
 | Input:
 |   - dupStr:
@@ -413,7 +413,7 @@ cCpStrDelim(\
 */
 
 /*-------------------------------------------------------\
-| Fun-09: cLenStr
+| Fun09: cLenStr
 |   - Finds the length of a string using characters
 | Input:
 |   - inStr:
@@ -432,7 +432,7 @@ cCpStrDelim(\
 })
 
 /*-------------------------------------------------------\
-| Fun-10: cStrEql
+| Fun10: cStrEql
 |   - Checks to see if two strings are equal
 | Input:
 |   - qryStr:
@@ -486,7 +486,7 @@ cCpStrDelim(\
 })
 
 /*-------------------------------------------------------\
-| Fun-11: cStrMatch
+| Fun11: cStrMatch
 |   - Checks to see if two strings are equal, but does
 |     not check to see if there is anything past the
 |     query's deliminator. This is to deal with strings

@@ -13,19 +13,19 @@
 ' SOF: Start Of File
 '   o header:
 '     - Inluded libraries and defintions/global variables
-'   o fun-01: noBranchHiBit2
+'   o fun01: noBranchHiBit2
 '     - Does a branchles method to find the higest bit in
 '       the element (integer log base 2)
-'   o fun-02: noBranchAB
+'   o fun02: noBranchAB
 '     - Does a branchless absolute value
-'   o fun-03: noBranchMax
+'   o fun03: noBranchMax
 '     - Find the maximum value (branchless)
-'   o fun-04: noBranchIfMax
+'   o fun04: noBranchIfMax
 '     - Set a value (ret) to a value based on which value
 '       is greater.
-'   o fun-05: noBranchMin
+'   o fun05: noBranchMin
 '     - Find the Minimum value (branchless)
-'   o fun-06: noBranchIfMin
+'   o fun06: noBranchIfMin
 '     - Set a value (ret) to a value based on which value
 '       is less than.
 '   o license:
@@ -41,7 +41,7 @@
 #define GENERAL_MATH_FUNCTIONS_H
 
 /*-------------------------------------------------------\
-| Fun-01: noBranchHiBit2
+| Fun01: noBranchHiBit2
 |   - Does a branchles method to find the higest bit in
 |     the element (integer log base 2)
 | Input:
@@ -76,7 +76,7 @@
 })
 
 /*-------------------------------------------------------\
-| Fun-02: noBranchAB
+| Fun02: noBranchAB
 |   - Does a branchless absolute value
 | Input:
 |   - numI:
@@ -92,7 +92,7 @@
 
 
 /*-------------------------------------------------------\
-| Fun-03: noBranchMax
+| Fun03: noBranchMax
 |  - Find the maximum value (branchless)
 | Input:
 |  o ret:
@@ -122,7 +122,7 @@
 )
 
 /*-------------------------------------------------------\
-| Fun-04: noBranchIfMax
+| Fun04: noBranchIfMax
 |  - Set a value (ret) to a value based on which value
 |    is greater.
 | Input:
@@ -151,7 +151,7 @@
 
 
 /*-------------------------------------------------------\
-| Fun-05: noBranchMin
+| Fun05: noBranchMin
 |  - Find the Minimum value (branchless)
 | Input:
 |  o ret:
@@ -181,7 +181,7 @@
 )
 
 /*-------------------------------------------------------\
-| Fun-06: noBranchIfMin
+| Fun06: noBranchIfMin
 |  - Set a value (ret) to a value based on which value
 |    is less than.
 | Input:

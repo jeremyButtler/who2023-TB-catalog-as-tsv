@@ -1,7 +1,36 @@
-/*
+/*########################################################
+# Name: trimSam
+#   - Holds functions for trimming softmasked regoins at
+#     the start and end of sequences in an sam file
+########################################################*/
+
+/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\
+' SOF: Start Of File
+'   o header:
+'     - Included libraries and defined variables
+'   o fun-01 trimSamEntry:
+'     o Trim soft mask regions off end of sam entry
+'   o fun-02: trimByCoords
+'     - Trim an sam file entry by coordinates
+'   o fun-03 trimSamReads:
+'     o Trims soft mask regions for all reads with a
+'       sequence in a sam file
 '   o license:
 '     - Licensing for this code (public domain / mit)
-*/
+\~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+
+/*-------------------------------------------------------\
+| Header:
+|   - Included libraries and defined variables
+|   o header Sec-01:
+|     - Included libraries
+|   o header Sec-02:
+\-------------------------------------------------------*/
+
+/*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\
+^ Header Sec-01:
+^   - Included libraries
+\<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
 
 #ifdef PLAN9
    #include <u.h>
@@ -18,10 +47,16 @@
 #include "ulCpStr.h"
 #include "dataTypeShortHand.h"
 
-/*Hidden depenencies
-  #include "../generalLib/base10StrToNum.h" no .c file
-  #include "../generalLib/numToStr.h"       no .c file
-*/
+/*%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\
+! Hidden depenencies
+!   o .h #include "../generalLib/base10StrToNum.h"
+!   o .h #include "../generalLib/numToStr.h"
+\%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%*/
+
+/*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\
+^ Header Sec-02:
+^   - Defined varialbes
+\<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
 
 /*This .c version is slightly slower, but it works*/
 /*This will work so long as the integer is beneath
@@ -49,33 +84,8 @@
 `       to add a correction in
 */
 
-/* This works, but requires limits.h
-#if UINT_MAX >= 0xffffffffffffffff
-   #define defShiftIntToGetChar 3
-
-#elif UINT_MAX >= 0xffffffff
-   #define defShiftIntToGetChar 2
-
-#elif ULONG_MAX >= 0xffff
-   #define defShiftIntToGetChar 1
-
-#else
-   #error This is an 8 bit system
-#endif
-*/
-
-
-/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\
-| trimSam SOF: Start Of Functions
-|  - fun-01 trimSamEntry:
-|    o Trim soft mask regions off end of sam entry
-|  - fun-02 trimSamReads:
-|    o Trims soft mask regions for all reads with a
-|      sequence in a sam file
-\~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-
 /*-------------------------------------------------------\
-| Name: trimSamEntry (Fun-01:)
+| Fun-01: trimSamEntry
 | Use:
 |  - Trims off the soft masked regions of a sam entry
 | Input:
@@ -266,11 +276,12 @@ unsigned char trimSamEntry(
     \****************************************************/
 
     /*Adjust for having removed q-scores at the end*/
-    for(iSeq = iSeq; qCpStr[iSeq] != '\0'; ++iSeq)
+    while(qCpStr[iSeq] != '\0')
     { /*Loop: adjust for the timmed ending Q-scores*/
        qUC = (uchar) samST->qStr[iSeq] - defQAdjust;
        --(samST->qHistUI[qUC]);
        samST->sumQUL -= qUC;
+       ++iSeq;
     } /*Loop: adjust for the timmed ending Q-scores*/
 
     /*Make sure they are c-strings*/
@@ -284,7 +295,309 @@ unsigned char trimSamEntry(
 } /*trimSamEntry*/
 
 /*-------------------------------------------------------\
-| Name: trimSamReads (Fun-02:)
+| Fun-02: trimByCoords
+|   - Trim an sam file entry by coordinates
+| Input:
+|   - samSTPtr:
+|     o Pointer to an sam entry structure with an read to
+|       trim
+|   - startSI:
+|     o Singed integer with the starting coordinate
+|   - endSI:
+|     o Singed integer with the ending coordinate
+|     o < 1 is treated as do not trim
+| Output:
+|   - Modifies:
+|     o samSTPtr to be trimmed
+|   - Returns:
+|     o 0 for no errors
+|     o 1 for coordinates out of range
+\-------------------------------------------------------*/
+signed char
+trimByCoords(
+   struct samEntry *samSTPtr,
+   signed int startSI,
+   signed int endSI
+){ /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\
+   ' Fun-02 TOC:
+   '   - Trim an sam file entry by coordinates
+   '   o fun-02 sec-01:
+   '     - Variable declerations
+   '   o fun-02 sec-02:
+   '     - Check ranges and set up variables
+   '   o fun-02 sec-03:
+   '     - Find the starting position
+   '   o fun-02 sec-04:
+   '     - Find the ending position
+   '   o fun-02 sec-05:
+   '     - Set up the lengths and ending coordinates
+   '   o fun-02 sec-06:
+   '     - Trim the sequence, Q-score, and cigar entries
+   \~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+
+   /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\
+   ^ Fun-02 Sec-01:
+   ^   - Variable declerations
+   \<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
+
+   uint seqStartUI = 0;
+   sint firstCigSI = 0;
+
+   sint siCig = 0;
+   sint cigBaseOnSI = 0;
+   sint refPosSI = 0;
+   sint seqPosSI = 0;
+
+   /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\
+   ^ Fun-02 Sec-02:
+   ^   - Check ranges and set up variables
+   \<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
+
+   if(samSTPtr->refStartUI > endSI)
+       return 1;
+
+   if(samSTPtr->refEndUI < startSI)
+       return 1;
+
+   cigBaseOnSI = samSTPtr->cigValAryI[0];
+   refPosSI = (sint) samSTPtr->refStartUI;
+
+   /*Setting to zero becuase it is easier to recount*/
+   samSTPtr->numMaskUI = 0;
+   samSTPtr->numInsUI = 0;
+   samSTPtr->numDelUI = 0;
+   samSTPtr->numSnpUI = 0;
+   samSTPtr->numMatchUI = 0;
+
+   /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\
+   ^ Fun-02 Sec-03:
+   ^   - Find the starting position
+   \<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
+
+   samEntryFindRefPos(
+      samSTPtr,
+      siCig,
+      cigBaseOnSI,
+      startSI,
+      refPosSI,
+      seqPosSI
+   );
+
+   samSTPtr->cigValAryI[siCig] = cigBaseOnSI;
+   samSTPtr->refStartUI = (uint) refPosSI;
+
+   seqStartUI = (uint) seqPosSI;
+   firstCigSI = siCig;
+
+   /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\
+   ^ Fun-02 Sec-04:
+   ^   - Find the ending position
+   ^   o fun-02 sec-04 sub-01:
+   ^     - Start loop and handle soft masking entires
+   ^   o fun-02 sec-04 sub-02:
+   ^     - Handle insertion entries
+   ^   o fun-02 sec-04 sub-03:
+   ^     - Handle deletion entries
+   ^   o fun-02 sec-04 sub-04:
+   ^     - Handle snp entries
+   ^   o fun-02 sec-04 sub-05:
+   ^     - Move to next cigar entry
+   \<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
+
+   /*****************************************************\
+   * Fun-02 Sec-04 Sub-01:
+   *   - Start loop and handle soft masking entires
+   \*****************************************************/
+
+   while(refPosSI < endSI)
+   { /*Loop: till I am on the target base*/
+      switch((samSTPtr)->cigTypeStr[(siCig)])
+      { /*Switch: check what the next entry is*/
+         case 'S':
+         /*Case: Softmasking*/
+            seqStartUI += cigBaseOnSI;
+            samSTPtr->numMaskUI +=  cigBaseOnSI;
+
+            ++siCig;
+            cigBaseOnSI = 0;
+            break;
+         /*Case: Softmasking*/
+
+         /***********************************************\
+         * Fun-02 Sec-04 Sub-02:
+         *   - Handle insertion entries
+         \***********************************************/
+
+         case 'I':
+         /*Case: insertions*/
+            seqStartUI += cigBaseOnSI;
+            samSTPtr->numInsUI +=  cigBaseOnSI;
+
+            ++siCig;
+            cigBaseOnSI = 0;
+            break;
+         /*Case: insertions*/
+
+         /***********************************************\
+         * Fun-02 Sec-04 Sub-03:
+         *   - Handle deletion entries
+         \***********************************************/
+
+         case 'D':
+         /*Case: Deletion*/
+            refPosSI += cigBaseOnSI;
+            samSTPtr->numDelUI += cigBaseOnSI;
+
+            if(refPosSI <= endSI)
+            { /*If: I have not found target position*/
+               ++siCig;
+               cigBaseOnSI = 0;
+            } /*If: I have not found target position*/
+
+            else 
+            { /*Else: I overshot the target*/
+               /*Find how many bases overshot by*/
+               cigBaseOnSI = (refPosSI - endSI);
+
+               /*Make corrections for overshooting*/
+               refPosSI -= cigBaseOnSI;
+               samSTPtr->numDelUI -= cigBaseOnSI;
+            } /*Else: I overshot the target*/
+
+            break;
+         /*Case: Deletion*/\
+
+         /***********************************************\
+         * Fun-02 Sec-04 Sub-03:
+         *   - Handle match entries
+         \***********************************************/
+
+         case 'M':\
+         case '=':\
+         /*Case: match (M or =)*/
+            refPosSI += cigBaseOnSI;
+            seqPosSI += cigBaseOnSI;
+            samSTPtr->numMatchUI += cigBaseOnSI;
+
+            if(refPosSI <= endSI)
+            { /*If: I have not found target position*/
+               cigBaseOnSI = 0;
+               ++siCig;
+            } /*If: I have not found target position*/
+
+            else
+            { /*Else: I overshot the target*/
+               /*Find how many bases overshot by*/
+               cigBaseOnSI = (int) (refPosSI - endSI);
+
+               /*Make corrections for overshooting*/
+               refPosSI -= cigBaseOnSI;
+               seqPosSI -= cigBaseOnSI;
+               samSTPtr->numMatchUI -= cigBaseOnSI;
+            } /*Else: I overshot the target*/
+
+            break;
+         /*Case: match (M or =)*/
+
+         /***********************************************\
+         * Fun-02 Sec-04 Sub-04:
+         *   - Handle snp entries
+         \***********************************************/
+
+         case 'X':\
+         /*Case: SNP (X)*/
+            refPosSI += cigBaseOnSI;
+            seqPosSI += cigBaseOnSI;
+            samSTPtr->numSnpUI += cigBaseOnSI;
+
+            if(refPosSI <= endSI)
+            { /*If: I have not found target position*/
+               cigBaseOnSI = 0;
+               ++siCig;
+            } /*If: I have not found target position*/
+
+            else
+            { /*Else: I overshot the target*/
+               /*Find how many bases overshot by*/
+               cigBaseOnSI = (int) (refPosSI - endSI);
+
+               /*Make corrections for overshooting*/
+               refPosSI -= cigBaseOnSI;
+               seqPosSI -= cigBaseOnSI;
+
+               samSTPtr->numSnpUI = cigBaseOnSI;
+            } /*Else: I overshot the target*/
+
+            break;
+         /*Case: SNP (X)*/
+      } /*Switch: check what the next entry is*/
+
+      /**************************************************\
+      * Fun-02 Sec-04 Sub-05:
+      *   - Move to next cigar entry
+      \**************************************************/
+
+      if(siCig >= samSTPtr->lenCigUI)
+         break; /*End of the sequence*/
+
+      /*This case will be true most of the time, unless
+      `   the start has already been found
+      */
+      if(cigBaseOnSI == 0)
+         cigBaseOnSI = samSTPtr->cigValAryI[siCig];
+   } /*Loop: till I am on the target base*/
+
+   /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\
+   ^ Fun-02 Sec-05:
+   ^   - Set up the lengths and ending coordinates
+   \<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
+
+   samSTPtr->cigValAryI[siCig] = cigBaseOnSI;
+   samSTPtr->lenCigUI = siCig - firstCigSI;
+
+   samSTPtr->readLenUI = (uint) (seqPosSI - seqStartUI);
+   samSTPtr->refEndUI = refPosSI;
+   samSTPtr->alnReadLenUI = samSTPtr->refEndUI;
+   samSTPtr->alnReadLenUI -= samSTPtr->refStartUI;
+
+   /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\
+   ^ Fun-02 Sec-06:
+   ^   - Trim the sequence, Q-score, and cigar entries
+   \<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
+
+   ulCpStr(
+      samSTPtr->seqStr,
+      &(samSTPtr->seqStr[seqStartUI]),
+      samSTPtr->readLenUI
+   );
+
+   if(samSTPtr->qStr[0] !='*' && samSTPtr->qStr[1] !='\0')
+   { /*If: There is no Q-score entry*/
+      cpQScores(
+         samSTPtr,
+         &(samSTPtr->qStr[seqStartUI]),
+         1
+      ); /*Uses samSTPtr->readLenUI to get length*/
+         /*Also finds median and mean Q-scores*/
+   } /*If: There is no Q-score entry*/
+
+   ulCpStr(
+      samSTPtr->cigTypeStr,
+      &(samSTPtr->cigTypeStr[firstCigSI]),
+      samSTPtr->lenCigUI
+   );
+
+   ulCpStr(
+      samSTPtr->cigValAryI,
+      &(samSTPtr->cigValAryI[firstCigSI]),
+      (samSTPtr->lenCigUI << 2)
+   );
+
+   return 0;
+} /*trimByCoords*/
+
+/*-------------------------------------------------------\
+| Fun-03: trimSamReads
 | Use:
 |  - Goes though sam file and calls trimSamEntry for each
 |    entry
@@ -308,7 +621,7 @@ unsigned char trimSamReads(
     void *outFILE,              /*File to store output*/
     char keepUnmappedReadsBl   /*1: keep unmapped reads*/
 ){/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-   ' Fun-02 TOC: trimSamReads
+   ' Fun-03 TOC: trimSamReads
    '  - Goes though sam file and calls trimSamEntry for
    '    each entry
    \~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/

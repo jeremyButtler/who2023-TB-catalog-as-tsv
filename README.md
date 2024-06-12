@@ -22,13 +22,11 @@ I have also included my converter in this repository if
   format for their next catalog.
 
 The current catalog in here has only the resistant (grade
-  1 and 2) entries and excludes entire gene deletions.
-  However, you can get all entries from the catalog for
-  using the `-all-amrs ` flag. It is around 33 megabytes
-  and takes around 2.11 seconds and 134 megabyes of
-  RAM (using gnu time (`/usr/bin/time -f "%e\t%M\t%P"`)).
-  For the entire gene deletions entries, just run the
-  converter on default settings.
+  1 and 2) entries. However, you can get all entries from
+  the catalog for using the `-all-amrs ` flag. It is
+  around 33 megabytes and takes around 2.11 seconds and
+  134 megabyes of RAM (using gnu
+  time (`/usr/bin/time -f "%e\t%M\t%P"`)).
 
 I should say that 2023 catalog from the WHO is a very
   valuable resource. I am grateful to the WHO for
@@ -39,17 +37,34 @@ I should say that 2023 catalog from the WHO is a very
 
 # Update log
 
-April 12, 2024
+2024-06-12 (June 12, 2024):
+
+   - Added in an reference coordinated converter
+     (swapDbRef). It just converts coordinates directly.
+     So it does not check reading frames for frame shifts.
+     - See its README.md file for more details 
+   - Fixed some read in errors for in the amrStruct.c.
+     This is only valid if you are using amrStruct.c to
+     read in the converted database.
+
+2024-05-06 (May 6, 2024):
+
+- Fixed an penicillin myceial dreg so it is output as
+  penicillin-myceial-dreg insead fo penicillinmyceialdreg.
+- Fixed an error were not using `-coords` would print out
+  `-ref ref.fa` is missing.
+
+2024-04-12 (April 12, 2024):
 
 - Fixed an memory leak that would cause crashes on more
   memory limted systems
-- Fixed an issue were gene\_LoF entries reference position
+- Fixed an issue were gene_LoF entries reference position
   would be the start of the gene
 - Fixed an error were I was adding two index one values to
   get an index two for the gene ending positions in the
   gene-tbl.tsv
 
-April 05, 2024:
+2024-04-05 (April 05, 2024):
 
 - I have set this up so that the entire gene deletions
   copy the sequence for the entire gene + the base before
@@ -57,7 +72,7 @@ April 05, 2024:
 - Changed entireGene to be 2 for an gene deletion event,
   1 for an LoF anywere in the genome, and 0 for nothing.
 
-April 02, 2024:
+2024-04-02 (April 02, 2024):
 
 - I fixed several preivous issues, but also
   changed how the converter runs. I replaced the sam file
@@ -87,29 +102,40 @@ April 02, 2024:
 - I removed the 2021 catalog files. These can still be
   generated if you wish to get them.
 
-March 18, 2024: I realized I had some misunderstands about
-  the catalog and I am updating the README to reflect
-  this and I am taking back some of what I said.
+2024-03-18 (March 18, 2024):
 
-March 16, 2024 No bugs, I am just adding some more data
-  to the README. I also got a response back from the WHO
-  and they pointed my to their using the 2023 catalog pdf.
-  I had read this before, but having worked a bit with the
-  catalog gave me a bit better understanding of some of
-  the decisions they made.
+  - I realized I had some misunderstands about
+    the catalog and I am updating the README to reflect
+    this and I am taking back some of what I said.
 
-March 15, 2024 I caught some variants with amino acid
-  mutations that go over the gene lengths. These have
-  had the amino acids removed (variant id unchanged).
+2024-03-16 (March 16, 2024):
 
-March 14, 2024 I found that a few codons were off in my
-  codon table. This will only effect deletions and
-  duplications larger than one amino acid. This has
-  been fixed.
+  - No bugs, I am just adding some more data
+    to the README. I also got a response back from the WHO
+    and they pointed my to their using the 2023 catalog
+    pdf. I had read this before, but having worked a bit
+    with the catalog gave me a bit better understanding of
+    some of the decisions they made.
 
-March 06, 2024. I fixed an error with my deletion entries
-  that resulted in the reference only ever having 2 amino
-  acids. I would recommend re-downloading the database.
+2024-03-15 (March 15, 2024):
+
+  - I caught some variants with amino acid
+    mutations that go over the gene lengths. These have
+    had the amino acids removed (variant id unchanged).
+
+2024-03-14 (March 14, 2024):
+
+  - I found that a few codons were off in my
+    codon table. This will only effect deletions and
+    duplications larger than one amino acid. This has
+    been fixed.
+
+2024-03-06 (March 06, 2024):
+
+  - I fixed an error with my deletion entries
+    that resulted in the reference only ever having 2
+    amino acids. I would recommend re-downloading the
+    database.
   
 # Files
 
@@ -258,7 +284,7 @@ Help message: `whoToTbAmr -h`
 
 Converting the 2023 catalog (using files in this rep):
 
-To buld this database:
+To build this database:
 
 ```
 whoToTbAmr -no-whole-gene-dels -ref NC000962.fa -coords gene-tbl.tsv -tabone-who-2023-tsv WHO-2023-TB-tab1-master.tsv -tabtwo-who-2023-tsv WHO-2023-TB-tab2-indices.tsv -out catalog.tsv
@@ -302,10 +328,10 @@ minimap2 \
       { # MAIN
          if($0 ~ /^@/) next; # Comment entry
          if($2 == 16) dirSC = "-"; # is reverse complement
-         else dirSC = "+";         # is an foward gene
+         else dirSC = "+";         # is an forward gene
 
          sub(/M/, "", $6); #Remove matches; becomes length
-         --$6; # Acount for index 1
+         --$6; # Account for index 1
                # Avoids adding two index 1 values
 
          geneEndSI = $4 + $6;
@@ -336,13 +362,8 @@ Keep in mind, that the other files (non-code files) are
 The code is split up into two folders, the generalLib
   folder and the whoToTbAmr\_src folder. This organization
   is from this program being part of a larger project that
-  I am working on. The generalLib folder has some uneeded
-  files.
-
-There are some files that are not used in generalLib. This
-  is because this is part of an larger project and I am to
-  lazy to remove the extra files. Feel free to use them if
-  you are intrested in one.
+  I am working on. The generalLib folder has some unneeded
+  files. Feel free to use one if your interested in it.
 
 # Bugs/errors in output:
 

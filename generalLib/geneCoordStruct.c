@@ -9,31 +9,38 @@
 ' SOF: Start Of File
 '   o header:
 '     - Includes and definitions
-'   o st: geneCoords
+'   o .h st: geneCoords
 '     - Holds the arrays for the gene coordinates and ids 
-'       in a paf file
-'   o fun-01: freeGeneCoordsStack
+'       in gene table
+'   o fun01: freeGeneCoordsStack
 '     - Frees the arrays in a geneCoords structure
-'   o fun-02: freeGeneCoords
+'   o fun02: freeGeneCoords
 '     - Frees the a heap alloacted geneCoords structure
-'   o fun-03: initGeneCoords (.h only)
+'   o .h fun03: initGeneCoords
 '     - Initializes a geneCoords structure
-'   o fun-04: makeGeneCoords
+'   o fun04: makeGeneCoords
 '     - Makes a heap allocated geneCoords structure
-'   o fun-05: getPafGene
+'   o fun05: getPafGene
 '     - Get the id and coordinates for a gene from a paf
 '       file
-'   o fun-06: swapGeneCoord
+'   o .c fun06: swapGeneCoord
 '     - Swaps two array items in a geneCoords structure
 '       around
-'   o fun-07: geneCoordsSort
+'   o fun07: geneCoordsSort
 '     - Sorts the arrays in a genesCoord structure by
 '       starting positiion with shell short.
-'   o fun-08: findStartCoordInGeneCoord
+'   o fun08: findStartCoordInGeneCoord
 '     - Does a binary search by starting coordinate for a
 '       potentail gene in a geneCoords structure
-'   o fun-09: getGeneCoords
-'     - Gets the gene coordinates from a paf file
+'   o fun09: geneCoords_sortNames
+'     - Sorts the arrays in a genesCoord structure by
+'       gene name
+'   o fun10: geneCoords_findName
+'     - Does a binary search to find an gene name in an
+'       gene geneCoords structer (must be sorted by name)
+'   o fun11: getGeneCoords
+'     - Gets the gene coordinates from an gene coordinates
+'       table
 '   o license:
 '     - Licensing for this code (public domain / mit)
 \~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
@@ -60,7 +67,7 @@
 #include "ulCpStr.h"
 
 /*-------------------------------------------------------\
-| Fun-01: freeGeneCoordsStack
+| Fun01: freeGeneCoordsStack
 |    - Frees the arrays in a geneCoords structure
 | Input:
 |   - geneCoordsST:
@@ -82,10 +89,13 @@ freeGeneCoordsStack(
    
    free((geneCoordsST)->endAryUI);
    (geneCoordsST)->endAryUI = 0;
+
+   free((geneCoordsST)->dirAryUC);
+   (geneCoordsST)->dirAryUC = 0;
 } /*freeGeneCoordsStack*/
 
 /*-------------------------------------------------------\
-| Fun-02: freeGeneCoords
+| Fun02: freeGeneCoords
 |    - Frees the a heap alloacted geneCoords structure
 | Input:
 |   - geneCoordsST:
@@ -103,23 +113,7 @@ freeGeneCoords(
 } /*freeGeneCoords*/
 
 /*-------------------------------------------------------\
-| Fun-03: initGeneCoords
-|    - Initializes a geneCoords structure
-| Input:
-|   - geneCoordsST:
-|     o Pointer to a geneCoords structure to initialize
-| Output:
-|   - Sets:
-|     o idStrAry, startAryUI, and endAryUI to 0
-\-------------------------------------------------------*/
-#define initGeneCoords(geneCoordsST){\
-   (geneCoordsST)->idStrAry = 0;\
-   (geneCoordsST)->startAryUI = 0;\
-   (geneCoordsST)->endAryUI = 0;\
-} /*initGeneCoords*/
-
-/*-------------------------------------------------------\
-| Fun-04: makeGeneCoords
+| Fun04: makeGeneCoords
 |    - Makes a heap allocated geneCoords structure
 | Input:
 |   - numGenesUI:
@@ -156,7 +150,12 @@ makeGeneCoords(
    
    retST->endAryUI = malloc((numGenesUI) * sizeof(uint));
    
-   if(! retST->startAryUI)
+   if(! retST->endAryUI)
+      goto memErr_fun04;
+
+   retST->dirAryUC = malloc((numGenesUI) * sizeof(uchar));
+   
+   if(! retST->dirAryUC)
       goto memErr_fun04;
 
    return retST;
@@ -169,7 +168,7 @@ makeGeneCoords(
 } /*makeGeneCoords*/
 
 /*-------------------------------------------------------\
-| Fun-05: getPafGene
+| Fun05: getPafGene
 |    - Get the id and coordinates for a gene from a paf
 |      file
 | Input:
@@ -207,13 +206,8 @@ getPafGene(
    
    for(ucEntry = 1; ucEntry < 7; ++ucEntry)
    { /*Loop: Move to the reference start position*/
-      for(
-         uiChar = uiChar;
-         (pafLineStr)[uiChar] > 32;
-         ++uiChar
-      ){} /*Move to the next entry (tab)*/
-      
-      ++uiChar;
+      /*Move off the tab*/
+      while((pafLineStr)[uiChar++] > 32) ;
    } /*Loop: Move to the reference start position*/
    
    tmpStr =
@@ -245,7 +239,7 @@ getPafGene(
 } /*getPafGene*/
 
 /*-------------------------------------------------------\
-| Fun-06: swapGeneCoord
+| Fun06: swapGeneCoord
 |  - Swaps two array items in a geneCoords structure
 |    around
 | Input:
@@ -263,17 +257,21 @@ getPafGene(
 #define swapGeneCoord(geneCoordST, posOne, posTwo){ \
   uint macStartUI = (geneCoordST)->startAryUI[(posOne)];\
   uint macEndUI = (geneCoordST)->endAryUI[(posOne)];\
-  char macSwapC = 0;\
+  char macSwapC =(char)(geneCoordST)->dirAryUC[(posOne)];\
   uchar cMac = 0;\
   \
   (geneCoordST)->startAryUI[(posOne)] =\
      (geneCoordST)->startAryUI[(posTwo)];\
-   \
+  \
   (geneCoordST)->endAryUI[(posOne)] =\
      (geneCoordST)->endAryUI[(posTwo)];\
   \
+  (geneCoordST)->dirAryUC[(posOne)] =\
+     (geneCoordST)->dirAryUC[(posTwo)];\
+  \
   (geneCoordST)->startAryUI[(posTwo)] = macStartUI;\
   (geneCoordST)->endAryUI[(posTwo)] = macEndUI;\
+  (geneCoordST)->dirAryUC[(posTwo)] = (uchar) macSwapC;\
   \
   while(\
         (geneCoordST)->idStrAry[(posOne)][cMac] != '\0'\
@@ -293,7 +291,7 @@ getPafGene(
 } /*swapScoreSTs*/
 
 /*-------------------------------------------------------\
-| Fun-07: geneCoordsSort
+| Fun07: geneCoordsSort
 |  - Sorts the arrays in a genesCoord structure by
 |    starting positiion with shell short.
 | Input:
@@ -315,7 +313,7 @@ sortGeneCoords(
    unsigned int startUI,
    unsigned int endUI
 ){ /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-   ' Fun-07 TOC: sortGeneCoords
+   ' Fun07 TOC: sortGeneCoords
    '  - Sorts the arrays in a geneCoords struct by
    '    starting position with shell short.
    '  - Shell sort taken from:
@@ -324,16 +322,16 @@ sortGeneCoords(
    '      edition. pages 505-508
    '    - I made some minor changes, but is mostly the
    '      same
-   '  o fun-07 sec-01:
+   '  o fun07 sec01:
    '    - Variable declerations
-   '  o fun-07 sec-02:
+   '  o fun07 sec02:
    '    - Find the number of rounds to sort for
-   '  o fun-07 sec-03:
+   '  o fun07 sec03:
    '    - Sort the arrays in geneCoordST
    \~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
   
   /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\
-  ^ Fun-07 Sec-01:
+  ^ Fun07 Sec01:
   ^  - Variable declerations
   \<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
   
@@ -353,7 +351,7 @@ sortGeneCoords(
   ulong ulElm = 0;
   
   /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\
-  ^ Fun-07 Sec-02:
+  ^ Fun07 Sec02:
   ^  - Find the max search value (number rounds to sort)
   \<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
   
@@ -362,7 +360,7 @@ sortGeneCoords(
   while(subUL < numElmUL - 1) subUL = (3 * subUL) + 1;
   
   /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-  ^ Fun-07 Sec-03:
+  ^ Fun07 Sec03:
   ^  - Sort the arrays in geneCoordST
   \<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
   
@@ -405,7 +403,7 @@ sortGeneCoords(
 } /*sortGeneCoords*/
 
 /*-------------------------------------------------------\
-| Fun-08: findStartCoordInGeneCoord
+| Fun08: findStartCoordInGeneCoord
 |  - Does a binary search by starting coordinate for a
 |    potentail gene in a geneCoords structure
 | Input:
@@ -428,12 +426,12 @@ findStartCoordInGeneCoord(
    uint qryUI,
    int numGenesI
 ){ /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-   ' Fun-08 TOC: findStartCoordInGeneCoords
+   ' Fun08 TOC: findStartCoordInGeneCoords
    '  - Finds the starting coordinate (query) in a
    '    geneCoords structure
-   '  o fun-08 sec-01:
+   '  o fun08 sec01:
    '    - Variable declerations
-   '  o fun-08 sec-02:
+   '  o fun08 sec02:
    \~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
    int midI = 0;
@@ -468,7 +466,179 @@ findStartCoordInGeneCoord(
 } /*findStartCoordInGeneCoords*/
 
 /*-------------------------------------------------------\
-| Fun-09: getGeneCoords
+| Fun09: geneCoords_sortNames
+|  - Sorts the arrays in a genesCoord structure by
+|    gene name
+| Input:
+|  - geneCoordST:
+|    o Pointer to geneCoords structure with gene
+|      coordinates to sort
+|  - startUI:
+|    o First element to start sorting at
+|  - endUI:
+|    o Last element to sort (index 0)
+| Output:
+|  - Modifies:
+|    o Arrays in geneCoordST to be sorted by the gene
+|      starting coordinate (lowest first)
+\-------------------------------------------------------*/
+void
+geneCoords_sortNames(
+   struct geneCoords *geneCoordST,
+   unsigned int startUI,
+   unsigned int endUI
+){ /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   ' Fun09 TOC:
+   '  - Sorts the arrays in a genesCoord structure by
+   '    gene name
+   '  - Shell sort taken from:
+   '    - Adam Drozdek. 2013. Data Structures and
+   '      Algorithims in c++. Cengage Leraning. fourth
+   '      edition. pages 505-508
+   '    - I made some minor changes, but is mostly the
+   '      same
+   '  o fun09 sec01:
+   '    - Variable declerations
+   '  o fun09 sec02:
+   '    - Find the number of rounds to sort for
+   '  o fun09 sec03:
+   '    - Sort the arrays in geneCoordST
+   \~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+  
+  /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\
+  ^ Fun09 Sec01:
+  ^  - Variable declerations
+  \<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
+  
+  /*Number of elements to sort*/
+  ulong numElmUL = (endUI) - (startUI);
+  
+  /*Number of sorting rounds*/
+  ulong subUL = 0;
+  ulong nextElmUL = 0;
+  ulong lastElmUL = 0;
+  ulong elmOnUL = 0;
+  
+  /*Get arrays to sort from the matrix (for sanity)*/
+  
+  /*Variables to incurment loops*/
+  ulong ulIndex = 0;
+  ulong ulElm = 0;
+  
+  /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\
+  ^ Fun09 Sec02:
+  ^  - Find the max search value (number rounds to sort)
+  \<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
+  
+  /*Recursion formula: h[0] = 1, h[n] = 3 * h[n - 1] +1*/
+  subUL = 1; /*Initialzie first array*/
+  while(subUL < numElmUL - 1) subUL = (3 * subUL) + 1;
+  
+  /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+  ^ Fun09 Sec03:
+  ^  - Sort the arrays in geneCoordST
+  \<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
+  
+  while(subUL > 0)
+  { /*loop trhough all sub arrays sort the subarrays*/
+    for(ulIndex = 0; ulIndex <= subUL; ++ulIndex)
+    { /*For each element in the subarray*/
+      for(ulElm = ulIndex;
+          ulElm + subUL <= endUI;
+          ulElm += subUL
+      ){ /*Loop; swap each nth element of the subarray*/
+        nextElmUL = ulElm + subUL;
+        
+        if(
+            cStrEql(
+               geneCoordST->idStrAry[ulElm],
+               geneCoordST->idStrAry[nextElmUL],
+               0
+            ) > 0
+        ){ /*If I need to swap an element*/
+          swapGeneCoord((geneCoordST),ulElm,nextElmUL);
+          
+          lastElmUL = ulElm;
+          elmOnUL = ulElm;
+          
+          while(lastElmUL >= subUL)
+          { /*loop; move swapped element back*/
+            lastElmUL -= subUL;
+            
+            if(
+                cStrEql(
+                   geneCoordST->idStrAry[elmOnUL],
+                   geneCoordST->idStrAry[lastElmUL],
+                   0
+                ) > 0
+            ) break; /*Positioned the element*/
+            
+            swapGeneCoord((geneCoordST),elmOnUL,lastElmUL);
+            
+            elmOnUL = lastElmUL;
+          } /*loop; move swapped element back*/
+        } /*If I need to swap elements*/
+      } /*Loop; swap each nth element of the subarray*/
+    } /*For each element in the subarray*/
+    
+    subUL = (subUL - 1) / 3; /*Move to the next round*/
+  } /*loop through all sub arrays to sort the subarrays*/
+} /*geneCoords_sortNames*/
+
+/*-------------------------------------------------------\
+| Fun10: geneCoords_findName
+|  - Does a binary search to find an gene name in an gene
+|    geneCoords structer (must be sorted by name)
+| Input:
+|  - geneCoordST:
+|    o Pointer to geneCoords structure to sort
+|      coordinates to search
+|  - nameStr:
+|    o c-string with name to search for
+|  - numGenesSI:
+|    o Number of genes in geneCoordST (index 1)
+| Output:
+|  - Returns:
+|    o The index of gene with the same name
+|    o -1 if there was no gene
+\-------------------------------------------------------*/
+int
+geneCoords_findName(
+   struct geneCoords *geneST,
+   signed char *nameStr,
+   signed int numGenesSI
+){ 
+   sint matchSI = 0;
+   sint midSI = 0;
+   sint rightHalfSI = numGenesSI - 1;
+   sint leftHalfSI = 0;
+
+   while(leftHalfSI <= rightHalfSI)
+   { /*Loop: Search for the starting coordinate*/
+      midSI = (leftHalfSI + rightHalfSI) >> 1;
+
+      matchSI =
+         cStrEql(
+            nameStr,
+            geneST->idStrAry[midSI],
+            '\0'
+         ); /*see if I have an match*/
+
+      if(matchSI < 0)
+         rightHalfSI = midSI - 1;
+
+      else if(matchSI > 0)
+         leftHalfSI = midSI + 1;
+
+     else
+        return midSI;
+   } /*Loop: Search for the starting coordinate*/
+
+   return -1; /*No match found*/
+} /*geneCoords_findCloseGene*/
+
+/*-------------------------------------------------------\
+| Fun11: getGeneCoords
 |  - Gets the gene coordinates from a gene table (tsv)
 | Input:
 |  - geneTblFileStr:
@@ -500,24 +670,24 @@ getGeneCoords(
    int *numGenesSI, /*Number of genes extracted*/\
    unsigned long *errULPtr
 ){ /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\
-   ' Fun-09 TOC: getGeneCoords
+   ' Fun11 TOC: getGeneCoords
    '   - Gets the gene coordinates from a gene table (tsv)
-   '   o fun-09 Sec-01:
+   '   o fun11 Sec01:
    '     - Variable declerations
-   '   o fun-09 Sec-02:
+   '   o fun11 Sec02:
    '     - Check input and allocate memory for buffer
-   '   o fun-09 Sec-03:
+   '   o fun11 Sec03:
    '     - Find number lines/max line length in table file
-   '   o fun-09 Sec-04:
+   '   o fun11 Sec04:
    '     - Allocate memory and go back to start of file
-   '   o fun-09 Sec-05:
+   '   o fun11 Sec05:
    '     - Read in the gene coordinates from the file
-   '   o fun-09 Sec-06:
+   '   o fun11 Sec06:
    '     - Clean up and return
    \~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
    /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\
-   ^ Fun-09 Sec-01:
+   ^ Fun11 Sec01:
    ^   - Variable declerations
    \<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
 
@@ -541,7 +711,7 @@ getGeneCoords(
    FILE *tblFILE  = 0;
    
    /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\
-   ^ Fun-09 Sec-02:
+   ^ Fun11 Sec02:
    ^   - Check input and allocate memory for buffer
    \<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
 
@@ -559,7 +729,7 @@ getGeneCoords(
        goto memErr_fun09;
 
    /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\
-   ^ Fun-09 Sec-03:
+   ^ Fun11 Sec03:
    ^   - Find number lines/max line length in table file
    \<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
 
@@ -608,7 +778,7 @@ getGeneCoords(
    } /*Loop: Scan through the file for new lines*/
 
    /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\
-   ^ Fun-09 Sec-04:
+   ^ Fun11 Sec04:
    ^   - Allocate memory and go back to start of file
    \<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
 
@@ -635,24 +805,24 @@ getGeneCoords(
    fseek((tblFILE), 0, SEEK_SET);
 
    /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\
-   ^ Fun-09 Sec-05:
+   ^ Fun11 Sec05:
    ^   - Read in the gene coordinates from the file
-   ^   o fun-09 sec-05 sub-01:
+   ^   o fun11 sec05 sub01:
    ^     - Start loop and copy gene name
-   ^   o fun-09 sec-05 sub-02:
+   ^   o fun11 sec05 sub02:
    ^     - Move past the refernce id
-   ^   o fun-09 sec-05 sub-03:
+   ^   o fun11 sec05 sub03:
    ^     - Move past the gene direction
-   ^   o fun-09 sec-05 sub-04:
+   ^   o fun11 sec05 sub04:
    ^     - Get coordiante of frist reference base in gene
-   ^   o fun-09 sec-05 sub-05:
+   ^   o fun11 sec05 sub05:
    ^     - Get coordiante of last reference base in gene
-   ^   o fun-09 sec-05 sub-06:
+   ^   o fun11 sec05 sub06:
    ^     - Move to the next gene
    \<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
 
    /*****************************************************\
-   * Fun-09 Sec-05 Sub-01:
+   * Fun11 Sec05 Sub01:
    *   - Start loop and copy gene name
    \*****************************************************/
 
@@ -676,7 +846,7 @@ getGeneCoords(
       ++cpStr; /*get off the tab*/
 
       /**************************************************\
-      * Fun-09 Sec-05 Sub-02:
+      * Fun11 Sec05 Sub02:
       *   - Move past the refernce id
       \**************************************************/
 
@@ -688,9 +858,12 @@ getGeneCoords(
          goto invalidEntry_fun09;
 
       /**************************************************\
-      * Fun-09 Sec-05 Sub-03:
-      *   - Move past the gene direction
+      * Fun11 Sec05 Sub03:
+      *   - get the gene direction
       \**************************************************/
+
+      genesHeapST->dirAryUC[*numGenesSI] = (*cpStr =='-');
+      genesHeapST->dirAryUC[*numGenesSI] |= (*cpStr=='R');
 
       while(*cpStr++ > 32) ;
 
@@ -700,7 +873,7 @@ getGeneCoords(
          goto invalidEntry_fun09;
 
       /**************************************************\
-      * Fun-09 Sec-05 Sub-04:
+      * Fun11 Sec05 Sub04:
       *   - Get coordiante of frist reference base in gene
       \**************************************************/
 
@@ -710,7 +883,7 @@ getGeneCoords(
             genesHeapST->startAryUI[*numGenesSI]
          ); /*Get the genes frist reference base*/
 
-      --genesHeapST->endAryUI[*numGenesSI];
+      --genesHeapST->startAryUI[*numGenesSI];
 
       if(*cpStr == '\t') ;      /*Expected*/
       else if(*cpStr == ' ') ;  /*Odd, but works*/
@@ -720,7 +893,7 @@ getGeneCoords(
       ++cpStr; /*Get off the tab*/
 
       /**************************************************\
-      * Fun-09 Sec-05 Sub-05:
+      * Fun11 Sec05 Sub05:
       *   - Get coordiante of last reference base in gene
       \**************************************************/
 
@@ -728,15 +901,29 @@ getGeneCoords(
          base10StrToSI(
             cpStr,
             genesHeapST->endAryUI[*numGenesSI]
-         ); /*Get the genes frist reference base*/
+         ); /*Get the genes last reference base*/
 
       --genesHeapST->endAryUI[*numGenesSI];
 
       if(*cpStr > 32)
          goto invalidEntry_fun09; /*Not an tsv*/
 
+      if(
+           genesHeapST->endAryUI[*numGenesSI]
+         < genesHeapST->startAryUI[*numGenesSI]
+      ){ /*If: I need to coordinates*/
+         genesHeapST->endAryUI[*numGenesSI] ^=
+            genesHeapST->startAryUI[*numGenesSI];
+
+         genesHeapST->startAryUI[*numGenesSI] ^=
+            genesHeapST->endAryUI[*numGenesSI];
+
+         genesHeapST->endAryUI[*numGenesSI] ^=
+            genesHeapST->startAryUI[*numGenesSI];
+      } /*If: I need to swap coordinates*/
+
       /**************************************************\
-      * Fun-09 Sec-05 Sub-06:
+      * Fun11 Sec05 Sub06:
       *   - Move to the next gene
       \**************************************************/
 
@@ -744,22 +931,22 @@ getGeneCoords(
    } /*Loop: Get entries from the paf file*/
    
    /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\
-   ^ Fun-09 Sec-06:
+   ^ Fun11 Sec06:
    ^   - Clean up and return
-   ^   o fun-09 sec-06 sub-01:
+   ^   o fun11 sec06 sub01:
    ^     - Clean up and return after success
-   ^   o fun-09 sec-06 sub-02:
+   ^   o fun11 sec06 sub02:
    ^     - Deal with memory errors
-   ^   o fun-09 sec-06 sub-03:
+   ^   o fun11 sec06 sub03:
    ^     - Deal with file opening errors
-   ^   o fun-09 sec-06 sub-04:
+   ^   o fun11 sec06 sub04:
    ^     - Deal with invalid entries in files
-   ^   o fun-09 sec-06 sub-05:
+   ^   o fun11 sec06 sub05:
    ^     - Clean up and return after an error
    \<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
 
    /*****************************************************\
-   * Fun-09 Sec-06 Sub-01:
+   * Fun11 Sec06 Sub01:
    *   - Clean up and return after success
    \*****************************************************/
 
@@ -775,7 +962,7 @@ getGeneCoords(
    return genesHeapST;
 
    /*****************************************************\
-   * Fun-09 Sec-06 Sub-02:
+   * Fun11 Sec06 Sub02:
    *   - Deal with memory errors
    \*****************************************************/
 
@@ -785,7 +972,7 @@ getGeneCoords(
    goto errCleanUp_fun09;
 
    /*****************************************************\
-   * Fun-09 Sec-06 Sub-03:
+   * Fun11 Sec06 Sub03:
    *   - Deal with file opening errors
    \*****************************************************/
 
@@ -795,7 +982,7 @@ getGeneCoords(
    goto errCleanUp_fun09;
 
    /*****************************************************\
-   * Fun-09 Sec-06 Sub-04:
+   * Fun11 Sec06 Sub04:
    *   - Deal with invalid entries in files
    \*****************************************************/
 
@@ -806,7 +993,7 @@ getGeneCoords(
    goto errCleanUp_fun09;
 
    /*****************************************************\
-   * Fun-09 Sec-06 Sub-05:
+   * Fun11 Sec06 Sub05:
    *   - Clean up and return after an error
    \*****************************************************/
 

@@ -11,35 +11,41 @@
 '    - header guards and definitions
 '  o .h st-01 samEntry:
 '    - Holds a single samfile entry
-'  o .h fun-01 blankSamEntry:
+'  o .h fun01 blankSamEntry:
 '    - Sets all non-alloacted variables in samEntryST to 0
-'  o fun-02 initSamEntry:
+'  o fun02 initSamEntry:
 '    - Initalize a samEntry struct to 0's
-'  o fun-03 freeSamEntryStack:
+'  o fun03 freeSamEntryStack:
 '    - Frees heap allocations in a stack allocated
 '      samEntry struct
-'  o fun-04 freeSamEntry:
+'  o fun04 freeSamEntry:
 '    - Frees a samEntry structer (and sets to null)
-'  o fun-05: makeSamEntry
+'  o fun05: makeSamEntry
 '    - Makes an heap allocated samEntry structure
-'  o .c fun-08: cpQScore
+'  o .h fun06: samEntryQHistToMed
+'    - Gets the median Q-score for an histogram of
+'       q-scores in a samStruct
+'  o fun07: samEntryFindQScores
+'     - Gets the median and mean Q-scores from a samEntry
+'       Structure.
+'  o .c fun08: cpQScore
 '    - Copies Q-scores from a string into a samEntry
 '      structure
-'  o fun-09: readSamLine
+'  o fun09: readSamLine
 '    - Reads in a single line from a sam file
-'  o .h fun-10: samEntryFindRefPos
+'  o .h fun10: samEntryFindRefPos
 '    - Find an reference coordinate in an sequence in
 '      an sam entry structure
-'  o fun-11: pSamEntry
+'  o fun11: pSamEntry
 '    - Prints the sam file entry to a file. This does not
 '      print any extra stats that were found.
-'  o fun-12: pSamEntryAsFastq
+'  o fun12: pSamEntryAsFastq
 '    - Prints the sam entry as a fastq entry to a fastq
 '      file
-'  o fun-13: pSamEntryAsFasta
+'  o fun13: pSamEntryAsFasta
 '    - Prints the sam entry as a fasta entry to a fasta
 '      file
-'  o fun-14: pSamEntryStats
+'  o fun14: pSamEntryStats
 '    - Prints out the stats in a samEntry struct to a file
 '  o .h note-01:
 '     - Notes about the sam file format from the sam file
@@ -127,7 +133,7 @@ typedef struct samEntry
 }samEntry;
 
 /*-------------------------------------------------------\
-| Fun-01: blankSamEntry
+| Fun01: blankSamEntry
 | Use:
 |  - Sets all values to 0, or for c-strings to '\0'
 | Input:
@@ -200,7 +206,7 @@ typedef struct samEntry
 } /*blankSamEntry*/
 
 /*-------------------------------------------------------\
-| Fun-02: initSamEntry
+| Fun02: initSamEntry
 |  - Initializes a samEntry structure for use. This 
 |    function should only ever be called once per
 |    structure or after freeSamEntryStack has been used.
@@ -219,7 +225,7 @@ typedef struct samEntry
 unsigned char initSamEntry(struct samEntry *samSTPtr);
 
 /*-------------------------------------------------------\
-| Fun-03: freeSamEntryStack
+| Fun03: freeSamEntryStack
 | Use:
 |  - Frees all variables in samEntry, but not samEntry
 | Input:
@@ -233,7 +239,7 @@ unsigned char initSamEntry(struct samEntry *samSTPtr);
 void freeSamEntryStack(struct samEntry *samSTPtr);
 
 /*-------------------------------------------------------\
-| Fun-04: freeSamEntry
+| Fun04: freeSamEntry
 |  - Frees a samEntry struct
 | Input:
 |  - samSTPtr
@@ -245,7 +251,7 @@ void freeSamEntryStack(struct samEntry *samSTPtr);
 void freeSamEntry(struct samEntry **samSTPtr);
 
 /*-------------------------------------------------------\
-| Fun-05: makeSamEntry
+| Fun05: makeSamEntry
 |  - Makes an heap allocated samEntry structure
 | Input:
 | Output:
@@ -256,7 +262,7 @@ void freeSamEntry(struct samEntry **samSTPtr);
 struct samEntry * makeSamEntry();
 
 /*-------------------------------------------------------\
-| Fun-06: samEntryQHistToMed
+| Fun06: samEntryQHistToMed
 |   - Gets the median Q-score for an histogram of q-scores
 |     in a samStruct
 | Input:
@@ -298,7 +304,7 @@ struct samEntry * makeSamEntry();
 } /*samEntryQHistToMed*/
 
 /*-------------------------------------------------------\
-| Fun-07: samEntryFindQScores
+| Fun07: samEntryFindQScores
 |   - Gets the median and mean Q-scores from a samEntry
 |     Structure.
 | Input:
@@ -314,10 +320,37 @@ struct samEntry * makeSamEntry();
 \-------------------------------------------------------*/
 void samEntryFindQScores(struct samEntry *samSTPtr);
 
-/*I am not making cpQScores available globally*/
+/*-------------------------------------------------------\
+| Fun08: cpQScore
+|   - Copies Q-scores from a string into a samEntry
+|     structure
+| Input:
+|   - samSTPtr:
+|     o Pionter to sam entry struct to copys Q-scores to
+|   _ cpQStr:
+|     o C-string with Q-scores to copy to samSTPtr
+|   - blankQHistBl:
+|     o 1: Blank Q-score vars (histogram/sum/mean/median)
+|     o 0: do not blank the Q-score variables
+| Output:
+|   - Mofidies:
+|     o qStr in samSTPtry to have the Q-scores
+|     o medianQF in samSTPtr to have the median Q-score
+|     o meanQF in samSTPtr to have the mean Q-score
+|     o qHistUI in samSTPtr to have histogram of Q-scores
+|     o samQUL in samSTPtr to have sum off all Q-scores
+|   - Returns
+|     o The value in samSTPtr->readLenUI
+\-------------------------------------------------------*/
+int
+cpQScores(
+   struct samEntry *samSTPtr, /*Copy Q-scores to*/
+   char *cpQStr,              /*Q-scores to copy*/
+   char blankQHistBl          /*1: to blank Q-score hist*/
+);
 
 /*-------------------------------------------------------\
-| Fun-09: readSamLine
+| Fun09: readSamLine
 |  - Reads in a single line from a sam file
 | Input:
 |  - samSTPtr:
@@ -351,7 +384,7 @@ char readSamLine(
 );
 
 /*-------------------------------------------------------\
-| Fun-10: samEntryFindRefPos
+| Fun10: samEntryFindRefPos
 |   - Find an reference coordinate in an sequence in
 |     an sam entry structure
 | Input:
@@ -392,21 +425,21 @@ samEntryFindRefPos(\
    refPosSI,    /*Current reference position*/\
    seqPosSI     /*Current sequence position*/\
 )({/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\
-   ` Fun-10 TOC: samEntryFindRefPos\
+   ` Fun10 TOC: samEntryFindRefPos\
    `   - Find an reference coordinate in an sequence in\
    `     an sam entry structure\
-   `   o fun-10 sec-01:\
+   `   o fun10 sec-01:\
    `     - Start loop and check insertions/soft masking\
-   `   o fun-10 sec-02:\
+   `   o fun10 sec-02:\
    `     - Move position in deletion cases\
-   `   o fun-10 sec-03:\
+   `   o fun10 sec-03:\
    `     - Move position for snp/match cases\
-   `   o fun-10 sec-04:\
+   `   o fun10 sec-04:\
    `     - Move to the next cigar entry\
    \~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/\
    \
    /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\
-   ^ Fun-10 Sec-01:\
+   ^ Fun10 Sec-01:\
    ^   - Start loop and check insertions/soft masking\
    \<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/\
    \
@@ -429,7 +462,7 @@ samEntryFindRefPos(\
          /*Case: Softmasking or insertions*/\
          \
          /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\
-         ^ Fun-10 Sec-02:\
+         ^ Fun10 Sec-02:\
          ^   - Move position in deletion cases\
          \<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/\
          \
@@ -462,7 +495,7 @@ samEntryFindRefPos(\
          /*Case: Deletion*/\
          \
          /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\
-         ^ Fun-10 Sec-03:\
+         ^ Fun10 Sec-03:\
          ^   - Move position for snp/match cases\
          \<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/\
          \
@@ -497,10 +530,16 @@ samEntryFindRefPos(\
             \
             break;\
          /*Case: match (M or =) or snp (M or X)*/\
+         \
+         default: \
+         /*Case: hard mask of some kind*/ \
+            ++(siCig);\
+            (cigBaseOnSI) = 0;\
+         /*Case: hard mask of some kind*/ \
       } /*Switch: check what the next entry is*/\
       \
       /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\
-      ^ Fun-10 Sec-03:\
+      ^ Fun10 Sec-03:\
       ^   - Move to the next cigar entry\
       \<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/\
       \
@@ -519,7 +558,7 @@ samEntryFindRefPos(\
 
 
 /*-------------------------------------------------------\
-| Fun-11: pSamEntry
+| Fun11: pSamEntry
 | Use:
 |  - Prints the sam file entry to a file. This does not
 |    print any extra stats that were found.
@@ -554,7 +593,7 @@ char pSamEntry(
 );
 
 /*-------------------------------------------------------\
-| Fun-12: pSamEntryAsFastq
+| Fun12: pSamEntryAsFastq
 | Use:
 |  - Prints the sam entry as a fastq entry to a fastq file
 | Input:
@@ -573,7 +612,7 @@ void pSamEntryAsFastq(
 );
 
 /*-------------------------------------------------------\
-| Fun-13: pSamEntryAsFasta
+| Fun13: pSamEntryAsFasta
 | Use:
 |  - Prints the sam entry as a fasta entry to a fasta file
 | Input:
@@ -592,7 +631,7 @@ void pSamEntryAsFasta(
 );
 
 /*-------------------------------------------------------\
-| Fun-14: pSamEntryStats
+| Fun14: pSamEntryStats
 | Use:
 |  - Prints out the stats in a samEntry struct to a file
 | Input:
@@ -601,6 +640,9 @@ void pSamEntryAsFasta(
 |  - pHeadBl:
 |    o 1: Print the header for the stats tsv file
 |    o 0: Do not print the header
+|  - pNsBl:
+|    o 1: find and print out the anonymous base counts
+|    o 0: do not print out anonymous base counts
 |  - outFILE:
 |    o TSV (tab deliminated) file to print stats to
 | Output:
@@ -612,6 +654,7 @@ void pSamEntryAsFasta(
 void pSamEntryStats(
    struct samEntry *samSTPtr,
    char *pHeadBl,
+   char pNsBl,
    void *outFILE
 );
 

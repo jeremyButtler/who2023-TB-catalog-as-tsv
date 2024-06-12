@@ -11,49 +11,53 @@
 '    - Included libraries
 '  o .h st-01 samEntry:
 '    - Holds a single samfile entry
-'  o .h fun-01 blankSamEntry:
+'  o .h fun01 blankSamEntry:
 '    - Sets all non-alloacted variables in samEntryST to 0
-'  o fun-02 initSamEntry:
+'  o fun02 initSamEntry:
 '    - Initalize a samEntry struct to 0's
-'  o fun-03 freeSamEntryStack:
+'  o fun03 freeSamEntryStack:
 '    - Frees heap allocations in a stack allocated
 '      samEntry struct
-'  o fun-04 freeSamEntry:
+'  o fun04 freeSamEntry:
 '    - Frees a samEntry structer (and sets to null)
-'  o fun-05: makeSamEntry
+'  o fun05: makeSamEntry
 '    - Makes an heap allocated samEntry structure
-'  o .c fun-08: cpQScore
+'  o .h fun06: samEntryQHistToMed
+'    - Gets the median Q-score for an histogram of
+'      q-scores in a samStruct
+'  o fun07: samEntryFindQScores
+'     - Gets the median and mean Q-scores from a samEntry
+'       Structure.
+'  o .c fun08: cpQScore
 '    - Copies Q-scores from a string into a samEntry
 '      structure
-'  o fun-09: readSamLine
+'  o fun09: readSamLine
 '    - Reads in a single line from a sam file
-'  o .h fun-10: samEntryFindRefPos
+'  o .h fun10: samEntryFindRefPos
 '    - Find an reference coordinate in an sequence in
 '      an sam entry structure
-'  o fun-11: pSamEntry
+'  o fun11: pSamEntry
 '    - Prints the sam file entry to a file. This does not
 '      print any extra stats that were found.
-'  o fun-12: pSamEntryAsFastq
+'  o fun12: pSamEntryAsFastq
 '    - Prints the sam entry as a fastq entry to a fastq
 '      file
-'  o fun-13: pSamEntryAsFasta
+'  o fun13: pSamEntryAsFasta
 '    - Prints the sam entry as a fasta entry to a fasta
 '      file
-'  o fun-14: pSamEntryStats
+'  o fun14: pSamEntryStats
 '    - Prints out the stats in a samEntry struct to a file
 '  o .h note-01:
 '     - Notes about the sam file format from the sam file
 '       pdf
-'   o license:
-'     - Licensing for this code (public domain / mit)
+'  o license:
+'    - Licensing for this code (public domain / mit)
 \~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
 /*-------------------------------------------------------\
 | Header:
 |   - Included libraries
 \-------------------------------------------------------*/
-
-#include "samEntryStruct.h"
 
 #ifdef PLAN9
    #include <u.h>
@@ -62,6 +66,8 @@
    #include <stdlib.h>
 #endif
 
+#include "samEntryStruct.h"
+
 #include <stdio.h>
 
 /*These have no .c files*/
@@ -69,9 +75,10 @@
 #include "base10StrToNum.h"
 #include "ulCpStr.h"
 #include "numToStr.h"
+#include "ntToBit.h" /*Lookup table for anonymous checks*/
 
 /*-------------------------------------------------------\
-| Fun-02: initSamEntry
+| Fun02: initSamEntry
 |  - Initializes a samEntry structure for use. This 
 |    function should only ever be called once per
 |    structure or after freeSamEntryStack has been used.
@@ -116,7 +123,7 @@ unsigned char initSamEntry(struct samEntry *samSTPtr){
 } /*initSamEntry*/
 
 /*-------------------------------------------------------\
-| Fun-03: freeSamEntryStack
+| Fun03: freeSamEntryStack
 | Use:
 |  - Frees all variables in samEntry, but not samEntry
 | Input:
@@ -151,7 +158,7 @@ void freeSamEntryStack(struct samEntry *samSTPtr){
 } /*freeSamEntryStack*/
 
 /*-------------------------------------------------------\
-| Fun-04: freeSamEntry
+| Fun04: freeSamEntry
 |  - Frees a samEntry struct
 | Input:
 |  - samSTPtr
@@ -167,7 +174,7 @@ void freeSamEntry(struct samEntry **samSTPtr){
 } /*freeSamEntry*/
 
 /*-------------------------------------------------------\
-| Fun-05: makeSamEntry
+| Fun05: makeSamEntry
 |  - Makes an heap allocated samEntry structure
 | Input:
 | Output:
@@ -191,7 +198,7 @@ makeSamEntry(
 } /*makeSamEntry*/
 
 /*-------------------------------------------------------\
-| Fun-07: samEntryFindQScores
+| Fun07: samEntryFindQScores
 |   - Gets the median and mean Q-scores from a samEntry
 |     Structure.
 | Input:
@@ -255,7 +262,7 @@ samEntryFindQScores(
 } /*samEntryFindQScores*/
 
 /*-------------------------------------------------------\
-| Fun-08: cpQScore
+| Fun08: cpQScore
 |   - Copies Q-scores from a string into a samEntry
 |     structure
 | Input:
@@ -263,6 +270,9 @@ samEntryFindQScores(
 |     o Pionter to sam entry struct to copys Q-scores to
 |   _ cpQStr:
 |     o C-string with Q-scores to copy to samSTPtr
+|   - blankQHistBl:
+|     o 1: Blank Q-score vars (histogram/sum/mean/median)
+|     o 0: do not blank the Q-score variables
 | Output:
 |   - Mofidies:
 |     o qStr in samSTPtry to have the Q-scores
@@ -276,22 +286,25 @@ samEntryFindQScores(
 int
 cpQScores(
    struct samEntry *samSTPtr, /*Copy Q-scores to*/
-   char *cpQStr               /*Q-scores to copy*/
+   char *cpQStr,              /*Q-scores to copy*/
+   char blankQHistBl          /*1: to blank Q-score hist*/
 ){/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\
-  ' Fun-08 TOC: cpQScores
-  '   o fun-08 sec-01:
+  ' Fun08 TOC: cpQScores
+  '   o fun08 sec01:
   '     - Variable declerations
-  '   o fun-08 sec-02:
+  '   o fun08 sec02:
+  '     - Check and if asked blank the Q-score values
+  '   o fun08 sec03:
   '     - Copy Q-scores using unsigned longs
-  '   o fun-08 sec-03:
+  '   o fun08 sec04:
   '     - Copy last Q-scores I could not copy with
   '       unsigned longs
-  '   o fun-08 sec-04:
+  '   o fun08 sec05:
   '     - Find the median and mean Q-scores
   \~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
   /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\
-  ^ Fun-08 Sec-01:
+  ^ Fun08 Sec01:
   ^   - Variable declerations
   \<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
 
@@ -304,7 +317,22 @@ cpQScores(
   ulong qScoreUL = 0;
   
   /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\
-  ^ Fun-08 Sec-02:
+  ^ Fun08 Sec02:
+  ^   - Check and if asked blank the Q-score values
+  \<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
+
+  if(blankQHistBl)
+  { /*If: I need to blank the Q-score histograms*/
+    for(iChar = 0; iChar < defMaxQScore; ++iChar)
+       samSTPtr->qHistUI[iChar] = 0;
+
+    samSTPtr->sumQUL = 0;
+    samSTPtr->medianQF = 0;
+    samSTPtr->meanQF = 0;
+  } /*If: I need to blank the Q-score histograms*/
+
+  /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\
+  ^ Fun08 Sec03:
   ^   - Copy Q-scores using unsigned longs
   \<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
 
@@ -328,7 +356,7 @@ cpQScores(
   } /*Loop: Copy the Q-score entries*/
   
   /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\
-  ^ Fun-08 Sec-03:
+  ^ Fun08 Sec04:
   ^   - Copy last Q-scores I could not copy with unsgined
   ^     longs
   \<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
@@ -350,7 +378,7 @@ cpQScores(
   (samSTPtr)->qStr[iQ] = '\0';
   
   /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\
-  ^ Fun-08 Sec-04:
+  ^ Fun08 Sec05:
   ^   - Find the median and mean Q-scores
   \<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
   
@@ -362,7 +390,7 @@ cpQScores(
 } /*cpQScores*/
 
 /*-------------------------------------------------------\
-| Fun-09: readSamLine
+| Fun09: readSamLine
 |  - Reads in a single line from a sam file
 | Input:
 |  - samSTPtr:
@@ -380,6 +408,7 @@ cpQScores(
 | Output:
 |  - Modifies:
 |    o samSTPtr to have the next line
+|      - Comments are in extraStr
 |    o samFILE to be on the next line
 |    o buffStr to hold a sam file line (resized if needed)
 |    o lenBuffUL to hold the resized length of buffStr
@@ -395,40 +424,40 @@ readSamLine(
    ulong *lenBuffUL,
    void *samVoidFILE
 ){ /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\
-   ' Fun-09 TOC: readSamLine
+   ' Fun09 TOC: readSamLine
    '   - Reads a single line from a sam file into samSTPtr
-   '   o fun-09 sec-01:
+   '   o fun09 sec01:
    '     - Variable declerations
-   '   o fun-09 sec-02:
+   '   o fun09 sec02:
    '     - Read in one line from the sam file
-   '   o fun-09 sec-03:
+   '   o fun09 sec03:
    '     - Get the query id from the buffer
-   '   o fun-09 sec-04:
+   '   o fun09 sec04:
    '     - Get the flag
-   '   o fun-09 sec-05:
+   '   o fun09 sec05:
    '     - REad in the reference name/id
-   '   o fun-09 sec-06:
+   '   o fun09 sec06:
    '     - Get the reference position
-   '   o fun-09 sec-07:
+   '   o fun09 sec07:
    '     - Get the mapping quality
-   '   o fun-09 sec-08:
+   '   o fun09 sec08:
    '     - Get the cigar entry
-   '   o fun-09 sec-09:
+   '   o fun09 sec09:
    '     - Get the RNEXT entry
-   '   o fun-09 sec-10:
+   '   o fun09 sec10:
    '     - Get the PNEXT entry
-   '   o fun-09 sec-11:
+   '   o fun09 sec11:
    '     - Get the TLEN entry
-   '   o fun-09 sec-12:
+   '   o fun09 sec12:
    '     - Get the sequence entry
-   '   o fun-09 sec-13:
+   '   o fun09 sec13:
    '     - Get the Q-score entry
-   '   o fun-09 sec-14:
+   '   o fun09 sec14:
    '     - Copy the extra entry; after strict sam entries
    \~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
    /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\
-   ^ Fun-09 Sec-01:
+   ^ Fun09 Sec01:
    ^   - Variable declerations
    \<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
 
@@ -443,7 +472,7 @@ readSamLine(
    FILE *samFILE = (FILE *) samVoidFILE;
 
    /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\
-   ^ Fun-09 Sec-02:
+   ^ Fun09 Sec02:
    ^   - Read in one line from the sam file
    \<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
 
@@ -537,7 +566,7 @@ readSamLine(
    iterStr = *buffStr;
 
    /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\
-   ^ Fun-09 Sec-03:
+   ^ Fun09 Sec03:
    ^   - Get the query id from the buffer
    \<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
 
@@ -558,7 +587,7 @@ readSamLine(
    iterStr += samSTPtr->lenQryIdUC + 1; /*+1 get off tab*/
 
    /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\
-   ^ Fun-09 Sec-04:
+   ^ Fun09 Sec04:
    ^   - Get the flag for the alignment
    \<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
 
@@ -571,7 +600,7 @@ readSamLine(
    ++iterStr; /*Get off the tab*/
 
    /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\
-   ^ Fun-09 Sec-05:
+   ^ Fun09 Sec05:
    ^   - REad in the reference name/id
    \<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
 
@@ -587,7 +616,7 @@ readSamLine(
    iterStr += samSTPtr->lenRefIdUC + 1; /*+1 get off tab*/
 
    /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\
-   ^ Fun-09 Sec-06:
+   ^ Fun09 Sec06:
    ^   - Get the reference position
    \<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
 
@@ -603,7 +632,7 @@ readSamLine(
    ++iterStr; /*Get off the tab*/
 
    /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\
-   ^ Fun-09 Sec-07:
+   ^ Fun09 Sec07:
    ^   - Get the mapping quality
    \<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
 
@@ -616,21 +645,21 @@ readSamLine(
    ++iterStr; /*Get off the tab*/
 
    /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\
-   ^ Fun-09 Sec-08:
+   ^ Fun09 Sec08:
    ^   - Get the cigar entry
-   ^   o fun-09 sec-08 sub-01:
+   ^   o fun09 sec08 sub01:
    ^     - Check if there is a cigar entry
-   ^   o fun-09 sec-08 sub-02:
+   ^   o fun09 sec08 sub02:
    ^     - Read in the cigar entry
-   ^   o fun-09 sec-08 sub-03:
+   ^   o fun09 sec08 sub03:
    ^     - Count number of matchs/snps/dels/inss/masks in
    ^       the cigar entry
-   ^   o fun-09 sec-08 sub-04:
+   ^   o fun09 sec08 sub04:
    ^     - Get the read lengths from the cigar entries
    \<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
 
    /*****************************************************\
-   * Fun-09 Sec-08 Sub-01:
+   * Fun09 Sec08 Sub01:
    *   - Check if there is a cigar entry
    \*****************************************************/
 
@@ -645,7 +674,7 @@ readSamLine(
    } /*If: the cigar entry was not present*/
 
    /*****************************************************\
-   * Fun-09 Sec-08 Sub-02:
+   * Fun09 Sec08 Sub02:
    *   - Read in the cigar entry
    \*****************************************************/
    
@@ -688,7 +717,7 @@ readSamLine(
       samSTPtr->cigTypeStr[samSTPtr->lenCigUI]=iterStr[0];
 
       /**************************************************\
-      * Fun-09 Sec-08 Sub-03:
+      * Fun09 Sec08 Sub03:
       *   - Count number of matchs/snps/dels/inss/masks in
       *     the cigar entry
       \**************************************************/
@@ -749,7 +778,7 @@ readSamLine(
    } /*Loop: Read in the cigar entry*/
 
    /*****************************************************\
-   * Fun-09 Sec-08 Sub-04:
+   * Fun09 Sec08 Sub04:
    *   - Get the read lengths from the cigar entries
    \*****************************************************/
 
@@ -776,7 +805,7 @@ readSamLine(
    ++iterStr; /*Get off the tab*/
 
    /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\
-   ^ Fun-09 Sec-09:
+   ^ Fun09 Sec09:
    ^   - Get the RNEXT entry
    \<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
 
@@ -794,7 +823,7 @@ readSamLine(
    iterStr += samSTPtr->lenRNextUC + 1; /*+1 get off tab*/
 
    /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\
-   ^ Fun-09 Sec-10:
+   ^ Fun09 Sec10:
    ^   - Get the PNEXT entry
    \<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
 
@@ -809,7 +838,7 @@ readSamLine(
    ++iterStr; /*Get off the tab*/
 
    /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\
-   ^ Fun-09 Sec-11:
+   ^ Fun09 Sec11:
    ^   - Get the TLEN entry
    \<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
 
@@ -822,7 +851,7 @@ readSamLine(
    ++iterStr; /*Get off the tab*/
 
    /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\
-   ^ Fun-09 Sec-12:
+   ^ Fun09 Sec12:
    ^   - Get the sequence entry
    \<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
 
@@ -865,22 +894,9 @@ readSamLine(
    iterStr += samSTPtr->readLenUI + 1; /*+1 gets off tab*/
 
    /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\
-   ^ Fun-09 Sec-13:
+   ^ Fun09 Sec13:
    ^   - Get the Q-score entry
-   ^   o fun-03 sec-13 sub-01:
-   ^     - Check if I have a Q-score entry
-   ^   o fun-03 sec-13 sub-02:
-   ^     - Copy the q-score entry in blocks of 8
-   ^   o fun-03 sec-13 sub-03:
-   ^     - Finish copying the end of the Q-score entry
-   ^   o fun-03 sec-13 sub-04:
-   ^     - Find the mean and median Q-scores
    \<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
-
-   /*****************************************************\
-   * Fun-03 Sec-13 Sub-01:
-   *   - Check if I have a Q-score entry
-   \*****************************************************/
 
    if(iterStr[0] == '*' && iterStr[1] == '\t')
    { /*If: there is no Q-score entry*/
@@ -891,10 +907,10 @@ readSamLine(
       iterStr += 2;
    } /*If: there is no Q-score entry*/
 
-   else iterStr += cpQScores(samSTPtr, iterStr) + 1;
+   else iterStr += cpQScores(samSTPtr, iterStr, 0) + 1;
 
    /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\
-   ^ Fun-09 Sec-14:
+   ^ Fun09 Sec14:
    ^   - Copy the extra entry; after strict sam entries
    \<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
    
@@ -924,7 +940,7 @@ readSamLine(
 } /*readSamLine*/
 
 /*-------------------------------------------------------\
-| Fun-11: pSamEntry
+| Fun11: pSamEntry
 |  - Prints the sam file entry to a file. This does not
 |    print any extra stats that were found.
 | Input:
@@ -974,7 +990,7 @@ pSamEntry(
    { /*If: I need to add more buffer*/
       free(*buffStr);
       *(lenBuffUL) = maxLenUL;
-      *buffStr = malloc(*(lenBuffUL) * sizeof(char));
+      *buffStr = malloc(*(lenBuffUL + 1) * sizeof(char));
    } /*If: I need to add more buffer*/
 
    tmpStr = *buffStr;
@@ -1111,7 +1127,7 @@ pSamEntry(
 } /*pSamEntry*/
 
 /*-------------------------------------------------------\
-| Fun-12: pSamEntryAsFastq
+| Fun12: pSamEntryAsFastq
 |  - Prints the sam entry as a fastq entry to a fastq file
 | Input:
 |  - samST:
@@ -1168,7 +1184,7 @@ void pSamEntryAsFastq(
 } /*pSamEntryAsFq*/
 
 /*-------------------------------------------------------\
-| Fun-13: pSamEntryAsFasta
+| Fun13: pSamEntryAsFasta
 |  - Prints the sam entry as a fasta entry to a fasta file
 | Input:
 |  - samST:
@@ -1219,7 +1235,7 @@ void pSamEntryAsFasta(
 } /*pSamEntryAsFasta*/
 
 /*-------------------------------------------------------\
-| Fun-14: pSamEntryStats
+| Fun14: pSamEntryStats
 |  - Prints out the stats in a samEntry struct to a file
 | Input:
 |  - samEntryST:
@@ -1227,6 +1243,9 @@ void pSamEntryAsFasta(
 |  - pHeadBl:
 |    o 1: Print the header for the stats tsv file
 |    o 0: Do not print the header
+|  - pNsBl:
+|    o 1: find and print out the anonymous base counts
+|    o 0: do not print out anonymous base counts
 |  - outFILE:
 |    o TSV (tab deliminated) file to print stats to
 | Output:
@@ -1238,48 +1257,248 @@ void pSamEntryAsFasta(
 void pSamEntryStats(
    struct samEntry *samSTPtr,
    char *pHeadBl,
+   char pNsBl,
    void *outFILE
-){
+){ /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\
+   ' Fun14 TOC:
+   '   - Prints stats in a samEntry struct to file
+   '   o fun14 sec01:
+   '     - variable declerations
+   '   o fun14 sec02:
+   '     - check if comment, if not check if print header
+   '   o fun14 sec03:
+   '     - print out general stats
+   '   o fun14 sec04:
+   '     - print matches, snps, ins, dels, and masking.
+   '     - if asked also include anonymous bases
+   '   o fun14 sec05:
+   '     - print out the accuracy stats
+   \~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+
+   /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\
+   ^ Fun14 Sec01:
+   ^   - variable declerations 
+   \<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
+
+   uint matchNCntUI = 0;
+   uint snpNCntUI = 0;
+   uint insNCntUI = 0;
+   uint maskNCntUI = 0;
+   uint *cntUI = 0;
+
+   sint siCig = 0;
+   sint numNtSI = 0;
+   schar *tmpStr = 0;
+   uchar ntUC = 0;
+
+   /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\
+   ^ Fun14 Sec02:
+   ^   - check if comment, if not check if print header
+   \<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
+
    if(   (samSTPtr)->extraStr[0] != '@'
       && (samSTPtr)->qryIdStr[0] != '\0'
    ){ /*If: This is not a comment*/
+
       if(*(pHeadBl))
       { /*If: I need to print the header*/
         fprintf((FILE *) (outFILE), "Read\tRef\tFlag");
         fprintf((FILE *) (outFILE), "\tMapQ\tRefPos"); 
         fprintf((FILE *) (outFILE), "\tReadLength");
         fprintf((FILE *) (outFILE), "\tRefAlnLength");
-        fprintf((FILE *) (outFILE), "\tMatches\tSnps");
-        fprintf((FILE *) (outFILE), "\tInss\tDels");
-        fprintf((FILE *) (outFILE), "\tsoftMask");
+
+        if((pNsBl))
+        { /*If: I am printing the anonymous base counts*/
+           fprintf((FILE *) (outFILE), "\tmatch_total");
+           fprintf((FILE *) (outFILE), "\tmatch");
+           fprintf((FILE *)(outFILE),"\tmatch_anonymous");
+
+           fprintf((FILE *) (outFILE), "\tsnp_total");
+           fprintf((FILE *) (outFILE), "\tsnp");
+           fprintf((FILE *) (outFILE), "\tsnp_anonymous");
+
+           fprintf((FILE *) (outFILE), "\tins_total");
+           fprintf((FILE *) (outFILE), "\tins");
+           fprintf((FILE *) (outFILE), "\tins_anonymous");
+
+           fprintf((FILE *) (outFILE), "\tdel");
+
+           fprintf((FILE *) (outFILE), "\tmask_total");
+           fprintf((FILE *) (outFILE), "\tmask");
+           fprintf((FILE *) (outFILE),"\tmask_anonymous");
+        } /*If: I am printing the anonymous base counts*/
+
+        else
+        { /*Else: Print out the normal header*/
+           fprintf((FILE *) (outFILE), "\tMatches\tSnps");
+           fprintf((FILE *) (outFILE), "\tInss\tDels");
+           fprintf((FILE *) (outFILE), "\tmask");
+        } /*Else: Print out the normal header*/
+
         fprintf((FILE *) (outFILE), "\tMedianQ\tMeanQ\n");
 
         *(pHeadBl) = 0;
       } /*If: I need to print the header*/
-      
+
+      /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\
+      ^ Fun14 Sec03:
+      ^   - print out general stats
+      \<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
+
       fprintf(
         (FILE *) (outFILE),
-        "%s\t%s\t%u\t%u\t%u\t%u",
+        "%s\t%s\t%u\t%u\t%u\t%u\t%u",
         (samSTPtr)->qryIdStr,
         (samSTPtr)->refIdStr,
         (samSTPtr)->flagUS,
         (samSTPtr)->mapqUC,
         (samSTPtr)->refStartUI + 1,
-        (samSTPtr)->readLenUI
+        (samSTPtr)->readLenUI,
+        (samSTPtr)->alnReadLenUI
       );
+
+      /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\
+      ^ Fun14 Sec04:
+      ^   - print matches, snps, ins, dels, and masking.
+      ^   - if asked also include anonymous bases
+      ^   o fun14 sec04 sub01:
+      ^     - find the number of anonymous bases
+      ^   o fun14 sec04 sub02:
+      ^     - print out anonymous base and other counts
+      ^   o fun14 sec04 sub03:
+      ^     - not printing anoynous bases do regular print
+      \<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
+
+      /**************************************************\
+      * Fun14 Sec04 Sub01:
+      *   - find the number of anonymous bases
+      \**************************************************/
+
+      if( (pNsBl) )
+      { /*If: I am finding the anonymous base counts*/
+         tmpStr = (schar *) (samSTPtr)->seqStr;
+
+         siCig = 0;
+
+         while(siCig < (samSTPtr)->lenCigUI)
+         { /*Loop: count number of anonymous bases*/
+            numNtSI = (samSTPtr)->cigValAryI[siCig];
+
+            switch((samSTPtr)->cigTypeStr[siCig])
+            { /*Switch: check what type of cigar entry*/
+               case 'I':
+               /*Case: Insertions*/
+                  cntUI = &insNCntUI;
+                  break;
+               /*Case: Insertions*/
+
+               case 'X':
+               /*Case: Mismatches*/
+                  cntUI = &snpNCntUI;
+                  break;
+               /*Case: Mismatches*/
+
+               case '=':
+               case 'M':
+               /*Case: Matches or non-eqx entry*/
+                  cntUI = &matchNCntUI;
+                  break;
+               /*Case: Matches or non-eqx entry*/
+
+               case 'S':
+               /*Case: softmasking*/
+                  cntUI = &maskNCntUI;
+                  break;
+               /*Case: softmasking*/
+
+               /*Handle missing information cases*/
+               default:
+               /*Case: deletions or hard masks*/
+                  cntUI = 0;
+                  numNtSI = 0;
+               /*Case: deletions or hard masks*/
+            } /*Switch: check what type of cigar entry*/
+
+            while(numNtSI > 0)
+            { /*Loop: Check each nucleotide*/
+               ntUC = ntToFiveBit[(uchar) *tmpStr];
+               (*cntUI) += (!!(ntUC & n_fiveBit));
+               ++tmpStr;
+               --numNtSI;
+            } /*Loop: Check each nucleotide*/
+
+            ++siCig;
+         } /*Loop: count number of anonymous bases*/
+
+         /***********************************************\
+         * Fun14 Sec04 Sub02:
+         *   - print anonymous base and other counts
+         \***********************************************/
+
+         fprintf(
+           (FILE *) (outFILE),
+           "\t%u\t%u\t%u",
+           (samSTPtr)->numMatchUI,
+           (samSTPtr)->numMatchUI - matchNCntUI,
+           matchNCntUI
+         );
+
+         fprintf(
+           (FILE *) (outFILE),
+           "\t%u\t%u\t%u",
+           (samSTPtr)->numSnpUI,
+           (samSTPtr)->numSnpUI - snpNCntUI,
+           snpNCntUI
+         );
+
+         fprintf(
+           (FILE *) (outFILE),
+           "\t%u\t%u\t%u\t%u",
+           (samSTPtr)->numInsUI,
+           (samSTPtr)->numInsUI - insNCntUI,
+           insNCntUI,
+           (samSTPtr)->numDelUI
+         );
+
+         fprintf(
+           (FILE *) (outFILE),
+           "\t%u\t%u\t%u",
+           (samSTPtr)->numMaskUI,
+           (samSTPtr)->numMaskUI - maskNCntUI,
+           maskNCntUI
+         );
+      } /*If: I am finding the anonymous base counts*/
+
+      /**************************************************\
+      * Fun14 Sec04 Sub03:
+      *   - not printing anoynous bases do regular print
+      \**************************************************/
+
+      else
+      { /*Else: I am not counting anonymous bases*/
+         fprintf(
+           (FILE *) (outFILE),
+           "\t%u\t%u\t%u\t%u\t%u",
+           (samSTPtr)->numMatchUI,
+           (samSTPtr)->numSnpUI,
+           (samSTPtr)->numInsUI,
+           (samSTPtr)->numDelUI,
+           (samSTPtr)->numMaskUI
+         );
+      } /*Else: I am not counting anonymous bases*/
       
+      /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\
+      ^ Fun14 Sec05:
+      ^   - print out the Q-scores
+      \<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
+
       fprintf(
         (FILE *) (outFILE),
-        "\t%u\t%u\t%u\t%u\t%u\t%u\t%f\t%f\n",
-        (samSTPtr)->alnReadLenUI,
-        (samSTPtr)->numMatchUI,
-        (samSTPtr)->numSnpUI,
-        (samSTPtr)->numInsUI,
-        (samSTPtr)->numDelUI,
-        (samSTPtr)->numMaskUI,
+        "\t%f\t%f\n",
         (samSTPtr)->meanQF,
         (samSTPtr)->medianQF
       );
+
    } /*If: This is not a comment*/
 } /*pSamEntryStats*/
 

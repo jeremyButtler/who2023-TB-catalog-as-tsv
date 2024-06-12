@@ -14,31 +14,38 @@
 ' SOF: Start Of File
 '   o header:
 '     - Header guards
-'   o st: geneCoords
+'   o .h st: geneCoords
 '     - Holds the arrays for the gene coordinates and ids 
-'       in a paf file
-'   o fun-01: freeGeneCoordsStack
+'       in an gene coordiantes table
+'   o fun01: freeGeneCoordsStack
 '     - Frees the arrays in a geneCoords structure
-'   o fun-02: freeGeneCoords
+'   o fun02: freeGeneCoords
 '     - Frees the a heap alloacted geneCoords structure
-'   o fun-03: initGeneCoords
+'   o .h fun03: initGeneCoords
 '     - Initializes a geneCoords structure
-'   o fun-04: makeGeneCoords
+'   o fun04: makeGeneCoords
 '     - Makes a heap allocated geneCoords structure
-'   o fun-05: getPafGene
+'   o fun05: getPafGene
 '     - Get the id and coordinates for a gene from a paf
 '       file
-'   o fun-06: swapGeneCoord (.c only)
+'   o .c fun06: swapGeneCoord
 '     - Swaps two array items in a geneCoords structure
 '       around
-'   o fun-07: geneCoordsSort
+'   o fun07: geneCoordsSort
 '     - Sorts the arrays in a genesCoord structure by
 '       starting positiion with shell short.
-'   o fun-08: findStartCoordInGeneCoord
+'   o fun08: findStartCoordInGeneCoord
 '     - Does a binary search by starting coordinate for a
 '       potentail gene in a geneCoords structure
-'   o fun-09: pafGetGeneCoords
-'     - Gets the gene coordinates from a paf file
+'   o fun09: geneCoords_sortNames
+'     - Sorts the arrays in a genesCoord structure by
+'       gene name
+'   o fun10: geneCoords_findName
+'     - Does a binary search to find an gene name in an
+'       gene geneCoords structer (must be sorted by name)
+'   o fun11: getGeneCoords
+'     - Gets the gene coordinates from an gene coordinates
+'       table
 '   o license:
 '     - Licensing for this code (public domain / mit)
 \~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
@@ -58,17 +65,18 @@
 /*-------------------------------------------------------\
 | ST: geneCoords
 |   - Holds the arrays for the gene coordinates and ids 
-|     in a paf file
+|     in an gene coordinates table
 \-------------------------------------------------------*/
 typedef struct geneCoords{
    char (*idStrAry)[64];
    unsigned int *startAryUI;
    unsigned int *endAryUI;
+   unsigned char *dirAryUC;
 }geneCoords;
 
 
 /*-------------------------------------------------------\
-| Fun-01: freeGeneCoordsStack
+| Fun01: freeGeneCoordsStack
 |    - Frees the arrays in a geneCoords structure
 | Input:
 |   - geneCoordsST:
@@ -84,7 +92,7 @@ freeGeneCoordsStack(
 );
 
 /*-------------------------------------------------------\
-| Fun-02: freeGeneCoords
+| Fun02: freeGeneCoords
 |    - Frees the a heap alloacted geneCoords structure
 | Input:
 |   - geneCoordsST:
@@ -99,7 +107,7 @@ freeGeneCoords(
 );
 
 /*-------------------------------------------------------\
-| Fun-03: initGeneCoords
+| Fun03: initGeneCoords
 |    - Initializes a geneCoords structure
 | Input:
 |   - geneCoordsST:
@@ -112,10 +120,11 @@ freeGeneCoords(
    (geneCoordsST)->idStrAry = 0;\
    (geneCoordsST)->startAryUI = 0;\
    (geneCoordsST)->endAryUI = 0;\
+   (geneCoordsST)->dirAryUC = 0;\
 } /*initGeneCoords*/
 
 /*-------------------------------------------------------\
-| Fun-04: makeGeneCoords
+| Fun04: makeGeneCoords
 |    - Makes a heap allocated geneCoords structure
 | Input:
 |   - numGenesUI:
@@ -133,7 +142,7 @@ makeGeneCoords(
 );
 
 /*-------------------------------------------------------\
-| Fun-05: getPafGene
+| Fun05: getPafGene
 |    - Get the id and coordinates for a gene from a paf
 |      file
 | Input:
@@ -160,7 +169,7 @@ getPafGene(
 ); /*getPagGene*/
 
 /*-------------------------------------------------------\
-| Fun-07: geneCoordsSort
+| Fun07: geneCoordsSort
 |  - Sorts the arrays in a genesCoord structure by
 |    starting positiion with shell short.
 | Input:
@@ -184,7 +193,7 @@ sortGeneCoords(
 );
 
 /*-------------------------------------------------------\
-| Fun-08: findStartCoordInGeneCoord
+| Fun08: findStartCoordInGeneCoord
 |  - Does a binary search by starting coordinate for a
 |    potentail gene in a geneCoords structure
 | Input:
@@ -209,7 +218,55 @@ findStartCoordInGeneCoord(
 );
 
 /*-------------------------------------------------------\
-| Fun-09: getGeneCoords
+| Fun09: geneCoords_sortNames
+|  - Sorts the arrays in a genesCoord structure by
+|    gene name
+| Input:
+|  - geneCoordST:
+|    o Pointer to geneCoords structure with gene
+|      coordinates to sort
+|  - startUI:
+|    o First element to start sorting at
+|  - endUI:
+|    o Last element to sort (index 0)
+| Output:
+|  - Modifies:
+|    o Arrays in geneCoordST to be sorted by the gene
+|      starting coordinate (lowest first)
+\-------------------------------------------------------*/
+void
+geneCoords_sortNames(
+   struct geneCoords *geneCoordST,
+   unsigned int startUI,
+   unsigned int endUI
+);
+
+/*-------------------------------------------------------\
+| Fun10: geneCoords_findName
+|  - Does a binary search to find an gene name in an gene
+|    geneCoords structer (must be sorted by name)
+| Input:
+|  - geneCoordST:
+|    o Pointer to geneCoords structure with starting gene
+|      coordinates to search
+|  - nameStr:
+|    o c-string with name to search for
+|  - numGenesSI:
+|    o Number of genes in geneCoordST (index 1)
+| Output:
+|  - Returns:
+|    o The index of gene with the same name
+|    o -1 if there was no gene
+\-------------------------------------------------------*/
+int
+geneCoords_findName(
+   struct geneCoords *geneST,
+   signed char *nameStr,
+   signed int numGenesSI
+);
+
+/*-------------------------------------------------------\
+| Fun11: getGeneCoords
 |  - Gets the gene coordinates from a gene table (tsv)
 | Input:
 |  - geneTblFileStr:

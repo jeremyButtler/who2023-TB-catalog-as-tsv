@@ -34,7 +34,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "amrStruct.h"
+#include "../generalLib/amrStruct.h"
 #include "genIndiceStruct.h"
 #include "cnvt_whoToTbAmr.h"
 
@@ -43,14 +43,13 @@
 #include "../generalLib/base10StrToNum.h"
 #include "../generalLib/dataTypeShortHand.h"
 
-/*Hidden includes
-`  - .c + .h files
-`    o #include "drug_str_ary.h"
-`  - .h only files
-`    o #include "../generalLib/gen-shellSort.h"
-`    o #include "../generalLib/genMath.h"
-`    o #include "../generalLib/codonTbl.h"
-*/
+/*%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\
+! Hidden includes
+!   o .c #include "../drug_str_ary.h"
+!   o .h #include "../generalLib/gen-shellSort.h"
+!   o .h #include "../generalLib/genMath.h"
+!   o .h #include "../generalLib/codonTbl.h"
+\%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%*/
 
 /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\
 ^ Header Sec-02:
@@ -208,6 +207,8 @@ main(
    ^     - Check if can open second tab of 2023 catalog
    ^   o main sec-02 sub-04:
    ^     - Check if the user provided the reference file
+   ^   o main sec-02 sub-05:
+   ^     - Check if user provided gene coordinates file
    \<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
 
    /*****************************************************\
@@ -330,7 +331,7 @@ main(
    *   - Check if the user provided the reference file
    \*****************************************************/
 
-   if(! coordsStr)
+   if(! refStr)
    { /*If: No reference sequence file was input*/
       fprintf(
          stderr,
@@ -340,7 +341,7 @@ main(
       exit(-1);
    } /*If: No reference sequence file was input*/
 
-   checkFILE = fopen(coordsStr, "r");
+   checkFILE = fopen(refStr, "r");
 
    if(! checkFILE)
    { /*If: could not open reference sequence file*/
@@ -361,8 +362,8 @@ main(
    *   - Check if the user provided gene coordinates file
    \*****************************************************/
 
-   if(! refStr)
-   { /*If: No reference sequence file was input*/
+   if(! coordsStr)
+   { /*If: No gene coordiantes file was input*/
       fprintf(
          stderr,
          "Gene coordiantes (-coords genes.tsv) are needed"
@@ -370,12 +371,12 @@ main(
 
       fprintf(stderr, "\n");
       exit(-1);
-   } /*If: No reference sequence file was input*/
+   } /*If: No gene coordinates file was input*/
 
-   checkFILE = fopen(refStr, "r");
+   checkFILE = fopen(coordsStr, "r");
 
    if(! checkFILE)
-   { /*If: could not open reference sequence file*/
+   { /*If: could not open gene coordinates file*/
          fprintf(
             stderr,
             "Could not open -coords %s\n",
@@ -383,7 +384,7 @@ main(
          );
    
          exit(-1);
-   } /*If: could not open reference sequence file*/
+   } /*If: could not open gene coordinates file*/
 
    fclose(checkFILE);
    checkFILE = 0;

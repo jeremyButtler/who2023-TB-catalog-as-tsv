@@ -8,15 +8,22 @@
 ' SOF: Start Of File
 '  o header:
 '    - Header guards
-'  o fun-01: arySortNumeric
+'  o .h fun-01: binSearchNumeric
+'    - Does an binary search on an array of numeric items
+'    - This is here because it is linked with sorting
+'  o .h fun-02: binSearchRange
+'     - Searches for an value inside an range 
+'  o .h fun-03: swapVal
+'     - Swaps to values (numeric/character not string)
+'  o .h fun-04: arySortNumeric
 '    - Sorts the input array from least to greatest with
 '      shell sort. This uses numeric input.
-'  o fun-02: twoArySortNumeric
+'  o .h fun-05: twoArySortNumeric
 '    - Sorts the first input array from least to greatest
 '      and keeps the second input arrar in order with the
 '      first array. This is set up for numeric input using
 '      shell short. Both arrays must be the same size.
-'  o fun-03: threeArySortNumeric
+'  o .h fun-06: threeArySortNumeric
 '    - Sorts three arrays by the first input array (as
 '      numeric) with shell short. All three arrays must be
 '      the same size.
@@ -33,7 +40,129 @@
 #define GENERAL_SHELL_SHORT_H
 
 /*-------------------------------------------------------\
-| Fun-01: arySortNumeric
+| Fun-01: binSearchNumeric
+|  - Does an binary search on an array of numeric items
+| Input:
+|  - numAryPtr:
+|    o Pointer to an array of numeric values
+|  - qrySI:
+|    o number to look up
+|  - lenAryUI:
+|    o length of qrySIPtr (index 1)
+| Output:
+|  - Returns:
+|    o The index of qrySI in arySIPtr
+|    o -1 if qrySI is not in arySIPtr
+\-------------------------------------------------------*/
+#define \
+binSearchNumeric(\
+   numAryPtr,\
+   qrySI,\
+   lenAryUI\
+)({\
+   unsigned int midMacUI = 0;\
+   unsigned int rightHalfMacUI = (lenAryUI) - 1;\
+   unsigned int leftHalfMacUI = 0;\
+   \
+   while(leftHalfMacUI <= rightHalfMacUI)\
+   { /*Loop: Search for the querys index*/\
+      midMacUI = (leftHalfMacUI + rightHalfMacUI) >> 1;\
+     \
+     if((qrySI) > (numAryPtr)[midMacUI])\
+         leftHalfMacUI = midMacUI + 1;\
+      \
+     else if((qrySI) < (numAryPtr)[midMacUI])\
+         rightHalfMacUI = midMacUI - 1;\
+     \
+     else \
+        break; /*Found the query*/ \
+   } /*Loop: Search for the querys index*/\
+   \
+   /*See if the query was found*/\
+   midMacSI |= ( -((long) (midMacSI >= (lenAryUI))) );\
+   midMacSI;\
+}) /*binSearchNumeric*/
+
+/*-------------------------------------------------------\
+| Fun-02: binSearchRange
+|  - Searches for an value inside an range 
+| Input:
+|  - numAryPtr:
+|    o Pointer to an array of numeric values
+|  - startSI:
+|    o Start of the range to look for
+|  - endSI:
+|    o End of the range to look for
+|  - lenAryUI:
+|    o length of qrySIPtr (index 1)
+| Output:
+|  - Returns:
+|    o The first index in the range
+|    o -1 if no value is in the range
+\-------------------------------------------------------*/
+#define \
+binSearchRange(\
+   numAryPtr,\
+   startSI,\
+   endSI,\
+   lenAryUI\
+)({\
+   signed int midMacSI = 0;\
+   signed int rightHalfMacSI = (lenAryUI) - 1;\
+   signed int leftHalfMacSI = 0;\
+   \
+   while(leftHalfMacSI <= rightHalfMacSI)\
+   { /*Loop: Search for the querys index*/\
+      midMacSI = (leftHalfMacSI + rightHalfMacSI) >> 1;\
+     \
+     if((startSI) > (numAryPtr)[midMacSI])\
+         leftHalfMacSI = midMacSI + 1;\
+      \
+     else if((endSI) < (numAryPtr)[midMacSI])\
+         rightHalfMacSI = midMacSI - 1;\
+     \
+     else \
+        break; /*Found the query*/\
+   } /*Loop: Search for the querys index*/\
+   \
+   /*Find the nearest value still in the range*/\
+   while( \
+         midMacSI > 0 \
+      && (numAryPtr)[midMacSI - 1] >= (startSI) \
+   ) --midMacSI; \
+   \
+   /*See if the query was found*/ \
+   midMacSI |= ( -((long) (midMacSI >= (lenAryUI))) ); \
+   midMacSI; \
+}) /*binSearchRange*/
+
+/*-------------------------------------------------------\
+| Fun-03: swapVal
+|   - Swaps to values (numeric/character not string)
+|   - This swap trick was taken from the standfords bit
+|     hacking guide
+| Input:
+|   - firstVal:
+|     o First value to swap
+|   - secVal:
+|     o second value to swap
+| Output:
+|   - Modifies:
+|     o firstVal to be secVal
+|     o secVal to be firstVal
+\-------------------------------------------------------*/
+#define \
+swapVal( \
+   firstVal, \
+   secVal \
+){ \
+   (firstVal) ^= (secVal); \
+   (secVal) ^= (firstVal); \
+   (firstVal) ^= (secVal); \
+} /*swapVal*/
+
+/*-------------------------------------------------------\
+| Fun-04: arySortNumeric
 |  - Sorts the input array from least to greatest with
 |    shell sort. This uses numeric input.
 | Input:
@@ -53,7 +182,7 @@ arySortNumeric( \
    startUL, \
    endUL \
 ){ /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\
-   ' Fun-01 TOC:
+   ' Fun-04 TOC:
    '  - Sorts the input array from least to greatest with
    '    shell sort. This uses numeric input.
    '  - Shell sort taken from:
@@ -62,16 +191,16 @@ arySortNumeric( \
    '      edition. pages 505-508
    '    - I made some minor changes, but is mostly the
    '      same
-   '  o fun-01 sec-01:
+   '  o fun-04 sec-01:
    '    - Variable declerations
-   '  o fun-01 sec-02:
+   '  o fun-04 sec-02:
    '    - Find the number of rounds to sort for
-   '  o fun-01 sec-03:
+   '  o fun-04 sec-03:
    '    - Sort the arrays
    \~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/\
   \
   /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\
-  ^ Fun-01 Sec-01:
+  ^ Fun-04 Sec-01:
   ^  - Variable declerations
   \<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/\
   \
@@ -92,7 +221,7 @@ arySortNumeric( \
   unsigned long ulElmMac = 0;\
   \
   /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\
-  ^ Fun-01 Sec-02:
+  ^ Fun-04 Sec-02:
   ^  - Find the max search value (number rounds to sort)
   \<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/\
   \
@@ -103,7 +232,7 @@ arySortNumeric( \
      subMacUL = (3 * subMacUL) + 1;\
   \
   /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\
-  ^ Fun-01 Sec-03:
+  ^ Fun-04 Sec-03:
   ^  - Sort the arrays in genIndiceST
   \<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/\
   \
@@ -122,9 +251,10 @@ arySortNumeric( \
         \
         if((firstAry)[ulElmMac]>(firstAry)[nextElmMacUL])\
         { /*If I need to swap an element*/\
-          swapMacL = (firstAry)[ulElmMac];\
-          (firstAry)[ulElmMac]= (firstAry)[nextElmMacUL];\
-          (firstAry)[nextElmMacUL] = swapMacL;\
+          swapVal( \
+             (firstAry)[ulElmMac], \
+             (firstAry)[nextElmMacUL] \
+          ); \
           \
           lastElmMacUL = ulElmMac;\
           elmOnMacUL = ulElmMac;\
@@ -138,10 +268,10 @@ arySortNumeric( \
             ) break; /*Positioned the element*/\
             \
             \
-            swapMacL = (firstAry)[elmOnMacUL];\
-            (firstAry)[elmOnMacUL] =\
-               (firstAry)[lastElmMacUL];\
-            (firstAry)[lastElmMacUL] = swapMacL;\
+            swapVal( \
+               (firstAry)[elmOnMacUL], \
+               (firstAry)[lastElmMacUL] \
+            ); \
             \
             elmOnMacUL = lastElmMacUL;\
           } /*loop; move swapped element back*/\
@@ -154,7 +284,7 @@ arySortNumeric( \
 } /*arySortNumeric*/
 
 /*-------------------------------------------------------\
-| Fun-02: twoArySortNumeric
+| Fun-05: twoArySortNumeric
 |  - Sorts the first input array from least to greatest
 |    and keeps the second input arrar in order with the
 |    first array. This is set up for numeric input using
@@ -180,7 +310,7 @@ twoArySortNumeric( \
    startUL, \
    endUL \
 ){ /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\
-   ' Fun-02 TOC:
+   ' Fun-05 TOC:
    '  - Sorts the first input array from least to greatest
    '    and keeps the second input arrar in order with the
    '    first array.
@@ -190,22 +320,21 @@ twoArySortNumeric( \
    '      edition. pages 505-508
    '    - I made some minor changes, but is mostly the
    '      same
-   '  o fun-02 sec-01:
+   '  o fun-05 sec-01:
    '    - Variable declerations
-   '  o fun-02 sec-02:
+   '  o fun-05 sec-02:
    '    - Find the number of rounds to sort for
-   '  o fun-02 sec-03:
+   '  o fun-05 sec-03:
    '    - Sort the arrays
    \~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/\
   \
   /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\
-  ^ Fun-02 Sec-01:
+  ^ Fun-05 Sec-01:
   ^  - Variable declerations
   \<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/\
   \
   /*Number of elements to sort*/\
   unsigned long numElmMacUL = (endUL) - (startUL);\
-  long swapMacL = 0;\
   \
   /*Number of sorting rounds*/\
   unsigned long subMacUL = 0;\
@@ -220,7 +349,7 @@ twoArySortNumeric( \
   unsigned long ulElmMac = 0;\
   \
   /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\
-  ^ Fun-02 Sec-02:
+  ^ Fun-05 Sec-02:
   ^  - Find the max search value (number rounds to sort)
   \<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/\
   \
@@ -231,7 +360,7 @@ twoArySortNumeric( \
      subMacUL = (3 * subMacUL) + 1;\
   \
   /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\
-  ^ Fun-02 Sec-03:
+  ^ Fun-05 Sec-03:
   ^  - Sort the arrays in genIndiceST
   \<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/\
   \
@@ -250,13 +379,15 @@ twoArySortNumeric( \
         \
         if((firstAry)[ulElmMac]>(firstAry)[nextElmMacUL])\
         { /*If I need to swap an element*/\
-          swapMacL = (firstAry)[ulElmMac];\
-          (firstAry)[ulElmMac]= (firstAry)[nextElmMacUL];\
-          (firstAry)[nextElmMacUL] = swapMacL;\
+          swapVal( \
+             (firstAry)[ulElmMac], \
+             (firstAry)[nextElmMacUL] \
+          ); \
           \
-          swapMacL = (secAry)[ulElmMac];\
-          (secAry)[ulElmMac] = (secAry)[nextElmMacUL];\
-          (secAry)[nextElmMacUL] = swapMacL;\
+          swapVal( \
+             (secAry)[ulElmMac], \
+             (secAry)[nextElmMacUL] \
+          ); \
           \
           lastElmMacUL = ulElmMac;\
           elmOnMacUL = ulElmMac;\
@@ -270,14 +401,15 @@ twoArySortNumeric( \
             ) break; /*Positioned the element*/\
             \
             \
-            swapMacL = (firstAry)[elmOnMacUL];\
-            (firstAry)[elmOnMacUL] =\
-               (firstAry)[lastElmMacUL];\
-            (firstAry)[lastElmMacUL] = swapMacL;\
+            swapVal( \
+               (firstAry)[elmOnMacUL], \
+               (firstAry)[lastElmMacUL] \
+            ); \
             \
-            swapMacL = (secAry)[elmOnMacUL];\
-            (secAry)[elmOnMacUL]= (secAry)[lastElmMacUL];\
-            (secAry)[lastElmMacUL] = swapMacL;\
+            swapVal( \
+               (secAry)[elmOnMacUL], \
+               (secAry)[lastElmMacUL] \
+            ); \
             \
             elmOnMacUL = lastElmMacUL;\
           } /*loop; move swapped element back*/\
@@ -290,7 +422,7 @@ twoArySortNumeric( \
 } /*twoArySortNumeric*/
 
 /*-------------------------------------------------------\
-| Fun-03: threeArySortNumeric
+| Fun-06: threeArySortNumeric
 |  - Sorts three arrays by the first input array (as
 |    numeric) with shell short. All three arrays must be
 |    the same size.
@@ -319,7 +451,7 @@ threeArySortNumeric( \
    startUL, \
    endUL \
 ){ /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\
-   ' Fun-03 TOC:
+   ' Fun-06 TOC:
    '  - Sorts three arrays by the first input array (as
    '    numeric) with shell short. All three arrays must
    '    be the same size.
@@ -329,16 +461,16 @@ threeArySortNumeric( \
    '      edition. pages 505-508
    '    - I made some minor changes, but is mostly the
    '      same
-   '  o fun-03 sec-01:
+   '  o fun-06 sec-01:
    '    - Variable declerations
-   '  o fun-03 sec-02:
+   '  o fun-06 sec-02:
    '    - Find the number of rounds to sort for
-   '  o fun-03 sec-03:
+   '  o fun-06 sec-03:
    '    - Sort the arrays
    \~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/\
   \
   /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\
-  ^ Fun-03 Sec-01:
+  ^ Fun-06 Sec-01:
   ^  - Variable declerations
   \<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/\
   \
@@ -359,7 +491,7 @@ threeArySortNumeric( \
   unsigned long ulElmMac = 0;\
   \
   /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\
-  ^ Fun-03 Sec-02:
+  ^ Fun-06 Sec-02:
   ^  - Find the max search value (number rounds to sort)
   \<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/\
   \
@@ -370,7 +502,7 @@ threeArySortNumeric( \
      subMacUL = (3 * subMacUL) + 1;\
   \
   /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\
-  ^ Fun-03 Sec-03:
+  ^ Fun-06 Sec-03:
   ^  - Sort the arrays in genIndiceST
   \<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/\
   \
@@ -389,17 +521,20 @@ threeArySortNumeric( \
         \
         if((firstAry)[ulElmMac]>(firstAry)[nextElmMacUL])\
         { /*If I need to swap an element*/\
-          swapMacL = (firstAry)[ulElmMac];\
-          (firstAry)[ulElmMac]= (firstAry)[nextElmMacUL];\
-          (firstAry)[nextElmMacUL] = swapMacL;\
+          swapVal( \
+             (firstAry)[ulElmMac], \
+             (firstAry)[nextElmMacUL] \
+          ); \
           \
-          swapMacL = (secAry)[ulElmMac];\
-          (secAry)[ulElmMac] = (secAry)[nextElmMacUL];\
-          (secAry)[nextElmMacUL] = swapMacL;\
+          swapVal( \
+             (secAry)[ulElmMac], \
+             (secAry)[nextElmMacUL] \
+          ); \
           \
-          swapMacL = (thirdAry)[ulElmMac];\
-          (thirdAry)[ulElmMac]= (thirdAry)[nextElmMacUL];\
-          (thirdAry)[nextElmMacUL] = swapMacL;\
+          swapVal( \
+             (thirdAry)[ulElmMac], \
+             (thirdAry)[nextElmMacUL] \
+          ); \
           \
           lastElmMacUL = ulElmMac;\
           elmOnMacUL = ulElmMac;\
@@ -413,19 +548,20 @@ threeArySortNumeric( \
             ) break; /*Positioned the element*/\
             \
             \
-            swapMacL = (firstAry)[elmOnMacUL];\
-            (firstAry)[elmOnMacUL] =\
-               (firstAry)[lastElmMacUL];\
-            (firstAry)[lastElmMacUL] = swapMacL;\
+            swapVal( \
+               (firstAry)[elmOnMacUL], \
+               (firstAry)[lastElmMacUL] \
+            ); \
             \
-            swapMacL = (secAry)[elmOnMacUL];\
-            (secAry)[elmOnMacUL]= (secAry)[lastElmMacUL];\
-            (secAry)[lastElmMacUL] = swapMacL;\
+            swapVal( \
+               (secAry)[elmOnMacUL], \
+               (secAry)[lastElmMacUL] \
+            ); \
             \
-            swapMacL = (thirdAry)[elmOnMacUL];\
-            (thirdAry)[elmOnMacUL] =\
-               (thirdAry)[lastElmMacUL];\
-            (thirdAry)[lastElmMacUL] = swapMacL;\
+            swapVal( \
+               (thirdAry)[elmOnMacUL], \
+               (thirdAry)[lastElmMacUL] \
+            ); \
             \
             elmOnMacUL = lastElmMacUL;\
           } /*loop; move swapped element back*/\

@@ -55,9 +55,9 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "amrStruct.h"
+#include "../generalLib/amrStruct.h"
+#include "../generalLib/drug_str_ary.h"
 #include "genIndiceStruct.h"
-#include "drug_str_ary.h"
 
 /*Are just .h files*/
 #include "../generalLib/dataTypeShortHand.h"
@@ -871,7 +871,7 @@ struct amrStruct * read_2021_WhoAmrCsv(
       \
       iMacShift =\
         findDrug_in_drugAryStr(\
-           "penicillinMyceialDreg",\
+           "penicillin-myceial-dreg",\
            (drugAryStr),\
            (numDrugs) + 1,\
             '\0'\
@@ -884,7 +884,7 @@ struct amrStruct * read_2021_WhoAmrCsv(
          \
          cpDrugToDrugAry(\
             (drugAryStr),\
-            "penicillinMyceialDreg",\
+            "penicillin-myceial-dreg",\
            (numDrugs),\
             '\0'\
          ); /*Copy the new drug name in*/\

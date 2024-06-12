@@ -7,6 +7,12 @@ typedef unsigned int uint;
 typedef unsigned short ushort;
 typedef unsigned char uchar;
 
+typedef signed long long slonglong;
+typedef signed long slong;
+typedef signed int sint;
+typedef signed short sshort;
+typedef signed char schar;
+
 #endif
 
 /*=======================================================\
